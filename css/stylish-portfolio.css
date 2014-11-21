@@ -17,9 +17,12 @@ body {
 }
 
 .text-vertical-center {
-    display: table-cell;
+/*    display: table-cell;
     text-align: center;
-    vertical-align: middle;
+    vertical-align: middle;*/
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .text-vertical-center h1 {
