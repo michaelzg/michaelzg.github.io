@@ -1,28 +1,28 @@
-@import url(http://fonts.googleapis.com/css?family=Gochi+Hand|Roboto+Slab);
+@import url(http://fonts.googleapis.com/css?family=Roboto+Slab);
+@import url(http://fonts.googleapis.com/css?family=Cabin+Sketch|Skranji|Schoolbell|Chelsea+Market);
 
-#michaels {
-	font-family: 'Gochi Hand';
-	font-size: 40px;
+#desc {
+	font-family: 'Roboto Slab';
+	font-size: 16px;
 	color: #F1E2D8;
 }
 
 #title {
-	font-family: 'Gochi Hand';
-	font-size: 80px;
-	color: #FA8536;
-	margin-top: 0px;
+	font-family: 'Cabin Sketch';
+	font-size: 75px;
+	color: #E0E0E0;
+	margin-top: 90px;
+	/*border-bottom: 3px solid #938377;*/
+	/*border-bottom: 1px solid #F1E2D8;*/
 }
 
-hr.small {
-	max-width: 300px;
-	margin-top: 0px;
-	border-color: #938377;
+hr.divide {
+	max-width: 20em;
 }
 
 .b {
 	background-color: #F1E2D8;
-	margin-right: 10px;
-	margin-left: 10px;
+	margin: 20px 10px 0px 10px;
 }
 
 #r {
@@ -31,7 +31,8 @@ hr.small {
 
 #footer {
 	font-family: 'Roboto Slab';
-	background-color: #F1E2D8;
+	color: #E0E0E0;
+	/*background-color: #F1E2D8;*/
 	position: fixed;
 	bottom: 0;
 	width: 100%;
@@ -44,8 +45,8 @@ body {
 }
 
 html { 
-  /*background: url(/assets/img/bg.jpg) no-repeat center center fixed; */
-  background-color: #56504B;
+  background: url(/assets/img/bg6.jpg) no-repeat center center fixed; 
+  /*background-color: #56504B;*/
   -webkit-background-size: cover;
   -moz-background-size: cover;
   -o-background-size: cover;
