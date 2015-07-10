@@ -713,7 +713,7 @@ table {
   margin: 0; }
 
 .posts .post {
-  padding-bottom: .375em;
+  padding-top: .375em;
   border-bottom: thin solid #f3f3f3; }
 
 .posts .post:last-child {
@@ -911,7 +911,7 @@ h6,
     margin-top: 0.5em; }
 
   .posts .post {
-    padding-bottom: 0.666em;
+    padding-top: 0.666em;
     border-bottom: thin solid #f3f3f3; }
 
   .posts .post:last-child {
@@ -976,7 +976,7 @@ h6,
     margin-top: .125em; }
 
   .posts .post {
-    padding-bottom: 1.333em;
+    padding-top: 0.999em;
     border-bottom: thin solid #f3f3f3; }
 
   .posts .post:last-child {
