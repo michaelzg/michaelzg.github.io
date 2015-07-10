@@ -5,18 +5,159 @@
     <description>Hello.</description>
     <link>http://michaelzg.me/</link>
     <atom:link href="http://michaelzg.me/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Fri, 10 Jul 2015 10:35:57 -0700</pubDate>
-    <lastBuildDate>Fri, 10 Jul 2015 10:35:57 -0700</lastBuildDate>
+    <pubDate>Fri, 10 Jul 2015 11:16:39 -0700</pubDate>
+    <lastBuildDate>Fri, 10 Jul 2015 11:16:39 -0700</lastBuildDate>
     <generator>Jekyll v2.4.0</generator>
     
       <item>
-        <title>First Post</title>
-        <description>&lt;p&gt;Wow my first post this is great. Let&amp;rsquo;s test some R Code:&lt;/p&gt;
+        <title>Project Euler</title>
+        <description>&lt;p&gt;&lt;a href=&quot;https://projecteuler.net/&quot;&gt;Project Euler&lt;/a&gt; is a bunch of fun math problems that you solve through computer. As of March 2nd 2014 there are 461 problems. I&amp;rsquo;m taking a crack at them (with R) for practice so here are the first few.&lt;/p&gt;
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-r&quot; data-lang=&quot;r&quot;&gt;bunches &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; rnorm&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;100&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-bunches2 &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;lapply&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;bunches&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;x&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; x &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-hist&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kp&quot;&gt;unlist&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;bunches2&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;#=&amp;gt; normal, shift to the right&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;hr&gt;
+
+&lt;h3 id=&quot;problem-1-multiples-of-3-and-5&quot;&gt;Problem #1: Multiples of 3 and 5&lt;/h3&gt;
+
+&lt;p&gt;&lt;em&gt;Find the sum of all the multiples of 3 or 5 below 1000.&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Get multiples of 3 and 5, stick em in vector. Then, you don&amp;rsquo;t want duplicates of both, e.g. 30 is both multiple of 3 and 5 and thus listed twice. So sum the unique values.&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-r&quot; data-lang=&quot;r&quot;&gt;mults &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kp&quot;&gt;seq&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;seq&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;999&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;kp&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kp&quot;&gt;unique&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;mults&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;# 233168&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+    
+
+&lt;h3 id=&quot;problem-2-even-fibonacci-numbers&quot;&gt;Problem #2: Even Fibonacci Numbers&lt;/h3&gt;
+
+&lt;p&gt;&lt;em&gt;By considering the terms in the Fibonacci sequence whose values do not exceed four million, find the sum of the even-valued terms.&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;First create a string of Fib numbers up to that 4e6 value. Then grab the evens and add&amp;#39;em up.&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-r&quot; data-lang=&quot;r&quot;&gt;&lt;span class=&quot;bp&quot;&gt;F&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;kr&quot;&gt;while&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kp&quot;&gt;tail&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;F&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;4000000&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+    &lt;span class=&quot;bp&quot;&gt;F&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;append&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;F&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kp&quot;&gt;tail&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;F&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;#sum evens&lt;/span&gt;
+&lt;span class=&quot;kp&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;F&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;F&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;%%&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;# 4613732&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+    
+
+&lt;h3 id=&quot;problem-3-largest-prime-factor&quot;&gt;Problem #3: Largest Prime Factor&lt;/h3&gt;
+
+&lt;p&gt;&lt;em&gt;What is the largest prime factor of the number 600851475143 ?&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;We first want a way to check if a number is prime. I implemented a &lt;code&gt;isPrime&lt;/code&gt; function, below:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-r&quot; data-lang=&quot;r&quot;&gt;isPrime &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;n&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+    rootn  &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;as.integer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kp&quot;&gt;sqrt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;n&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;  
+    &lt;span class=&quot;kt&quot;&gt;vector&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;seq&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;rootn&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    
+    set &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; n &lt;span class=&quot;o&quot;&gt;%%&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;vector&lt;/span&gt;
+    
+    &lt;span class=&quot;kr&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kp&quot;&gt;length&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kp&quot;&gt;which&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; set &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+        &lt;span class=&quot;kr&quot;&gt;return&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Nope not prime.&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kp&quot;&gt;length&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kp&quot;&gt;which&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; set &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)))&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;kr&quot;&gt;return&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;Prime!!&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;with that out of the way, we dive in. Set 600851475143 as &lt;code&gt;num&lt;/code&gt;. We make a sequence of candidate factors, noting that we only need to test up to the square root of the number as testing one factor rules out 2 numbers. &lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-r&quot; data-lang=&quot;r&quot;&gt;seq_num &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;seq&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;sqrt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;num&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;# Factors are those that divide `num` with a modulus of 0 &lt;/span&gt;
+factors &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; seq_num&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;num % seq.num &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;# test factors for prime&lt;/span&gt;
+&lt;span class=&quot;kp&quot;&gt;unlist&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kp&quot;&gt;lapply&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;factors&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;x&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; isPrime&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;x&lt;span class=&quot;p&quot;&gt;)))&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;And the largest is six thousand eight hundred and fifty seven!&lt;/p&gt;
+</description>
+        <pubDate>Fri, 10 Jul 2015 04:02:00 -0700</pubDate>
+        <link>http://michaelzg.me/euler/2015/07/10/project-euler/</link>
+        <guid isPermaLink="true">http://michaelzg.me/euler/2015/07/10/project-euler/</guid>
+        
+        
+        <category>euler</category>
+        
+      </item>
+    
+      <item>
+        <title>Scheduled R Code</title>
+        <description>&lt;p&gt;Running R scripts as a cron job is useful for executing jobs on a schedule. &lt;/p&gt;
+
+&lt;p&gt;This script would do three things:&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;1:&lt;/strong&gt; Download the data with &lt;code&gt;download.file()&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;2:&lt;/strong&gt; Do some initial processing (e.g. unzip with &lt;code&gt;untar&lt;/code&gt;, filter out things you don&amp;rsquo;t need, add a new column for something you know you will need, etc) &lt;/p&gt;
+
+&lt;p&gt;For example, every entry in the data had a timestamp but it was in Unix epoch time. To convert it, I learned this nice &lt;code&gt;as.POSIXct&lt;/code&gt; function:&lt;/p&gt;
+
+&lt;p&gt;Time was given in milleseconds, thats 13 digits. The function wants it in seconds:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-r&quot; data-lang=&quot;r&quot;&gt;time &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;1390409880221&lt;/span&gt;
+    &lt;span class=&quot;kp&quot;&gt;as.POSIXct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;time&lt;span class=&quot;o&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1e3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; origin &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;1970-01-01&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;# &amp;quot;2014-01-22 11:58:00 EST&amp;quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+     
+
+&lt;p&gt;There is another, similar function, &lt;code&gt;as.POSIXlt&lt;/code&gt; but from &lt;a href=&quot;http://stackoverflow.com/questions/10699511/difference-between-as-posixct-as-posixlt-and-strptime-for-converting-character-v&quot;&gt;what I&amp;rsquo;ve read&lt;/a&gt; that just converts the time into a format that stores it differently (seconds for the first and day-month-year etc for the second). &lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;3:&lt;/strong&gt; Dump the data in a folder. But rather than a folder, this may be a great place for a database. Just haven&amp;rsquo;t learned it &lt;em&gt;yet&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;Done? Not so fast! What if there is an error in the first step of downloading the file? What if the data returns empty due to something on the website&amp;rsquo;s side of things? We&amp;rsquo;d want to handle these errors and let the script tell us something helpful when they occur. For this, I used &lt;code&gt;tryCatch&lt;/code&gt; and here&amp;rsquo;s a &lt;a href=&quot;http://mazamascience.com/WorkingWithData/?p=912&quot;&gt;wonderful blog post by Jonathan Callahan on exactly how to use it.&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;But this script runs every hour and it can fail one hour and be successful another. So how do we log those potentially varying status reports? Remember, writing to some command line or console won&amp;rsquo;t work because there is no permanently active session open to write to. Plus even if there was, what if it closes? You&amp;rsquo;d still want to know the status&amp;hellip;&lt;/p&gt;
+
+&lt;p&gt;So, to help with that I personally just updated logs in a text file like with &lt;code&gt;readLines&lt;/code&gt; and &lt;code&gt;writeLines&lt;/code&gt; like so:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-r&quot; data-lang=&quot;r&quot;&gt;timeStamp &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;Sys.time&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    log &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;readLines&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;log.txt&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    log &lt;span class=&quot;o&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;kp&quot;&gt;append&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kp&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;timeStamp&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;new status&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+    &lt;span class=&quot;kp&quot;&gt;writeLines&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kp&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;log.txt&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Great&amp;ndash;the script can now handle errors and record them convieniently in a text file. &lt;/p&gt;
+
+&lt;p&gt;But hey! We can make the script even smarter. Chances are these scheduled scripts run on some server that stays on and you &lt;code&gt;ssh&lt;/code&gt; into them every time you want to do some stuff. How inconvient! How about we set another script to automate sending the log.txt file right to your inbox in the form of an email.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;sendmailR&lt;/code&gt; package can help you do that. It&amp;rsquo;s straightforward so I&amp;rsquo;ll leave you to the &lt;a href=&quot;http://cran.r-project.org/web/packages/sendmailR/sendmailR.pdf&quot;&gt;documentation&lt;/a&gt; and &lt;a href=&quot;http://stackoverflow.com/questions/2885660/how-to-send-email-with-attachment-from-r-in-windows&quot;&gt;this helpful SO answer on attachments.&lt;/a&gt;. Note there&amp;rsquo;s another package in R for sending mail, that is called the &lt;code&gt;mail&lt;/code&gt; package but I &lt;em&gt;think&lt;/em&gt; it sends it some alternate way where it passes through another server. Eh. But don&amp;rsquo;t quote me on that though..&lt;/p&gt;
+
+&lt;p&gt;Okay last but certainly not the hardest is the scheduled task with cron. We&amp;rsquo;ll use Rscript because &lt;a href=&quot;http://stackoverflow.com/questions/10116411/schedule-r-script-using-cron&quot;&gt;this SO answer said so&lt;/a&gt;, but honestly use it because it just works.&lt;/p&gt;
+
+&lt;p&gt;Set up a cron job under a specified user (not root) by doing &lt;code&gt;crontab -u user -e&lt;/code&gt; and a little cron document shows up for you to edit.&lt;/p&gt;
+
+&lt;p&gt;At the end of the file you can enter something like:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;0 * * * * Rscript /some/path/to/yourScript.r
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;to run &lt;code&gt;yourScript.r&lt;/code&gt; at the top of the hour, every day of every week. More options for each asterisk:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;The number of minutes after the hour (0 to 59)&lt;/li&gt;
+&lt;li&gt;The hour in military time (24 hour) format (0 to 23)&lt;/li&gt;
+&lt;li&gt;The day of the month (1 to 31)&lt;/li&gt;
+&lt;li&gt;The month (1 to 12)&lt;/li&gt;
+&lt;li&gt;The day of the week (0 or 7 is Sun, or use name)&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;a href=&quot;http://en.wikipedia.org/wiki/Cron&quot;&gt;wiki on cron&lt;/a&gt;&lt;/p&gt;
+</description>
+        <pubDate>Fri, 10 Jul 2015 04:01:00 -0700</pubDate>
+        <link>http://michaelzg.me/code/r/2015/07/10/sched-r-code/</link>
+        <guid isPermaLink="true">http://michaelzg.me/code/r/2015/07/10/sched-r-code/</guid>
+        
+        
+        <category>code</category>
+        
+        <category>r</category>
+        
+      </item>
+    
+      <item>
+        <title>Hello, 1st Post</title>
+        <description>&lt;p&gt;Wow my first post. Hopefully this blog will grow with time. I&amp;rsquo;ll kick it off with a nice quote: &lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;Sometimes failures and adversity are better preparations for long term success than effortless progress&amp;quot;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;It&amp;rsquo;s from a UC Berkeley professor&amp;rsquo;s &lt;a href=&quot;http://imgur.com/8twecZR&quot;&gt;writeup&lt;/a&gt;.&lt;/p&gt;
 </description>
         <pubDate>Wed, 01 Jul 2015 16:49:00 -0700</pubDate>
         <link>http://michaelzg.me/hello/2015/07/01/first-post/</link>
@@ -24,33 +165,6 @@ hist&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kp&quot;&
         
         
         <category>hello</category>
-        
-      </item>
-    
-      <item>
-        <title>Welcome to Jekyll!</title>
-        <description>&lt;p&gt;You’ll find this post in your &lt;code&gt;_posts&lt;/code&gt; directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run &lt;code&gt;jekyll serve --watch&lt;/code&gt;, which launches a web server and auto-regenerates your site when a file is updated.&lt;/p&gt;
-
-&lt;p&gt;To add new posts, simply add a file in the &lt;code&gt;_posts&lt;/code&gt; directory that follows the convention &lt;code&gt;YYYY-MM-DD-name-of-post.ext&lt;/code&gt; and includes the necessary front matter. Take a look at the source for this post to get an idea about how it works.&lt;/p&gt;
-
-&lt;p&gt;Jekyll also offers powerful support for code snippets:&lt;/p&gt;
-
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;print_hi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;Hi, &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;print_hi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&amp;#39;Tom&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;#=&amp;gt; prints &amp;#39;Hi, Tom&amp;#39; to STDOUT.&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;Check out the &lt;a href=&quot;http://jekyllrb.com&quot;&gt;Jekyll docs&lt;/a&gt; for more info on how to get the most out of Jekyll. File all bugs/feature requests at &lt;a href=&quot;https://github.com/jekyll/jekyll&quot;&gt;Jekyll’s GitHub repo&lt;/a&gt;. If you have questions, you can ask them on &lt;a href=&quot;https://github.com/jekyll/jekyll-help&quot;&gt;Jekyll’s dedicated Help repository&lt;/a&gt;.&lt;/p&gt;
-</description>
-        <pubDate>Wed, 01 Jul 2015 16:07:40 -0700</pubDate>
-        <link>http://michaelzg.me/jekyll/update/2015/07/01/welcome-to-jekyll/</link>
-        <guid isPermaLink="true">http://michaelzg.me/jekyll/update/2015/07/01/welcome-to-jekyll/</guid>
-        
-        
-        <category>jekyll</category>
-        
-        <category>update</category>
         
       </item>
     

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Project Euler &#8211; Hmph</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Hello.">
+    <meta name="author" content="Michael Gao">
+    <meta name="keywords" content="euler">
+    <link rel="canonical" href="http://michaelzg.me/euler/2015/07/10/project-euler/">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/pixyll.css" type="text/css">
+
+    <!-- Fonts -->
+    <link href='//fonts.googleapis.com/css?family=Merriweather:900,900italic,300,300italic' rel='stylesheet' type='text/css'>
+    <link href='//fonts.googleapis.com/css?family=Lato:900,300' rel='stylesheet' type='text/css'>
+    
+
+
+    <!-- Open Graph -->
+    <!-- From: https://github.com/mmistakes/hpstr-jekyll-theme/blob/master/_includes/head.html -->
+    <meta property="og:locale" content="en_US">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Project Euler">
+    <meta property="og:description" content="Hello.">
+    <meta property="og:url" content="http://michaelzg.me/euler/2015/07/10/project-euler/">
+    <meta property="og:site_name" content="Hmph">
+
+    <!-- Icons -->
+  <!--   <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180x180.png">
+    <link rel="icon" type="image/png" href="/favicon-192x192.png" sizes="192x192">
+    <link rel="icon" type="image/png" href="/favicon-160x160.png" sizes="160x160">
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32"> -->
+        
+    
+</head>
+
+<body class="">
+  <div class="site-wrap">
+    <header class="site-header px2 px-responsive">
+  <div class="mt2 wrap">
+    <div class="measure">
+      <a href="http://michaelzg.me" class="site-title">Hmph</a>
+      <nav class="site-nav right">
+        <a href="/about/">About</a>
+<!-- <a href="/contact/">Contact</a> -->
+
+      </nav>
+      <div class="clearfix"></div>
+      
+    </div>
+  </div>
+</header>
+
+
+    <div class="post p2 p-responsive wrap" role="main">
+      <div class="measure">
+        
+
+
+<div class="post-header mb2">
+  <h1>Project Euler</h1>
+  <span class="post-meta">Jul 10, 2015</span><br>
+  
+  <span class="post-meta small">2 minute read</span>
+</div>
+
+<article class="post-content">
+  <p><a href="https://projecteuler.net/">Project Euler</a> is a bunch of fun math problems that you solve through computer. As of March 2nd 2014 there are 461 problems. I&rsquo;m taking a crack at them (with R) for practice so here are the first few.</p>
+
+<hr>
+
+<h3 id="problem-1-multiples-of-3-and-5">Problem #1: Multiples of 3 and 5</h3>
+
+<p><em>Find the sum of all the multiples of 3 or 5 below 1000.</em></p>
+
+<p>Get multiples of 3 and 5, stick em in vector. Then, you don&rsquo;t want duplicates of both, e.g. 30 is both multiple of 3 and 5 and thus listed twice. So sum the unique values.</p>
+
+<div class="highlight"><pre><code class="language-r" data-lang="r">mults <span class="o">&lt;-</span> <span class="kt">c</span><span class="p">(</span><span class="kp">seq</span><span class="p">(</span><span class="m">0</span><span class="p">,</span><span class="m">1000</span><span class="p">,</span><span class="m">3</span><span class="p">),</span> <span class="kp">seq</span><span class="p">(</span><span class="m">0</span><span class="p">,</span><span class="m">999</span><span class="p">,</span><span class="m">5</span><span class="p">))</span>
+<span class="kp">sum</span><span class="p">(</span><span class="kp">unique</span><span class="p">(</span>mults<span class="p">))</span>
+<span class="c1"># 233168</span></code></pre></div>
+    
+
+<h3 id="problem-2-even-fibonacci-numbers">Problem #2: Even Fibonacci Numbers</h3>
+
+<p><em>By considering the terms in the Fibonacci sequence whose values do not exceed four million, find the sum of the even-valued terms.</em></p>
+
+<p>First create a string of Fib numbers up to that 4e6 value. Then grab the evens and add&#39;em up.</p>
+
+<div class="highlight"><pre><code class="language-r" data-lang="r"><span class="bp">F</span> <span class="o">&lt;-</span> <span class="kt">c</span><span class="p">(</span><span class="m">1</span><span class="p">,</span><span class="m">1</span><span class="p">)</span>
+<span class="kr">while</span><span class="p">(</span> <span class="kp">sum</span><span class="p">(</span><span class="kp">tail</span><span class="p">(</span><span class="bp">F</span><span class="p">,</span><span class="m">2</span><span class="p">))</span> <span class="o">&lt;</span> <span class="m">4000000</span> <span class="p">){</span>
+    <span class="bp">F</span> <span class="o">&lt;-</span> <span class="kp">append</span><span class="p">(</span> <span class="bp">F</span><span class="p">,</span> <span class="kp">sum</span><span class="p">(</span><span class="kp">tail</span><span class="p">(</span><span class="bp">F</span><span class="p">,</span> <span class="m">2</span><span class="p">))</span> <span class="p">)</span>
+<span class="p">}</span>
+<span class="c1">#sum evens</span>
+<span class="kp">sum</span><span class="p">(</span><span class="bp">F</span><span class="p">[</span><span class="bp">F</span> <span class="o">%%</span> <span class="m">2</span> <span class="o">==</span> <span class="m">0</span><span class="p">])</span>
+<span class="c1"># 4613732</span></code></pre></div>
+    
+
+<h3 id="problem-3-largest-prime-factor">Problem #3: Largest Prime Factor</h3>
+
+<p><em>What is the largest prime factor of the number 600851475143 ?</em></p>
+
+<p>We first want a way to check if a number is prime. I implemented a <code>isPrime</code> function, below:</p>
+
+<div class="highlight"><pre><code class="language-r" data-lang="r">isPrime <span class="o">&lt;-</span> <span class="kr">function</span><span class="p">(</span>n<span class="p">){</span>
+    rootn  <span class="o">&lt;-</span> <span class="kp">as.integer</span><span class="p">(</span><span class="kp">sqrt</span><span class="p">(</span>n<span class="p">))</span>  
+    <span class="kt">vector</span> <span class="o">&lt;-</span> <span class="kp">seq</span><span class="p">(</span><span class="m">2</span><span class="p">,</span>rootn<span class="p">)</span>
+    
+    set <span class="o">&lt;-</span> n <span class="o">%%</span> <span class="kt">vector</span>
+    
+    <span class="kr">if</span> <span class="p">(</span><span class="kp">length</span><span class="p">(</span><span class="kp">which</span><span class="p">(</span> set <span class="o">==</span> <span class="m">0</span> <span class="p">))</span> <span class="o">&gt;</span> <span class="m">0</span><span class="p">){</span>
+        <span class="kr">return</span><span class="p">(</span><span class="s">&quot;Nope not prime.&quot;</span><span class="p">)</span>
+    <span class="p">}</span> <span class="kr">else</span> <span class="kr">if</span> <span class="p">(</span><span class="kp">length</span><span class="p">(</span><span class="kp">which</span><span class="p">(</span> set <span class="o">!=</span> <span class="m">0</span> <span class="p">)))</span> <span class="o">&gt;</span> <span class="m">0</span><span class="p">{</span>
+        <span class="kr">return</span><span class="p">(</span><span class="s">&quot;Prime!!&quot;</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+
+<p>with that out of the way, we dive in. Set 600851475143 as <code>num</code>. We make a sequence of candidate factors, noting that we only need to test up to the square root of the number as testing one factor rules out 2 numbers. </p>
+
+<div class="highlight"><pre><code class="language-r" data-lang="r">seq_num <span class="o">&lt;-</span> <span class="kp">seq</span><span class="p">(</span><span class="m">2</span><span class="p">,</span> <span class="kp">sqrt</span><span class="p">(</span>num<span class="p">))</span>
+<span class="c1"># Factors are those that divide `num` with a modulus of 0 </span>
+factors <span class="o">&lt;-</span> seq_num<span class="p">[</span>num % seq.num <span class="o">==</span> <span class="m">0</span><span class="p">]</span>
+<span class="c1"># test factors for prime</span>
+<span class="kp">unlist</span><span class="p">(</span><span class="kp">lapply</span><span class="p">(</span>factors<span class="p">,</span> <span class="kr">function</span><span class="p">(</span>x<span class="p">)</span> isPrime<span class="p">(</span>x<span class="p">)))</span></code></pre></div>
+
+<p>And the largest is six thousand eight hundred and fifty seven!</p>
+
+</article>
+
+
+
+
+
+
+
+
+
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+  <div class="p2 wrap">
+    <div class="measure mt1 center">
+      <small>
+      	Hmph blog by Michael G.
+      	<br>
+        <a href="https://github.com/johnotander/pixyll">Pixyll Theme</a>
+      </small>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
