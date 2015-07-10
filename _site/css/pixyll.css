@@ -713,13 +713,11 @@ table {
   margin: 0; }
 
 .posts .post {
-  margin-bottom: 0.75em;
   padding-bottom: .375em;
   border-bottom: thin solid #f3f3f3; }
 
 .posts .post:last-child {
   border-bottom: none;
-  margin-bottom: .375em;
   padding-bottom: 0; }
 
 .post-link .post-title {
@@ -913,13 +911,11 @@ h6,
     margin-top: 0.5em; }
 
   .posts .post {
-    margin-bottom: 1.333em;
     padding-bottom: 0.666em;
     border-bottom: thin solid #f3f3f3; }
 
   .posts .post:last-child {
     border-bottom: none;
-    margin-bottom: .333em;
     padding-bottom: 0; } }
 @media screen and (max-width: 48em) {
   blockquote {
@@ -976,20 +972,15 @@ h6,
   h4 {
     font-size: 1.591rem; }
 
-  .posts .post-meta {
-    padding-bottom: .2em; }
-
   .post-link .post-title {
     margin-top: .125em; }
 
   .posts .post {
-    margin-bottom: 2.666em;
     padding-bottom: 1.333em;
     border-bottom: thin solid #f3f3f3; }
 
   .posts .post:last-child {
     border-bottom: none;
-    margin-bottom: .666em;
     padding-bottom: 0; } }
 .share-page {
   font-size: 0.65em;
