@@ -2,7 +2,7 @@
 layout: post
 title:  "Scheduled R Code"
 date:   2015-07-10 11:01:00
-categories: code r
+categories: R
 ---
 
 Running R scripts as a cron job is useful for executing jobs on a schedule. 
