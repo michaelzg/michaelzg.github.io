@@ -1,3 +1,3 @@
-# Hello
+# Blog by michaezg
 
-My website.
+[michaelzg.com](http://michaelzg.com/)
