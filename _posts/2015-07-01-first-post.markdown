@@ -3,6 +3,7 @@ layout: post
 title:  "Hello, 1st Post"
 date:   2015-07-01 23:49:00
 categories: hello
+published: true
 ---
 Wow my first post. Hopefully this blog will grow with time. I'll kick it off with a nice quote: 
 
