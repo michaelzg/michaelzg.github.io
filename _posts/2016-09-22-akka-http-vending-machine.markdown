@@ -1,11 +1,10 @@
 ---
 layout: post
 title:  "Using Akka HTTP Server Part 1: Soda Vending Machine Demo"
-date:   2016-09-22 00:00:00
+date:   2016-10-30 00:00:00
 categories: akka
 published: false
 ---
-It's been over a year since my last blog post and _a_ _lot_ has happened since then. I'm back! And I'll be writing about the things I've had the pleasure of working with recently: the Scala language and the Akka framework. 
 This blog post will demonstrate a simple HTTP API implementation of a soda vending machine. I'll highlight the handy use of unmarshallers and the use of an actor to encapsulate state.
 
 We'll create a Soda Vending Machine HTTP API with the following functions:
@@ -17,9 +16,15 @@ We'll create a Soda Vending Machine HTTP API with the following functions:
 |POST|`/buy`|buy soda. If there isn't enough money in the first POST, store the state so the user can keep feeding money!|   |
 |DELETE|`/dispense?id=<int>`|Dispense all the change and cancel the transaction|   |
 
-### Project Layout
+### Layout
+
+I could describe how the packages and classes all work together, but let me know _show_ you first.
+
+_diagram_
 
 ### Handling and Parsing Requests
+
+We want our route definitions clean. Let Akka http unmarshallers help you do that.
 
 ### Encapsulating State Through an Actor
 
