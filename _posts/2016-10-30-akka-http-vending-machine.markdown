@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Using Akka HTTP Server Part 1: Soda Vending Machine Demo"
+title:  "Using Akka HTTP Server Part 1: Soda Vending Machine"
 date:   2016-10-30 00:00:00
 categories: akka
 published: false
@@ -8,13 +8,13 @@ published: false
 
 Want to just see all the code? [Here is the respository on my Github](https://github.com/michaelzg/vending-machine-http-api).
 
-This post--the first of two--aims to demonstrate the use of [Akka HTTP](http://doc.akka.io/docs/akka/2.4.11/scala/http/index.html) by implementing an API for a soda vending machine. I'll discuss tests in the second. But in this first one, I highlight:
+This post--the first of two--aims to demonstrate one way of using [Akka HTTP](http://doc.akka.io/docs/akka/2.4.11/scala/http/index.html) by implementing an API for a soda vending machine. I'll discuss tests in the second. But in this first one, I highlight some useful features that Scala and Akka provide: 
 
 * Unmarshallers for cleanly parsing request queries into pre-defined case classes.
 * Routing structures defined as a trait and the benefit of extendability. 
-* Use of an actor to encapsulate state of the soda inventory and payment, analagous to a database.
+* Use of an actor to encapsulate state (e.g. the soda inventory and payments), analagous to a database.
 
-One can interact with the Soda Vending Machine through the following methods:
+One will be able to interact with the Soda Vending Machine through the following methods:
 
 |Method|Route & Query String|Functionality|
 |---|---|---|---|
@@ -23,6 +23,8 @@ One can interact with the Soda Vending Machine through the following methods:
 |GET|`/history?last=<int>`|Return the ledger, can be limited to the last N|
 |POST|`/buy`|Buy soda. If there isn't enough money in the first POST, store the state so the user can keep feeding money!|
 |DELETE|`/dispense?id=<int>`|Dispense all the change and cancel the transaction|
+
+I'll first provide an overview of the application layout. Then, with the implementations of each method I'll showcase the useful tools that Akka and scala provide when building an HTTP server.
 
 ### Layout
 
@@ -37,7 +39,7 @@ scala/
 	VendingMachineHttpApp.scala
 ```
 
-Above is the layout of packages in `/src/main/scala`, following the [Maven standard layout](https://maven.apache.org/guides/introduction/introduction-to-the-standard-directory-layout.html). Here is a bird's-eye-summary-view: 
+Above is the layout of packages in `/src/main/scala`, following the [Maven standard layout](https://maven.apache.org/guides/introduction/introduction-to-the-standard-directory-layout.html). Here is a bird's-eye-summary-view of each package:
 
 * `Domain` defines concepts relevant to a soda vending machine. The data model for what it means to be a "soda" within a vending machine are defined here. Also, the `VendingMachineActor` implementing the management of state (e.g. soda's being bought, inventories changing) lives here as well. 
 * `Requests` is the interface with pre-defined methods of interacting with the API. Requests first get parsed into case classes here, and bad requests are not to get passed this layer! 
@@ -69,10 +71,59 @@ object VendingMachineHttpApp extends App with VendingMachineHttpRouteService {
 }
 ```  
 
+It is short because most of the application logic is hidden away in layers where responsibility of the code gets finer-grained the deeper you go. The layer directly underneath this "main" function is the `routes` that is defined within the `VendingMachineHttpRouteService`:
+
+```
+val routes =
+    handleExceptions(exceptionHandler) {
+      handleRejections(rejectionHandler) {
+        get {
+          rootRoute ~
+            shopRoute
+        }
+      }
+    }
+```
+
+Note that in an effort to make the routes defined in `VendingMachineHttpRouteService` _clean_, without cluttering it with too much route handling logic, every route gets handled by a route handler within `Routes.Handlers`. We'll take a tour of each route handler in the following sections, starting with the root route.
+
+### Root route: The Simple Response 
+
+The `rootRoute` leads to it's handler:
+
+```
+val rootRoute = pathSingleSlash {
+	Handlers.VendingMachineApi.handleRootRoute
+}
+```
+
+and the handler is simple, using Akka's `complete` directive to return a string (or a more customized `HttpResponse` that you can see in the Exception/Rejection handling section).
+
+```
+def handleRootRoute: Route = complete("Welcome to the Vending Machine HTTP API demo!")
+```
 
 ### Shop Route: Encapsulating State Through an Actor
 
-We come up to the vending machine and would like to know "What can I buy?" Upon hitting the `/shop` endpoint, 
+We come up to the vending machine and would like to know "What can I buy?" Upon hitting the `/shop` endpoint, the route handlers guide the request down to the `handleShopRoute` method:
+
+```
+def handleShopRoute(vendingMachine: ActorRef): Route = {
+    implicit val timeout = Timeout(5 seconds)
+    //note performance overhead for asks
+    val inventory = vendingMachine ? CheckInventory
+
+    onComplete(inventory) {
+      case Success(result) =>
+        val sodasInStock = result.asInstanceOf[Map[Soda, Int]]
+        val response = Formatter.formatShopResponse(sodasInStock)
+        complete(response)
+      case Failure(ex) =>
+        throw ex //caught in Exception Handler
+    }
+```
+
+
 
 
 ### Buy and History Route: Parsing Fields in the Query String
@@ -88,6 +139,8 @@ The dispense route shows the parsing of the request and the change of state in t
 ### Keep response formatting until the very end
 
 These are done through the `Formatter` class with the `Response` package. 
+
+### Handling Exceptions and Rejections
 
 
 
