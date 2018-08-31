@@ -1,20 +1,20 @@
 ---
 layout: post
-title:  "Builing an Akka HTTP Server Part 1: Soda Vending Machine"
-date:   2016-10-30 00:00:00
+title:  "Akka HTTP Server Part 1: Soda Vending Machine"
+date:   2017-05-30 00:00:00
 categories: akka
 published: false
 ---
 
-This post--Part 1 of 2--aims to demonstrate one way of using [Akka HTTP 10.0.1](http://doc.akka.io/docs/akka-http/10.0.1/scala.html) by implementing an API for a soda vending machine. Want to just see all the code? [Here is the respository on my Github](https://github.com/michaelzg/vending-machine-http-api).
+This post--Part 1 of 2--aims to demonstrate one way of using [Akka-HTTP](http://doc.akka.io/docs/akka-http/current/scala.html) by implementing an API for a soda vending machine. All the code, including instructions for building, is [in a sub-module of my akka-playground project.](https://github.com/michaelzg/vending-machine-http-api).
 
-I'll discuss tests in the second. But in this first one, I highlight some useful features that Scala and Akka provide:
+Walking through this little program, I'll highlight:
 
 * Unmarshallers for cleanly parsing request queries into pre-defined case classes.
 * Routing structures defined as a trait and the benefit of extendability. 
 * Use of an actor to encapsulate state (e.g. the soda inventory and payments), analagous to a database.
 
-One will be able to interact with the Soda Vending Machine through the following methods:
+The API has the following routes:
 
 |Method|Route & Query String|Functionality|
 |---|---|---|---|
