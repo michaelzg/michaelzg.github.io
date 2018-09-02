@@ -1,3 +1,3 @@
 # Blog by michaelzg
 
-[michaelzg.com](http://michaelzg.com/)
+[michaelzg.com](https://michaelzg.com/)

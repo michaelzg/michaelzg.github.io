@@ -4,7 +4,7 @@ email:       your_email@example.com
 author:      Michael Gao
 description: "Michael G."
 baseurl:     ""
-url:         "http://michaelzg.com"
+url:         "https://michaelzg.com"
 
 # Google analytics
 google_analytics:

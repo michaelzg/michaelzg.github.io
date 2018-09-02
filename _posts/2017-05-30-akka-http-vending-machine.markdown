@@ -6,7 +6,7 @@ categories: akka
 published: false
 ---
 
-This post--Part 1 of 2--aims to demonstrate one way of using [Akka-HTTP](http://doc.akka.io/docs/akka-http/current/scala.html) by implementing an API for a soda vending machine. All the code, including instructions for building, is [in a sub-module of my akka-playground project.](https://github.com/michaelzg/vending-machine-http-api).
+This post--Part 1 of 2--aims to demonstrate one way of using [Akka-HTTP](https://doc.akka.io/docs/akka-http/current/scala.html) by implementing an API for a soda vending machine. All the code, including instructions for building, is [in a sub-module of my akka-playground project.](https://github.com/michaelzg/vending-machine-http-api).
 
 Walking through this little program, I'll highlight:
 
@@ -113,7 +113,7 @@ def handleRootRoute: Route =
 
 ### GET: `/buy` | Encapsulating State Through an Actor
 
-We come up to the vending machine and would like to know "What can I buy?" Upon hitting the `/shop` endpoint, the route handlers guide the request down to the `handleShopRoute` method where the `vendingMachine` actor is queried for its state using an [Ask](http://doc.akka.io/docs/akka/2.4.16/scala/actors.html#Ask__Send-And-Receive-Future) (note that a separate Actor gets spun up for Asks!).
+We come up to the vending machine and would like to know "What can I buy?" Upon hitting the `/shop` endpoint, the route handlers guide the request down to the `handleShopRoute` method where the `vendingMachine` actor is queried for its state using an [Ask](https://doc.akka.io/docs/akka/2.4.16/scala/actors.html#Ask__Send-And-Receive-Future) (note that a separate Actor gets spun up for Asks!).
 
 ```scala
 def handleShopRoute(vendingMachine: ActorRef): Route = {
