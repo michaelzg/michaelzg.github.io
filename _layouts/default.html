@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.1.1/anchor.min.js"></script>
+
 {% include head.html %}
 <body class="{% if site.animated %}animated fade-in-down{% endif %}">
   <div class="site-wrap">
@@ -13,5 +15,13 @@
   </div>
 
   {% include footer.html %}
+
+<script>
+  document.addEventListener("DOMContentLoaded", function(event) {
+  anchors.options.placement = 'left';
+  anchors.add();
+});
+</script>
+
 </body>
 </html>
