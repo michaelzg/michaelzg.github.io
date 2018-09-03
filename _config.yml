@@ -1,6 +1,6 @@
 # Site settings
 title:       Blog | michaelzg
-email:       your_email@example.com
+email:       ""
 author:      Michael Gao
 description: "Michael G."
 baseurl:     ""
@@ -10,7 +10,7 @@ url:         "https://michaelzg.com"
 google_analytics:
 
 # Optional features
-animated:           false
+animated:           true
 show_related_posts: false
 show_post_footers:  false
 
@@ -18,13 +18,8 @@ show_post_footers:  false
 show_social_icons: false
 github_username:
 stackoverflow_id:
-twitter_username:
-google_plus_id:
+twitter_username: 
 linkedin_username:
-angellist_username:
-bitcoin_url:
-paypal_url:
-flattr_button:
 
 # Build settings
 markdown:     kramdown
@@ -34,5 +29,6 @@ permalink:    pretty
 paginate:     6
 sass:
   compressed: true
+highlighter: rouge
 
 gems: [jekyll-paginate]
