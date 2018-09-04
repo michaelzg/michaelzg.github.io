@@ -10,7 +10,7 @@ Using [Akka actors](https://doc.akka.io/docs/akka/current/general/actors.html) i
 
 I'll be using Akka version `2.5.16`. Please note that as of this writing, the Akka Typed module [may change](https://doc.akka.io/docs/akka/current/common/may-change.html) so if they do I'll update accordingly.
 
-Let's dive in. The following a diagram represents a simple but demonstrative example: a chef cooking ingredients for customers.
+Let's dive in. The following diagram represents a simple but demonstrative example: a chef cooking ingredients for customers.
 
 ![akka-actor-chef-fsm](/assets/img/akka-actor-chef-fsm.png)
 
