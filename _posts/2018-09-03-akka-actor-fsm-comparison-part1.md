@@ -251,7 +251,7 @@ Without this, one would need to log both upon handling `BurntFood` and `CookedFo
 
 #### Untyped FSM: `whenUnhandled`
 
-The `skill.cook()` returns a `Future[Food]` with the `Food` result piped to itself. To handle a potential failed future–messaged in a `akka.actor.Status.Failure`–one can conviently leverage [whenUnhandled](https://doc.akka.io/docs/akka/current/fsm.html#unhandled-events) to capture, generically, not only the error but also the state of the actor when received:
+The `skill.cook()` returns a `Future[Food]` with the `Food` result piped to itself. To handle a potential failed future–messaged in a `akka.actor.Status.Failure`–one can conveniently leverage [whenUnhandled](https://doc.akka.io/docs/akka/current/fsm.html#unhandled-events) to capture, generically, not only the error but also the state of the actor when received:
 
 ```scala
 whenUnhandled {
