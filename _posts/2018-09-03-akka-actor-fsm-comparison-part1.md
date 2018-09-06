@@ -38,7 +38,7 @@ sealed trait ManagerMsg
 
 final case class Introduce(chef: ActorRef) extends ManagerMsg
 
-final case object Poll extends ManagerMsg
+case object Poll extends ManagerMsg
 final case class Reply(served: Int, isDone: Boolean) extends ManagerMsg
 ```
 
@@ -174,9 +174,9 @@ This `ChefSM` (pun intended) leverages the [FSM mixin](https://doc.akka.io/docs/
 ```scala
 object ChefSM {
   sealed trait State
-  final case object Cooking extends State
-  final case object Plating extends State
-  final case object Done extends State
+  case object Cooking extends State
+  case object Plating extends State
+  case object Done extends State
 }
 
 class ChefSM(customers: Int, skill: CookingSkill)
@@ -414,7 +414,7 @@ val future = skill.cook(ingredients)
 pipe(future) to self // or future pipeTo self
 ```
 
-In typed, there is no need for piping of futures. For example, we can accomplish the [previous scenario of handling a failed future](#untyped-fsm-whenunhandled) like any other future outside of an actor by using `onComplete`. Notice that closing over the context's `self` reference is [now also safe](https://github.com/akka/akka/blob/2b6997b7a04d1c085b0c6d0741e555c6fb28df04/akka-actor-typed/src/main/scala/akka/actor/typed/scaladsl/ActorContext.scala#L54-L55), unlike [the untyped context](https://github.com/akka/akka/blob/2b6997b7a04d1c085b0c6d0741e555c6fb28df04/akka-actor/src/main/scala/akka/actor/Actor.scala#L460-L461).
+In typed, there is no need for piping of futures. For example, we can accomplish the [previous scenario of handling a failed future](#untyped-fsm-whenunhandled) like any other future outside of an actor by using `onComplete`. Notice that closing over the context's `self` reference is [also safe](https://github.com/akka/akka/blob/2b6997b7a04d1c085b0c6d0741e555c6fb28df04/akka-actor-typed/src/main/scala/akka/actor/typed/scaladsl/ActorContext.scala#L54-L55) similar to that of the [untyped](https://doc.akka.io/docs/akka/2.2.3/general/jmm.html#Actors_and_shared_mutable_state) `self` reference.
 
 ```scala
 def cooking(data: Data): Behavior[ChefMsg] =
@@ -430,7 +430,7 @@ def cooking(data: Data): Behavior[ChefMsg] =
 // ...
 ```
 
-This also means upon error handling we can work with `scala.util.{Success, Failure}` and we don't have to remember that the error result in `akka.actor.Status.Failure`.
+This also means upon error handling we can work with `scala.util.{Success, Failure}` and we don't have to remember that the error results in `akka.actor.Status.Failure`.
 
 
 #### Typed Actor: Interacting with Another Actor via `asks` and Timers
