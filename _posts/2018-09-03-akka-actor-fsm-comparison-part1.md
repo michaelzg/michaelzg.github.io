@@ -14,7 +14,7 @@ Let's dive in. The following diagram represents a simple but demonstrative examp
 
 ![akka-actor-chef-fsm](/assets/img/akka-actor-chef-fsm.png)
 
-A chef is given `Ingredients` to cook. Cooking can yield `CookedFood` which will then be plated and served to a limited amount of customers. However, cooking can also result in `BurntFood`, which means back to more cooking when more ingredients are received. When all customers are served, the chef is done.
+A chef is given `Ingredients` to cook. Cooking can yield `CookedFood` which will then be plated and served to a limited amount of customers. However, cooking can also result in `BurntFood`, which means back to more cooking when more `Ingredients` are received. When all customers are served, the chef is done.
 
 There will be a manager actor interacting with the chef actor, periodically querying `AreYouDone` in which the chef will respond with its state in a `Reply`. 
 
