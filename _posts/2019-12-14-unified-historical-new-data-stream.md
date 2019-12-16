@@ -11,10 +11,9 @@ It can be thought of as two data streams:
 a finite stream populating historical data and an infinite stream providing the new data.
 Traditionally, API clients (e.g. a UI) may be pulling this off by
 continually polling the backend API endpoint at some interval or
-juggling two separate endpoints for historical and new data streams.
+juggling two separate endpoints for both streams. This post showcases moving that client logic into the backend API and
+exposing a single **unified** interface for handling both types of data streams.
 
-This post showcases moving that polling logic into the backend API and 
-exposing a **unified** interface for both historical and new data.
 Benefits include:
 
 * A simpler query pattern for clients.
