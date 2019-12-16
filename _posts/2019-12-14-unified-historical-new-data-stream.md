@@ -213,7 +213,9 @@ server interface types with [Akka gRPC](https://doc.akka.io/docs/akka-grpc/curre
 Streamed responses are `Source[T, NotUsed]`.
 One can get up and running and implement simple and powerful streaming API this way.
 
-With plain HTTP APIs, one can hook up a `Source` using [Akka HTTP Source Streaming](https://doc.akka.io/docs/akka-http/current/routing-dsl/source-streaming-support.html).
+With HTTP APIs, one can integrate `Source`s using Akka HTTP 
+[Source Streaming](https://doc.akka.io/docs/akka-http/current/routing-dsl/source-streaming-support.html) and
+[Server-sent Events](https://doc.akka.io/docs/akka-http/current/common/sse-support.html).
 
 Note that I took care of not abusing the word "real-time" due to the polling nature.
 While it can come close, the responsiveness for delivering new data is limited by the polling interval.
