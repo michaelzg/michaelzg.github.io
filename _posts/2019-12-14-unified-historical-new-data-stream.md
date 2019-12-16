@@ -26,7 +26,7 @@ I assume the reader has background knowledge about
 [Akka Streams](https://doc.akka.io/docs/akka/current/stream/index.html).
 
 If you just want to see the code and run it, here is the repository on my Github:
-https://github.com/michaelzg/unified-historical-new-datastream
+[michaelzg/unified-historical-new-datastream](https://github.com/michaelzg/unified-historical-new-datastream).
 It's using Scala `2.12.x` and Akka `2.6.x`, I'll try to keep it up-to-date and relevant through time.
 I also link to the specific sections of source code as I walk through it.
 
