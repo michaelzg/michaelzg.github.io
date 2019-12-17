@@ -115,11 +115,12 @@ class StubAutoRefreshingTweetStore(users: List[String], referenceTime: DateTime,
     implicit ec: ExecutionContext)
     extends TweetStore {
 
-  private var data: Map[String, List[Tweet]] = users.map(user => user -> initializeTweets(user)).toMap
+  private val oneSecond = Duration(1, TimeUnit.SECONDS)
+  
+  private var data: Map[String, List[Tweet]] =
+    users.map(user => user -> initializeTweets(user)).toMap
 
-  scheduler.scheduleAtFixedRate(
-    initialDelay = Duration(1, TimeUnit.SECONDS),
-    interval = Duration(1, TimeUnit.SECONDS))(new Runnable() {
+  scheduler.scheduleAtFixedRate(initialDelay = oneSecond, interval = oneSecond)(new Runnable() {
     override def run(): Unit = users.foreach(newTweet)
   })
 
