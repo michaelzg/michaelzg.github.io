@@ -5,6 +5,8 @@ author:      Michael Gao
 description: "Michael G."
 baseurl:     ""
 url:         "https://michaelzg.com"
+github:      "https://github.com/michaelzg"
+twitter:     "https://twitter.com/mchlgao"
 
 # Google analytics
 google_analytics:
