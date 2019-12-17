@@ -12,7 +12,7 @@ a finite stream populating historical data and an infinite stream providing the 
 Traditionally, API clients (e.g. a UI) may be pulling this off by
 continually polling the backend API endpoint at some interval or
 juggling two separate endpoints for both streams. This post showcases moving that client logic into the backend API and
-exposing a single **unified** interface for handling both types of data streams.
+exposing a unified interface for handling both types of data streams.
 
 Benefits include:
 
@@ -21,13 +21,13 @@ Benefits include:
 * Flexibility in iterating the implementation. A client does not need to change the way it queries if the backend integrated with single database or a database and an event log.
 
 I'll first go over implementation and tests–using Scala & Akka Streams–and conclude
-with implications for gRPC and next steps to enable more real-time streaming.
+with implications for gRPC and considerations for real-time streaming.
 I assume the reader has background knowledge about
 [Akka Streams](https://doc.akka.io/docs/akka/current/stream/index.html).
 
-If you just want to see the code and run it, here is the repository on my Github:
+To just see working code, here is the repository on my Github:
 [michaelzg/unified-historical-new-datastream](https://github.com/michaelzg/unified-historical-new-datastream).
-It's using Scala `2.12.x` and Akka `2.6.x`, I'll try to keep it up-to-date and relevant through time.
+It's using Scala `2.12.x` and Akka `2.6.x`. I'll try to keep it up-to-date and relevant through time.
 I also link to the specific sections of source code as I walk through it.
 
 ## Interface & Implementation
@@ -41,9 +41,9 @@ trait TweetStream {
 ```
 [GitHub Source](https://github.com/michaelzg/unified-historical-new-datastream/blob/master/src/main/scala/TweetStream.scala)
 
-One can query historical-only data (finite stream) or a
-combined historical and new data stream (infinite stream) depending on
-if `end` timestamp is supplied.
+One can query historical-only data (finite) or a
+combined historical and new data stream (infinite) depending on
+whether the `end` timestamp is supplied.
 Here is the first layer of implementation handling this logic.
 
 ```scala
@@ -63,15 +63,14 @@ def stream(user: String, start: DateTime, end: Option[DateTime]): Source[Tweet, 
 ```
 [GitHub Source](https://github.com/michaelzg/unified-historical-new-datastream/blob/master/src/main/scala/TweetStreamImpl.scala)
 
-As you may expect, both `historical` and `periodicPoll` are functions returning `Source[Tweet, NotUsed]`.
-The key thing here is the intelligent combination the two data streams with
-Akka's [Source.combine](https://doc.akka.io/docs/akka/current/stream/operators/Source/combine.html) with `Concat` strategy
-which first emits all `Tweets` from the historical data source and then
+Both `historical` and `periodicPoll` are functions returning `Source[Tweet, NotUsed]`.
+The key here is the concatentation of two data streams using
+Akka's [Source.combine](https://doc.akka.io/docs/akka/current/stream/operators/Source/combine.html) with `Concat` strategy.
+The strategy first emits all `Tweets` from the historical data source and then
 emits the new `Tweets` through a periodic polling source.
 
-The historical implementation is straight forward, what is more interesting
-is that of the periodic polling done on the backend,
-also implemented with a stream:
+The `historical` function is straight forward. What is more interesting
+is the periodic polling implemented as a stream:
 
 ```scala
 def periodicPoll(user: String): Source[Tweet, NotUsed] = {
@@ -88,7 +87,7 @@ def periodicPoll(user: String): Source[Tweet, NotUsed] = {
         }
     }
     .mapAsync(parallelism = 1) {
-      case (start, end) => queryStore(user, start, end)
+      case (start, end) => query(user, start, end)
     }
     .mapConcat(identity)
     .mapMaterializedValue(_ => NotUsed)
@@ -99,18 +98,17 @@ def periodicPoll(user: String): Source[Tweet, NotUsed] = {
 
 Let's break it down:
 
-* [Source.tick](https://doc.akka.io/docs/akka/current/stream/operators/Source/tick.html#source-tick) provides the periodic "trigger" for the downstream operations, at an interval defined on the backend (picked carefully, too short and you can overload the backend store with many clients. Too long, and you sacrifice latency of getting new data to the client).
+* [Source.tick](https://doc.akka.io/docs/akka/current/stream/operators/Source/tick.html#source-tick) provides the periodic trigger for the downstream operations. This is done at a defined interval. Picked carefully. One too short can overload the backend store. One too long increases latency of new data reaching the client.
 * [statefulMapConcat](https://doc.akka.io/docs/akka/current/stream/operators/Source-or-Flow/statefulMapConcat.html) allows us to maintain the `bookmark` state which represents the ending timestamp of the last query. We update this bookmark with every new poll to avoid returning duplicate elements and keeping the queried time windows short and sequentially accurate.
 * The rest is textbook: the `mapAsync` executes the `Future` query to return `List[Tweets]` downstream. `mapConcat` unwraps the list into individual `Tweet`s. `mapMaterializedValue` maintains the interface and has some implications if one were using this Source to implement a gRPC interface (more later).
 
-Combining historical and polling, one achieves the unified
-API and provide similar query patterns for clients querying historical-only
-data or historical _and_ new data as it comes in.
+This, combined with `historical`, results a unified
+interface allowing for flexible query patterns. 
 
 ## Unit Testing and See it in Action
 
 Unit tests can be done with a mocked storage layer.
-The `StubAutoRefreshingTweetStore` below initializes some users and will run a schedule to append 1 new Tweet every second. Think of this as emulating a database.
+The `StubAutoRefreshingTweetStore` below first initializes some `users` with backfilled data and appends one new `Tweet` every second. Think of this as emulating a database.
 
 ```scala
 class StubAutoRefreshingTweetStore(users: List[String], referenceTime: DateTime, scheduler: Scheduler)(
@@ -126,27 +124,23 @@ class StubAutoRefreshingTweetStore(users: List[String], referenceTime: DateTime,
   })
 
   def query(user: String, start: DateTime, end: DateTime): Future[List[Tweet]] = {
+    val interval = new Interval(start, end)
     val result = data
       .get(user)
       .map { tweets =>
-        tweets.filter { tweet =>
-          new Interval(start, end).contains(tweet.timestamp)
-        }
+        tweets.filter(t => interval.contains(t.timestamp))
       }
       .getOrElse(List.empty)
     Future.successful(result)
   }
 
-  // Details & obvious helper functions snipped
+  // Details & helper functions snipped
 }
 ```
 [GitHub Source](https://github.com/michaelzg/unified-historical-new-datastream/blob/master/src/test/scala/StubAutoRefreshingTweetStore.scala)
 
-We can then write a unit test ([Scalatest `FreeSpec`](http://www.scalatest.org/at_a_glance/FreeSpec))
-injecting this store into the API
-and calling the historical + new data stream method to show
-historical tweets streamed to the client, and after every 1 second the
-implementation discussed previously will provide new Tweets from the queried user.
+This stub allows us to write a unit test ([Scalatest `FreeSpec`](http://www.scalatest.org/at_a_glance/FreeSpec))
+showcasing a combined historical and new data stream.
 
 ```scala
 "Infinite stream with new tweets" - {
@@ -169,9 +163,8 @@ implementation discussed previously will provide new Tweets from the queried use
 ```
 [GitHub Source](https://github.com/michaelzg/unified-historical-new-datastream/blob/master/src/test/scala/TweetStreamExample.scala)
 
-See both historical and real-time streams run in the console below.
-Wayne's frantic "live tweets" print to the console every second as they get "inserted", up to `maxTweets = 10` while
-the Bruce's historical query print the historical tweets and complete immediately.
+See both historical and new data emitted in the same stream print out to the console.
+Wayne's day-old tweets print out immediately, and his new "live tweets" print out every second as they get "inserted", up to `maxTweets = 10`, before completing. The stream would keep printing if one removed the `take` stage. Contrast this with Bruce's historical-only stream completing immediately.
 
 ```
 Historical
@@ -220,6 +213,5 @@ With HTTP APIs, one can integrate `Source`s using Akka HTTP
 Note that I took care of not abusing the word "real-time" due to the polling nature.
 While it can come close, the responsiveness for delivering new data is limited by the polling interval.
 If one were to instead integrate with a Kafka consumer or some other push-model interface,
-new data can be ingested and delivered to the client faster. The tradeoff here is the complexity in
-the merge between two data sources to ensure data integrity
-(deduplication, sanitization, potentially parsing different a serialization format).
+new data can be ingested and delivered to the client faster. The tradeoff here is the complexity in 
+merging two data sources to ensure data integrity: deduplication, sanitization, and potentially parsing different serialization formats.
