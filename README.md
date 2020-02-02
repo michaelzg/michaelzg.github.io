@@ -2,25 +2,12 @@
 
 [michaelzg.com](https://michaelzg.com/). Uses [Jekyll](https://jekyllrb.com/).
 
-#### Develop locally
+#### Build & Run
 
-First setup a [Vagrant](https://www.vagrantup.com/) box:
-
-```
-vagrant up
-vagrant ssh
-```
-
-and once in, install dependencies:
+Ensure you have [Docker](https://www.docker.com/) installed. Then,
 
 ```
-cd /vagrant && ./setup.sh
+make build-run
 ```
 
-Afterwards, one can build and serve the blog with:
-
-```
-bundle exec jekyll serve --host 0.0.0.0 -P 8081
-```
-
-and see it at `localhost:8081`.
+And then navigate to http://localhost:4000/.
