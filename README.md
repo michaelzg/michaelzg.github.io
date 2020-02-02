@@ -11,3 +11,4 @@ make build-run
 ```
 
 And then navigate to http://localhost:4000/.
+Local changes to the post content will be automatically updated.

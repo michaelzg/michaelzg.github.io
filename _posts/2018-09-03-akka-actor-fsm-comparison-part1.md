@@ -6,9 +6,12 @@ categories: akka
 published: true
 ---
 
-Using [Akka actors](https://doc.akka.io/docs/akka/current/general/actors.html) in Scala, I'll be discussing three approaches to implement a finite state machine: [Untyped](#untyped-actor), [Untyped FSM](#untyped-fsm-actor), and [Typed](#typed-actor). I will provide code to portray their nuances and highlight some interesting aspects of each. Testing is another important consideration that I've saved for Part 2 (*coming soon!*). If one would rather run the full code and test suite, I've put [this project on my GitHub](https://github.com/michaelzg/cooking-fsm-demo).
+Using [Akka actors](https://doc.akka.io/docs/akka/current/general/actors.html) in Scala, I'll be discussing three approaches to implement a finite state machine: [Untyped](#untyped-actor), [Untyped FSM](#untyped-fsm-actor), and [Typed](#typed-actor). I will provide code to portray their nuances and highlight some interesting aspects of each. Testing is another important consideration that I've saved for Part 2. If one would rather run the full code and test suite, I've put [this project on my GitHub](https://github.com/michaelzg/cooking-fsm-demo).
 
-I'll be using Akka version `2.5.16`. Please note that as of this writing, the Akka Typed module [may change](https://doc.akka.io/docs/akka/current/common/may-change.html) so if they do I'll update accordingly.
+I'll be using Akka version `2.6.3` (last updated Feb 2020).
+Please note that as of this writing, the Akka Typed module 
+[may change](https://doc.akka.io/docs/akka/current/common/may-change.html)
+so if they do I'll update accordingly.
 
 Let's dive in. The following diagram represents a simple but demonstrative example: a chef cooking ingredients for customers.
 
@@ -321,15 +324,21 @@ final case class Introduce(chef: ActorRef[ChefMsg]) extends ManagerMsg
 States can be represented as `Behaviors`. State data can be passed as parameters similar to untyped `context.become` pattern shown above.
 
 ```scala
-class ChefTyped(customers: Int, skill: CookingSkill) {
+class ChefTyped(customers: Int, skill: CookingSkill) extends StrictLogging {
   val behavior: Behavior[ChefMsg] = cooking(Data(served = 0))
 
   def cooking(data: Data): Behavior[ChefMsg] =
     Behaviors.receivePartial[ChefMsg] {
-      case (ctx, ing: Ingredients) =>
-        skill.cook(ing).map { food =>
-          ctx.self ! food // safe with typed
-        }(ctx.executionContext)
+      case (ctx, ing @ Ingredients(servings)) =>
+        logger.info(s"Cooking $servings servings.")
+        skill
+          .cook(ing)
+          .onComplete {
+            case Success(food) =>
+              ctx.self ! food // safe with typed
+            case Failure(ex) =>
+              logger.warn(s"error while cooking with ${data.served} customers served: ${ex.getMessage}")
+          }(ctx.executionContext)
         Behaviors.same
 
       case (ctx, cooked: CookedFood) =>
@@ -337,36 +346,41 @@ class ChefTyped(customers: Int, skill: CookingSkill) {
         plating(data)
 
       case (_, BurntFood(servings)) =>
+        logger.warn(s"Burnt $servings servings.")
         cooking(data)
-    }.orElse(notDone(data))
+
+      case (_, AreYouDone(replyTo)) =>
+        replyTo ! Reply(data.served, isDone = false)
+        Behaviors.same
+    }
 
   def plating(data: Data): Behavior[ChefMsg] =
-    // no context needed for handling these messages
     Behaviors.receiveMessagePartial[ChefMsg] {
       case CookedFood(servings) =>
+        logger.info(s"Plating $servings servings.")
         val newData = Data(data.served + servings)
         if (newData.served >= customers) {
+          logger.info("All fed.")
           done(newData)
         } else {
+          val remaining = customers - newData.served
+          logger.info(s"$remaining customers still hungry.")
           cooking(newData)
         }
 
       case _: BurntFood =>
+        logger.warn("I will not plate this food!")
         cooking(data)
 
-    }.orElse(notDone(data))
+      case AreYouDone(replyTo) =>
+        replyTo ! Reply(data.served, isDone = false)
+        Behaviors.same
+    }
 
   def done(data: Data): Behavior[ChefMsg] =
     Behaviors.receiveMessagePartial[ChefMsg] {
       case AreYouDone(replyTo) =>
         replyTo ! Reply(data.served, isDone = true)
-        Behaviors.same
-    }
-
-  private def notDone(data: Data): Behavior[ChefMsg] =
-    Behaviors.receiveMessagePartial[ChefMsg] {
-      case AreYouDone(replyTo) =>
-        replyTo ! Reply(data.served, isDone = false)
         Behaviors.same
     }
 }
@@ -395,13 +409,22 @@ This is the commonly cited benefit. For example, sending a chef a `Reply` (not i
 
 #### Typed Actor: Compose Behaviors with `orElse`
 
-Behaviors can be composed with `orElse`. This means the chef's handling of `AreYouDone` messages can be shared via a common function:
+Update: **`orElse` is no longer supported as of 2.6.3.**
+Refer to [this and associated GitHub issues](https://github.com/akka/akka/issues/27629)
+for details.
+Note one can still use `PartialFunctions` to layer common cases, but
+the types may differ if one is using both `Behaviors.receive` and `Behaviors.receiveMessage`.
+
+The below quoted sections below only applies for Akka Typed 2.5.x.
+
+> Behaviors can be composed with `orElse`.
+This means the chef's handling of `AreYouDone` messages can be shared via a common function:
 
 ```scala
 private def notDone(data: Data): Behavior[ChefMsg]
 ```
 
-and appended to the relevant states as seen above. If no case match is found for the message, it falls back to `Behaviors.unhandled` with similar behaviors of the untyped actors. 
+> and appended to the relevant states as seen above. If no case match is found for the message, it falls back to `Behaviors.unhandled` with similar behaviors of the untyped actors. 
 
 Note that if all messages need to be handled explicitly, one has the option to use `Behaviors.receive` or `Behaviors.receiveMessage` and provide a total function for handling your message protocol instead.
 
@@ -420,12 +443,15 @@ In typed, there is no need for piping of futures. For example, we can accomplish
 def cooking(data: Data): Behavior[ChefMsg] =
   Behaviors.receivePartial[ChefMsg] {
     case (ctx, ing @ Ingredients(servings)) =>
-      skill.cook(ing).onComplete {
-        case Success(food) =>
-          ctx.self ! food // safe with typed
-        case Failure(ex) =>
-          logger.warn(s"error while cooking with ${data.served} customers served: ${ex.getMessage}")
-      }(ctx.executionContext)
+      logger.info(s"Cooking $servings servings.")
+      skill
+        .cook(ing)
+        .onComplete {
+          case Success(food) =>
+            ctx.self ! food // safe with typed
+          case Failure(ex) =>
+            logger.warn(s"error while cooking with ${data.served} customers served: ${ex.getMessage}")
+        }(ctx.executionContext)
       Behaviors.same
 // ...
 ```
@@ -449,37 +475,35 @@ object ManagerTyped extends StrictLogging {
     Behaviors.withTimers[ManagerMsg] { timers =>
       Behaviors.receiveMessagePartial {
         case IntroduceTyped(chef) =>
-          timers.startPeriodicTimer("pollTimer", Poll, 500 millis)
+          timers.startTimerWithFixedDelay("pollTimer", Poll, 500 millis)
           managing(timers, chef)
       }
     }
 
-  private def managing(
-    timers: TimerScheduler[ManagerMsg],
-    chef: ActorRef[ChefMsg]): Behavior[ManagerMsg] =
-      Behaviors.receivePartial {
-        case (ctx, Poll) =>
-          implicit val timeout = Timeout(2 seconds)
-          ctx.ask[ChefMsg, ManagerMsg](chef)(self => AreYouDone(self)) {
+  private def managing(timers: TimerScheduler[ManagerMsg], chef: ActorRef[ChefMsg]): Behavior[ManagerMsg] =
+    Behaviors.receivePartial {
+      case (ctx, Poll) =>
+        implicit val timeout = Timeout(2 seconds)
+        ctx.ask[ChefMsg, ManagerMsg](chef, self => AreYouDone(self)) {
           // These messages will in turn be received by self.
-            case Success(reply) =>
-              reply
-            case Failure(ex) =>
-              logger.warn(s"Future failed: $ex")
-              UnsuccessfulReply(ex)
-          }
-          Behaviors.same
+          case Success(reply) =>
+            reply
+          case Failure(ex) =>
+            logger.warn(s"Future failed: $ex")
+            UnsuccessfulReply(ex)
+        }
+        Behaviors.same
 
-        case (_, Reply(served, isDone)) =>
-          if (isDone) {
-            logger.info(s"The chef is done for the day, all $served customers served!")
-            timers.cancel("pollTimer")
-            emptyKitchen
-          } else {
-            logger.info("The chef is not done yet.")
-            Behaviors.same
-          }
-      }
+      case (_, Reply(served, isDone)) =>
+        if (isDone) {
+          logger.info(s"The chef is done for the day, all $served customers served!")
+          timers.cancel("pollTimer")
+          emptyKitchen
+        } else {
+          logger.info("The chef is not done yet.")
+          Behaviors.same
+        }
+    }
 }
 ```
 
@@ -498,13 +522,15 @@ object CookingAppTyped extends App {
       val chefTemplate = new ChefTyped(5, cookingSkill)
       val chef = ctx.spawn(chefTemplate.behavior, "chef")
 
-      manager ! Introduce(chef)
+      manager ! IntroduceTyped(chef)
 
       chef ! Ingredients(9) // burnt
-      ctx.system.scheduler.scheduleOnce(1 second) {
-        chef ! Ingredients(3)
-        chef ! Ingredients(2)
-      }(ctx.system.executionContext)
+      ctx.system.scheduler.scheduleOnce(delay = 1.second, new Runnable() {
+        override def run(): Unit = {
+          chef ! Ingredients(3)
+          chef ! Ingredients(2)
+        }
+      })(ctx.system.executionContext)
 
       Behaviors.empty
     }
