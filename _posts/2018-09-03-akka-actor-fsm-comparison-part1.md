@@ -6,7 +6,14 @@ categories: akka
 published: true
 ---
 
-Using [Akka actors](https://doc.akka.io/docs/akka/current/general/actors.html) in Scala, I'll be discussing three approaches to implement a finite state machine: [Untyped](#untyped-actor), [Untyped FSM](#untyped-fsm-actor), and [Typed](#typed-actor). I will provide code to portray their nuances and highlight some interesting aspects of each. Testing is another important consideration that I've saved for Part 2. If one would rather run the full code and test suite, I've put [this project on my GitHub](https://github.com/michaelzg/cooking-fsm-demo).
+Using [Akka actors](https://doc.akka.io/docs/akka/current/general/actors.html) in Scala, 
+I'll be discussing three approaches to implement a finite state machine: 
+[Untyped](#untyped-actor), [Untyped FSM](#untyped-fsm-actor), and 
+[Typed](#typed-actor). I will provide code to portray their nuances and
+highlight some interesting aspects of each. 
+Testing is another important consideration that I've saved for Part 2.
+If one would rather run the full code and test suite,
+I've put [this project on my GitHub](https://github.com/michaelzg/blog-scala/tree/master/cooking-fsm-demo).
 
 I'll be using Akka version `2.6.3` (last updated Feb 2020).
 Please note that as of this writing, the Akka Typed module 
@@ -17,11 +24,18 @@ Let's dive in. The following diagram represents a simple but demonstrative examp
 
 ![akka-actor-chef-fsm](/assets/img/akka-actor-chef-fsm.png)
 
-A chef is given `Ingredients` to cook. Cooking can yield `CookedFood` which will then be plated and served to a limited amount of customers. However, cooking can also result in `BurntFood`, which means back to more cooking when more `Ingredients` are received. When all customers are served, the chef is done.
+A chef is given `Ingredients` to cook. Cooking can yield `CookedFood`
+which will then be plated and served to a limited amount of customers.
+However, cooking can also result in `BurntFood`, which means back to
+more cooking when more `Ingredients` are received.
+When all customers are served, the chef is done.
 
-There will be a manager actor interacting with the chef actor, periodically querying `AreYouDone` in which the chef will respond with its state in a `Reply`. 
+There will be a manager actor interacting with the chef actor,
+periodically querying `AreYouDone` in which the chef will
+respond with its state in a `Reply`. 
 
-Below is the protocol used by the untyped chef actors. The typed protocol will have a slight difference, discussed later.
+Below is the protocol used by the untyped chef actors.
+The typed protocol will have a slight difference, discussed later.
 
 ```scala
 sealed trait ChefMsg
@@ -47,7 +61,10 @@ final case class Reply(served: Int, isDone: Boolean) extends ManagerMsg
 
 ## Untyped Actor
 
-The [untyped actor](https://doc.akka.io/docs/akka/current/actors.html) can leverage `context.become` for state transitions. A [commonly advocated pattern](https://github.com/alexandru/scala-best-practices/blob/master/sections/5-actors.md#52-should-mutate-state-in-actors-only-with-contextbecome) is mutating state data by passing it as a parameter upon `context.become`. I leave logging for only this implementation to show the interaction between the chef and manager.
+The [untyped actor](https://doc.akka.io/docs/akka/current/actors.html) can leverage `context.become` for state transitions. 
+A [commonly advocated pattern](https://github.com/alexandru/scala-best-practices/blob/master/sections/5-actors.md#52-should-mutate-state-in-actors-only-with-contextbecome)
+is mutating state data by passing it as a parameter upon `context.become`.
+I leave logging for only this implementation to show the interaction between the chef and manager.
 
 ```scala
 class Chef(customers: Int, skill: CookingSkill)
@@ -99,7 +116,9 @@ class Chef(customers: Int, skill: CookingSkill)
 }
 ```
 
-Once the manager is introduced to a chef, the manager polls the chef periodically until the chef is done. The manager is a stateful actor itself. Its polling is implemented with [timers](https://doc.akka.io/docs/akka/current/actors.html#timers-scheduled-messages).
+Once the manager is introduced to a chef, the manager polls the chef periodically until 
+the chef is done. The manager is a stateful actor itself.
+Its polling is implemented with [timers](https://doc.akka.io/docs/akka/current/actors.html#timers-scheduled-messages).
 
 ```scala
 class Manager() extends Actor with ActorLogging with Timers {
@@ -129,7 +148,8 @@ class Manager() extends Actor with ActorLogging with Timers {
 }
 ```
 
-Once initialized with a set of cooking skills and a number of customers, the chef can be introduced to the manager and be given `Ingredients`. Here is the main App:
+Once initialized with a set of cooking skills and a number of customers,
+the chef can be introduced to the manager and be given `Ingredients`. Here is the main App:
 
 ```scala
 object CookingApp extends App {
@@ -172,7 +192,8 @@ And the following scene plays out on the console:
 ## Untyped FSM Actor
 
 
-This `ChefSM` (pun intended) leverages the [FSM mixin](https://doc.akka.io/docs/akka/current/fsm.html). It looks a bit different with predefined states and data.
+This `ChefSM` (pun intended) leverages the [FSM mixin](https://doc.akka.io/docs/akka/current/fsm.html).
+It looks a bit different with predefined states and data.
 
 ```scala
 object ChefSM {
@@ -238,10 +259,13 @@ While the above implementation mirrors the function of the untyped version, ther
 * [whenUnhandled](#untyped-fsm-whenunhandled)
 * [subscribing to transitions](#untyped-fsm-subscribing-to-transitions)
 
-[See more in the Akka docs](https://doc.akka.io/docs/akka/current/fsm.html). Note that testing with `FSM` is more powerful as well, discussed in Part 2 (*coming soon!*).
+[See more in the Akka docs](https://doc.akka.io/docs/akka/current/fsm.html).
+Note that testing with `FSM` is more powerful as well, discussed in a Part 2.
 
 #### Untyped FSM: `onTransition`
-If one wanted to log a message upon transition of from plating to cooking, the [onTransition](https://doc.akka.io/docs/akka/current/fsm.html#internal-monitoring) handler becomes useful:
+If one wanted to log a message upon transition of from plating to cooking, the 
+[onTransition](https://doc.akka.io/docs/akka/current/fsm.html#internal-monitoring)
+handler becomes useful:
 
 ```scala
 onTransition {
@@ -250,11 +274,17 @@ onTransition {
 }
 ```
 
-Without this, one would need to log both upon handling `BurntFood` and `CookedFood` in the plating state. This becomes convenient if one needed to do more complicated actions, like managing state specific timer (e.g. a cooking timer that needs to be cancelled when transitioning out of that state).
+Without this, one would need to log both upon handling `BurntFood` and `CookedFood` 
+in the plating state. This becomes convenient if one needed to do more complicated 
+actions, like managing state specific timer 
+(e.g. a cooking timer that needs to be cancelled when transitioning out of that state).
 
 #### Untyped FSM: `whenUnhandled`
 
-The `skill.cook()` returns a `Future[Food]` with the `Food` result piped to itself. To handle a potential failed future–messaged in a `akka.actor.Status.Failure`–one can conveniently leverage [whenUnhandled](https://doc.akka.io/docs/akka/current/fsm.html#unhandled-events) to capture, generically, not only the error but also the state of the actor when received:
+The `skill.cook()` returns a `Future[Food]` with the `Food` result piped to itself.
+To handle a potential failed future–messaged in a `akka.actor.Status.Failure`–one can 
+conveniently leverage [whenUnhandled](https://doc.akka.io/docs/akka/current/fsm.html#unhandled-events) to capture, generically, 
+not only the error but also the state of the actor when received:
 
 ```scala
 whenUnhandled {
@@ -269,7 +299,10 @@ Alternatively, one would need to add handling of this case at every state.
 
 #### Untyped FSM: Subscribing to Transitions
 
-In the untyped example, the manager actor polls until the chef is done. `FSM` conveniently provides the ability to [subscribe to state transitions](https://doc.akka.io/docs/akka/current/fsm.html#external-monitoring). This means the subscribed manager can listen for state changes from the chef rather than constantly polling:
+In the untyped example, the manager actor polls until the chef is done. 
+`FSM` conveniently provides the ability to [subscribe to state transitions](https://doc.akka.io/docs/akka/current/fsm.html#external-monitoring). 
+This means the subscribed manager can listen for state changes from the chef 
+rather than constantly polling:
 
 ```scala
 class ManagerFSM() extends Actor with ActorLogging {
@@ -304,14 +337,19 @@ The interaction now looks more efficient:
 [INFO] [akka://default/user/manager] The chef is done for the day!
 ```
 
-While neat, [note that a stopped manager will not terminate the subscription](https://doc.akka.io/docs/akka/current/fsm.html#external-monitoring), so that is the subscriber's responsibility.
+While neat, [note that a stopped manager will not terminate the subscription](https://doc.akka.io/docs/akka/current/fsm.html#external-monitoring),
+so that is the subscriber's responsibility.
 
 
 ## Typed Actor
 
-It's exciting to see the [Akka typed ecosystem](https://doc.akka.io/docs/akka/current/typed/index.html) maturing to production-readiness. While discussing all the differences with untyped actor module is outside of the scope of this post, I'll attempt to portray the significant parts with the chef and manager scenario.
+It's exciting to see the [Akka typed ecosystem](https://doc.akka.io/docs/akka/current/typed/index.html) maturing to production-readiness.
+While discussing all the differences with untyped actor module is outside of the scope of this post,
+I'll attempt to portray the significant parts with the chef and manager scenario.
 
-First, the `AreYouDone` and `Introduce` messages need to change to include the typed `ActorRef[T]` where `T` is the type of messages the actor can receive. `sender()` is not available in typed. 
+First, the `AreYouDone` and `Introduce` messages need to change to include the typed 
+`ActorRef[T]` where `T` is the type of messages the actor can receive.
+`sender()` is not available in typed. 
 
 ```scala
 // chef
@@ -321,7 +359,8 @@ final case class AreYouDone(replyTo: ActorRef[Reply]) extends ChefMsg
 final case class Introduce(chef: ActorRef[ChefMsg]) extends ManagerMsg
 ```
 
-States can be represented as `Behaviors`. State data can be passed as parameters similar to untyped `context.become` pattern shown above.
+States can be represented as `Behaviors`.
+State data can be passed as parameters similar to untyped `context.become` pattern shown above.
 
 ```scala
 class ChefTyped(customers: Int, skill: CookingSkill) extends StrictLogging {
@@ -395,7 +434,8 @@ Let's discuss a few interesting things with typed implementation:
 
 #### Typed Actor: Compile Time Type Safety
 
-This is the commonly cited benefit. For example, sending a chef a `Reply` (not in the `ChefMsg` protocol)  will lead to the following compilation error:
+This is the commonly cited benefit. For example, sending a chef a `Reply` 
+(not in the `ChefMsg` protocol)  will lead to the following compilation error:
 
 ```
 [error] .../CookingAppTyped.scala:22:19: type mismatch;
@@ -424,20 +464,29 @@ This means the chef's handling of `AreYouDone` messages can be shared via a comm
 private def notDone(data: Data): Behavior[ChefMsg]
 ```
 
-> and appended to the relevant states as seen above. If no case match is found for the message, it falls back to `Behaviors.unhandled` with similar behaviors of the untyped actors. 
+> and appended to the relevant states as seen above.If no case match is found for the message, it falls back to `Behaviors.unhandled` with similar behaviors of the untyped actors. 
 
-Note that if all messages need to be handled explicitly, one has the option to use `Behaviors.receive` or `Behaviors.receiveMessage` and provide a total function for handling your message protocol instead.
+Note that if all messages need to be handled explicitly,
+one has the option to use `Behaviors.receive` or `Behaviors.receiveMessage` and
+provide a total function for handling your message protocol instead.
 
 #### Typed Actor: Handling of Futures
 
-For an untyped actor, the common pattern for handling futures is to [pipe the future result](https://doc.akka.io/docs/akka/current/futures.html#use-with-actors) to another actor or oneself.
+For an untyped actor, the common pattern for handling futures is to 
+[pipe the future result](https://doc.akka.io/docs/akka/current/futures.html#use-with-actors)
+to another actor or oneself.
 
 ```scala
 val future = skill.cook(ingredients)
 pipe(future) to self // or future pipeTo self
 ```
 
-In typed, there is no need for piping of futures. For example, we can accomplish the [previous scenario of handling a failed future](#untyped-fsm-whenunhandled) like any other future outside of an actor by using `onComplete`. Notice that closing over the context's `self` reference is [also safe](https://github.com/akka/akka/blob/2b6997b7a04d1c085b0c6d0741e555c6fb28df04/akka-actor-typed/src/main/scala/akka/actor/typed/scaladsl/ActorContext.scala#L54-L55) similar to that of the [untyped](https://doc.akka.io/docs/akka/2.2.3/general/jmm.html#Actors_and_shared_mutable_state) `self` reference.
+In typed, there is no need for piping of futures.
+For example, we can accomplish the [previous scenario of handling a failed future](#untyped-fsm-whenunhandled)
+like any other future outside of an actor by using `onComplete`.
+Notice that closing over the context's `self` reference is 
+[also safe](https://github.com/akka/akka/blob/2b6997b7a04d1c085b0c6d0741e555c6fb28df04/akka-actor-typed/src/main/scala/akka/actor/typed/scaladsl/ActorContext.scala#L54-L55)
+similar to that of the [untyped](https://doc.akka.io/docs/akka/2.2.3/general/jmm.html#Actors_and_shared_mutable_state) `self` reference.
 
 ```scala
 def cooking(data: Data): Behavior[ChefMsg] =
@@ -456,7 +505,9 @@ def cooking(data: Data): Behavior[ChefMsg] =
 // ...
 ```
 
-This also means upon error handling we can work with `scala.util.{Success, Failure}` and we don't have to remember that the error results in `akka.actor.Status.Failure`.
+This also means upon error handling we can work with 
+`scala.util.{Success, Failure}` and we don't have to remember that
+the error results in `akka.actor.Status.Failure`.
 
 
 #### Typed Actor: Interacting with Another Actor via `asks` and Timers
@@ -467,7 +518,9 @@ For the manager using `asks`, I extend its protocol again for the failure case o
 final case class UnsuccessfulReply(cause: Throwable) extends ManagerMsg
 ```
 
-Here is the typed manager with a timer mirroring the functionality of the untyped version discussed above. The manager polls until the chef is done.
+Here is the typed manager with a timer mirroring the
+functionality of the untyped version discussed above.
+The manager polls until the chef is done.
 
 ```scala
 object ManagerTyped extends StrictLogging {
@@ -507,7 +560,9 @@ object ManagerTyped extends StrictLogging {
 }
 ```
 
-As of this writing there is no out-of-the-box [subscription of transitions](#untyped-fsm-subscribing-to-transitions) like the untyped FSM actor that allows for transition events to be pushed to the manager.
+As of this writing there is no out-of-the-box 
+[subscription of transitions](#untyped-fsm-subscribing-to-transitions) 
+like the untyped FSM actor that allows for transition events to be pushed to the manager.
 
 The main function to start the interaction of the chef and manager looks like this:
 
@@ -555,10 +610,13 @@ INFO chef.ChefTyped - All fed.
 INFO manager.ManagerTyped$ - The chef is done for the day, all 5 customers served!
 ```
 
-If you got to this point and are still craving more, refer to the [Akka Typed documentation](https://doc.akka.io/docs/akka/current/typed/index.html) or watch [Konrad](https://twitter.com/ktosopl)'s talk about [Networks and Types: The Future of Akka](https://slideslive.com/38908791/networks-and-types-the-future-of-akka) if you haven't already.
+If you got to this point and are still craving more, refer to the 
+[Akka Typed documentation](https://doc.akka.io/docs/akka/current/typed/index.html)
+or watch [Konrad](https://twitter.com/ktosopl)'s talk about 
+[Networks and Types: The Future of Akka](https://slideslive.com/38908791/networks-and-types-the-future-of-akka)
+if you haven't already.
 
-## Wrapping up
 
-Thank you for reading. I hope this comparison illuminates some interesting things about Akka actors for you. I also encourage you to check out Part 2 (*coming soon!*) of this series that compares testing these actors.
-
-I find the Akka project fun to study and work with–so here's a shoutout to the Akka Team at Lightbend for their great work.
+Thank you for reading. I hope this comparison illuminates some interesting
+things about Akka actors for you. I find the Akka project fun to study and
+work with–so here's a shoutout to the Akka Team at Lightbend for their great work.
