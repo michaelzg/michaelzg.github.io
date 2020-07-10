@@ -13,7 +13,7 @@ I'll be discussing three approaches to implement a finite state machine:
 highlight some interesting aspects of each. 
 Testing is another important consideration that I've saved for Part 2.
 If one would rather run the full code and test suite,
-I've put [this project on my GitHub](https://github.com/michaelzg/blog-scala/tree/master/cooking-fsm-demo).
+I've put [this project on my GitHub](https://github.com/michaelzg/blog-scala/tree/master/fsm).
 
 I'll be using Akka version `2.6.3` (last updated Feb 2020).
 Please note that as of this writing, the Akka Typed module 

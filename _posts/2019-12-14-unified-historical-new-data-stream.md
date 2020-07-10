@@ -25,8 +25,8 @@ with implications for gRPC and considerations for real-time streaming.
 I assume the reader has background knowledge about
 [Akka Streams](https://doc.akka.io/docs/akka/current/stream/index.html).
 
-To just see working code, [here is the repository on my Github](https://github.com/michaelzg/blog-scala/tree/master/unified-historical-new-datastream).
-It's using Scala `2.12.x` and Akka `2.6.x`. I'll try to keep it up-to-date and relevant through time.
+To just see working code, [here is the repository on my Github](https://github.com/michaelzg/blog-scala/blob/master/streaming-merge).
+It's using Scala `2.13.x` and Akka `2.6.x`. I'll try to keep it up-to-date and relevant through time.
 I also link to the specific sections of source code as I walk through it.
 
 ## Interface & Implementation
@@ -38,7 +38,7 @@ trait TweetStream {
   def stream(user: String, start: DateTime, end: Option[DateTime]): Source[Tweet, NotUsed]
 }
 ```
-[GitHub Source](https://github.com/michaelzg/blog-scala/blob/master/unified-historical-new-datastream/src/main/scala/TweetStream.scala)
+[GitHub Source](https://github.com/michaelzg/blog-scala/blob/master/streaming-merge/src/TweetStream.scala)
 
 One can query historical-only data (finite) or a
 combined historical and new data stream (infinite) depending on
@@ -60,7 +60,7 @@ def stream(user: String, start: DateTime, end: Option[DateTime]): Source[Tweet, 
   }
 }
 ```
-[GitHub Source](https://github.com/michaelzg/blog-scala/blob/master/unified-historical-new-datastream/src/main/scala/TweetStreamImpl.scala)
+[GitHub Source](https://github.com/michaelzg/blog-scala/blob/master/streaming-merge/src/TweetStreamImpl.scala)
 
 Both `historical` and `periodicPoll` are functions returning `Source[Tweet, NotUsed]`.
 The key here is the concatentation of two data streams using
@@ -92,7 +92,7 @@ def periodicPoll(user: String): Source[Tweet, NotUsed] = {
     .mapMaterializedValue(_ => NotUsed)
 }
 ```
-[GitHub Source](https://github.com/michaelzg/blog-scala/blob/master/unified-historical-new-datastream/src/main/scala/TweetStreamImpl.scala)
+[GitHub Source](https://github.com/michaelzg/blog-scala/blob/master/streaming-merge/src/TweetStreamImpl.scala)
 
 
 Let's break it down:
@@ -137,7 +137,7 @@ class StubAutoRefreshingTweetStore(users: List[String], referenceTime: DateTime,
   // Details & helper functions snipped
 }
 ```
-[GitHub Source](https://github.com/michaelzg/blog-scala/blob/master/unified-historical-new-datastream/src/test/scala/StubAutoRefreshingTweetStore.scala)
+[GitHub Source](https://github.com/michaelzg/blog-scala/blob/master/streaming-merge/test/src/StubAutoRefreshingTweetStore.scala)
 
 This stub allows us to write a unit test ([Scalatest `FreeSpec`](http://www.scalatest.org/at_a_glance/FreeSpec))
 showcasing a combined historical and new data stream.
@@ -161,7 +161,7 @@ showcasing a combined historical and new data stream.
   }
 }
 ```
-[GitHub Source](https://github.com/michaelzg/blog-scala/blob/master/unified-historical-new-datastream/src/test/scala/TweetStreamExample.scala)
+[GitHub Source](https://github.com/michaelzg/blog-scala/blob/master/streaming-merge/test/src/TweetStreamExample.scala)
 
 See both historical and new data emitted in the same stream print out to the console.
 Wayne's day-old tweets print out immediately, and his new "live tweets" print out every second as they get "inserted", up to `maxTweets = 10`, before completing. The stream would keep printing if one removed the `take` stage. Contrast this with Bruce's historical-only stream completing immediately.
