@@ -1,0 +1,382 @@
+---
+layout: default
+title: Life In Weeks
+---
+
+<style>
+  .liw-container {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    padding: 0 1rem;
+    box-sizing: border-box;
+  }
+
+  .liw-header {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .liw-header h1 {
+    margin-bottom: 0.25rem;
+  }
+
+  .liw-header p {
+    color: #666;
+    margin-top: 0;
+  }
+
+  .liw-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.8rem;
+  }
+
+  .liw-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .liw-legend-swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .liw-decade-nav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.95);
+    border-bottom: 1px solid #e0e0e0;
+    padding: 0.4rem 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .liw-decade-nav a {
+    text-decoration: none;
+    color: #555;
+    padding: 0.2rem 0.6rem;
+    border-radius: 3px;
+    transition: background 0.15s;
+  }
+
+  .liw-decade-nav a:hover {
+    background: #eee;
+    color: #111;
+  }
+
+  .liw-decade-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .liw-decade-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #555;
+    margin: 1rem 0 0.4rem 0;
+    padding-left: 0.25rem;
+  }
+
+  .liw-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  .liw-box {
+    position: relative;
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    border: 2px solid #ccc;
+    background: #f5f5f5;
+    cursor: default;
+    flex-shrink: 0;
+  }
+
+  .liw-box.liw-future {
+    opacity: 0.3;
+  }
+
+  .liw-box .liw-tip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    font-size: 0.7rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  .liw-box:hover .liw-tip,
+  .liw-box:focus .liw-tip {
+    display: block;
+  }
+
+  .liw-box.liw-future .liw-tip {
+    display: none !important;
+  }
+
+  .liw-year-label {
+    width: 100%;
+    font-size: 0.7rem;
+    color: #999;
+    margin-top: 0.3rem;
+    margin-bottom: 0.1rem;
+    padding-left: 0.1rem;
+  }
+
+  @media (max-width: 600px) {
+    .liw-box {
+      width: 12px;
+      height: 12px;
+      border-width: 1.5px;
+    }
+
+    .liw-legend {
+      gap: 0.5rem;
+      font-size: 0.7rem;
+    }
+
+    .liw-decade-nav {
+      font-size: 0.7rem;
+      gap: 0.3rem;
+    }
+  }
+</style>
+
+<div class="liw-container">
+  <div class="liw-header">
+    <h1>Life In Weeks</h1>
+    <p>Each box is one week. Border color = location. Fill color = activity.</p>
+  </div>
+
+  <div class="liw-legend">
+    <span class="liw-legend-item">
+      <span class="liw-legend-swatch" style="border: 2px solid #8eb2d6; background: #FFF6DA;"></span>
+      Hometown / Childhood
+    </span>
+    <span class="liw-legend-item">
+      <span class="liw-legend-swatch" style="border: 2px solid #FCC737; background: #E8F9FF;"></span>
+      College Town / Student
+    </span>
+    <span class="liw-legend-item">
+      <span class="liw-legend-swatch" style="border: 2px solid #469046; background: #F8E7F6;"></span>
+      First City / Working
+    </span>
+    <span class="liw-legend-item">
+      <span class="liw-legend-swatch" style="border: 2px solid #ccc; background: #f5f5f5; opacity: 0.3;"></span>
+      Future
+    </span>
+  </div>
+
+  <div class="liw-decade-nav" id="decadeNav"></div>
+  <div id="grid"></div>
+</div>
+
+<script>
+(function () {
+  var BIRTH = new Date(1993, 2, 15); // March 15, 1993
+  var END_YEAR = 2093;
+  var MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
+  var NOW = new Date();
+
+  // Location border colors
+  var LOC_COLORS = {
+    hometown: '#8eb2d6',
+    college:  '#FCC737',
+    city:     '#469046'
+  };
+
+  // Activity background colors
+  var ACT_COLORS = {
+    childhood: '#FFF6DA',
+    student:   '#E8F9FF',
+    working:   '#F8E7F6'
+  };
+
+  // Events sorted by date. `based` sets location, `doing` sets activity.
+  // Values persist until overridden by a later event.
+  var EVENTS = [
+    { date: '1993-03-15', label: 'Born',                    based: 'hometown', doing: 'childhood' },
+    { date: '1998-09-01', label: 'Kindergarten',             based: 'hometown', doing: 'childhood' },
+    { date: '1999-09-01', label: 'Elementary school',        based: 'hometown', doing: 'student' },
+    { date: '2004-09-01', label: 'Middle school',            based: 'hometown', doing: 'student' },
+    { date: '2007-09-01', label: 'High school',              based: 'hometown', doing: 'student' },
+    { date: '2009-06-15', label: 'Driver\'s license',        based: 'hometown', doing: 'student' },
+    { date: '2011-06-15', label: 'Graduated high school',    based: 'hometown', doing: 'student' },
+    { date: '2011-09-01', label: 'Started college',          based: 'college',  doing: 'student' },
+    { date: '2013-06-01', label: 'First internship',         based: 'college',  doing: 'working' },
+    { date: '2015-05-15', label: 'Graduated college',        based: 'college',  doing: 'student' },
+    { date: '2015-07-01', label: 'First job',                based: 'city',     doing: 'working' },
+    { date: '2017-03-01', label: 'Promoted',                 based: 'city',     doing: 'working' },
+    { date: '2018-06-01', label: 'Traveled abroad',          based: 'city',     doing: 'working' },
+    { date: '2020-03-15', label: 'Pandemic',                 based: 'city',     doing: 'working' },
+    { date: '2021-01-15', label: 'Started a blog',           based: 'city',     doing: 'working' },
+    { date: '2022-06-01', label: 'New job',                  based: 'city',     doing: 'working' },
+    { date: '2024-01-15', label: 'Side project launched',    based: 'city',     doing: 'working' },
+    { date: '2073-03-15', label: 'Life expectancy (age 80)', based: 'city',     doing: 'working' }
+  ];
+
+  // Parse "YYYY-MM-DD" to a Date in local time
+  function parseDate(s) {
+    var parts = s.split('-');
+    return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  }
+
+  // Build a lookup: week-index -> event(s) that fall in that week
+  var eventsByWeek = {};
+  EVENTS.forEach(function (evt) {
+    var d = parseDate(evt.date);
+    var weekIdx = Math.floor((d - BIRTH) / MS_PER_WEEK);
+    if (!eventsByWeek[weekIdx]) eventsByWeek[weekIdx] = [];
+    eventsByWeek[weekIdx].push(evt);
+  });
+
+  // Format a Date as "Mon DD, YYYY"
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function fmtDate(d) {
+    return MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+  }
+
+  // Compute age string from a date
+  function ageStr(d) {
+    var years = d.getFullYear() - BIRTH.getFullYear();
+    var m = d.getMonth() - BIRTH.getMonth();
+    if (m < 0 || (m === 0 && d.getDate() < BIRTH.getDate())) years--;
+    return 'Age ' + years;
+  }
+
+  // Decade labels
+  var DECADES = [
+    { id: 'birth', label: 'Birth', startAge: 0 },
+    { id: 'teens', label: 'Teens', startAge: 13 },
+    { id: '20s',   label: '20s',   startAge: 20 },
+    { id: '30s',   label: '30s',   startAge: 30 },
+    { id: '40s',   label: '40s',   startAge: 40 },
+    { id: '50s',   label: '50s',   startAge: 50 },
+    { id: '60s',   label: '60s',   startAge: 60 },
+    { id: '70s',   label: '70s',   startAge: 70 },
+    { id: '80s',   label: '80s',   startAge: 80 },
+    { id: '90s',   label: '90s',   startAge: 90 }
+  ];
+
+  // Build decade nav
+  var navEl = document.getElementById('decadeNav');
+  DECADES.forEach(function (dec) {
+    var a = document.createElement('a');
+    a.href = '#decade-' + dec.id;
+    a.textContent = dec.label;
+    navEl.appendChild(a);
+  });
+
+  // Render grid
+  var gridEl = document.getElementById('grid');
+  var totalWeeks = Math.floor((new Date(END_YEAR, 2, 15) - BIRTH) / MS_PER_WEEK);
+
+  var currentBased = 'hometown';
+  var currentDoing = 'childhood';
+
+  var currentDecadeIdx = 0;
+  var decadeSection = null;
+  var decadeGrid = null;
+  var currentYear = -1;
+
+  for (var w = 0; w < totalWeeks; w++) {
+    var weekStart = new Date(BIRTH.getTime() + w * MS_PER_WEEK);
+    var weekYear = weekStart.getFullYear();
+    var isFuture = weekStart > NOW;
+
+    // Check for events this week; update running state
+    var evtsThisWeek = eventsByWeek[w];
+    if (evtsThisWeek) {
+      evtsThisWeek.forEach(function (evt) {
+        if (evt.based) currentBased = evt.based;
+        if (evt.doing) currentDoing = evt.doing;
+      });
+    }
+
+    // Age in years (floor)
+    var agYears = weekStart.getFullYear() - BIRTH.getFullYear();
+    var bm = weekStart.getMonth() - BIRTH.getMonth();
+    if (bm < 0 || (bm === 0 && weekStart.getDate() < BIRTH.getDate())) agYears--;
+
+    // Check if we need a new decade section
+    while (currentDecadeIdx < DECADES.length - 1 && agYears >= DECADES[currentDecadeIdx + 1].startAge) {
+      currentDecadeIdx++;
+    }
+    var neededDecade = DECADES[currentDecadeIdx];
+    var sectionId = 'decade-' + neededDecade.id;
+
+    if (!decadeSection || decadeSection.id !== sectionId) {
+      decadeSection = document.createElement('div');
+      decadeSection.className = 'liw-decade-section';
+      decadeSection.id = sectionId;
+
+      var lbl = document.createElement('div');
+      lbl.className = 'liw-decade-label';
+      lbl.textContent = neededDecade.label;
+      decadeSection.appendChild(lbl);
+
+      decadeGrid = document.createElement('div');
+      decadeGrid.className = 'liw-grid';
+      decadeSection.appendChild(decadeGrid);
+
+      gridEl.appendChild(decadeSection);
+      currentYear = -1; // reset year label tracking
+    }
+
+    // Year label at start of each calendar year's first week in this decade
+    if (weekYear !== currentYear) {
+      currentYear = weekYear;
+      var yl = document.createElement('div');
+      yl.className = 'liw-year-label';
+      yl.textContent = weekYear;
+      decadeGrid.appendChild(yl);
+    }
+
+    // Create the box
+    var box = document.createElement('span');
+    box.className = 'liw-box' + (isFuture ? ' liw-future' : '');
+    box.style.borderColor = LOC_COLORS[currentBased] || '#ccc';
+    box.style.background = ACT_COLORS[currentDoing] || '#f5f5f5';
+
+    if (!isFuture) {
+      box.setAttribute('tabindex', '0');
+
+      // Build tooltip text
+      var tipText = fmtDate(weekStart) + ' \u2014 ' + ageStr(weekStart);
+      if (evtsThisWeek) {
+        evtsThisWeek.forEach(function (evt) {
+          tipText += ' \u2022 ' + evt.label;
+        });
+      }
+
+      var tip = document.createElement('span');
+      tip.className = 'liw-tip';
+      tip.textContent = tipText;
+      box.appendChild(tip);
+    }
+
+    decadeGrid.appendChild(box);
+  }
+})();
+</script>
