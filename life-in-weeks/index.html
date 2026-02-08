@@ -169,19 +169,14 @@ title: Life In Weeks
     <p>Each box is one week. Border color = location. Fill color = activity.</p>
   </div>
 
+  {% assign liw = site.data.life-in-weeks %}
   <div class="liw-legend">
+    {% for item in liw.legend %}
     <span class="liw-legend-item">
-      <span class="liw-legend-swatch" style="border: 2px solid #8eb2d6; background: #FFF6DA;"></span>
-      Hometown / Childhood
+      <span class="liw-legend-swatch" style="border: 2px solid {{ liw.locations[item.location] }}; background: {{ liw.activities[item.activity] }};"></span>
+      {{ item.label }}
     </span>
-    <span class="liw-legend-item">
-      <span class="liw-legend-swatch" style="border: 2px solid #FCC737; background: #E8F9FF;"></span>
-      College Town / Student
-    </span>
-    <span class="liw-legend-item">
-      <span class="liw-legend-swatch" style="border: 2px solid #469046; background: #F8E7F6;"></span>
-      First City / Working
-    </span>
+    {% endfor %}
     <span class="liw-legend-item">
       <span class="liw-legend-swatch" style="border: 2px solid #ccc; background: #f5f5f5; opacity: 0.3;"></span>
       Future
@@ -194,47 +189,19 @@ title: Life In Weeks
 
 <script>
 (function () {
-  var BIRTH = new Date(1993, 2, 15); // March 15, 1993
-  var END_YEAR = 2093;
+  // Data injected from _data/life-in-weeks.yml at build time
+  {% assign liw = site.data.life-in-weeks %}
+  var CONFIG = {{ liw | jsonify }};
+
+  var birthParts = CONFIG.birthday.split('-');
+  var BIRTH = new Date(parseInt(birthParts[0], 10), parseInt(birthParts[1], 10) - 1, parseInt(birthParts[2], 10));
+  var END_YEAR = BIRTH.getFullYear() + CONFIG.lifespan_years;
   var MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
   var NOW = new Date();
 
-  // Location border colors
-  var LOC_COLORS = {
-    hometown: '#8eb2d6',
-    college:  '#FCC737',
-    city:     '#469046'
-  };
-
-  // Activity background colors
-  var ACT_COLORS = {
-    childhood: '#FFF6DA',
-    student:   '#E8F9FF',
-    working:   '#F8E7F6'
-  };
-
-  // Events sorted by date. `based` sets location, `doing` sets activity.
-  // Values persist until overridden by a later event.
-  var EVENTS = [
-    { date: '1993-03-15', label: 'Born',                    based: 'hometown', doing: 'childhood' },
-    { date: '1998-09-01', label: 'Kindergarten',             based: 'hometown', doing: 'childhood' },
-    { date: '1999-09-01', label: 'Elementary school',        based: 'hometown', doing: 'student' },
-    { date: '2004-09-01', label: 'Middle school',            based: 'hometown', doing: 'student' },
-    { date: '2007-09-01', label: 'High school',              based: 'hometown', doing: 'student' },
-    { date: '2009-06-15', label: 'Driver\'s license',        based: 'hometown', doing: 'student' },
-    { date: '2011-06-15', label: 'Graduated high school',    based: 'hometown', doing: 'student' },
-    { date: '2011-09-01', label: 'Started college',          based: 'college',  doing: 'student' },
-    { date: '2013-06-01', label: 'First internship',         based: 'college',  doing: 'working' },
-    { date: '2015-05-15', label: 'Graduated college',        based: 'college',  doing: 'student' },
-    { date: '2015-07-01', label: 'First job',                based: 'city',     doing: 'working' },
-    { date: '2017-03-01', label: 'Promoted',                 based: 'city',     doing: 'working' },
-    { date: '2018-06-01', label: 'Traveled abroad',          based: 'city',     doing: 'working' },
-    { date: '2020-03-15', label: 'Pandemic',                 based: 'city',     doing: 'working' },
-    { date: '2021-01-15', label: 'Started a blog',           based: 'city',     doing: 'working' },
-    { date: '2022-06-01', label: 'New job',                  based: 'city',     doing: 'working' },
-    { date: '2024-01-15', label: 'Side project launched',    based: 'city',     doing: 'working' },
-    { date: '2073-03-15', label: 'Life expectancy (age 80)', based: 'city',     doing: 'working' }
-  ];
+  var LOC_COLORS = CONFIG.locations;
+  var ACT_COLORS = CONFIG.activities;
+  var EVENTS = CONFIG.events;
 
   // Parse "YYYY-MM-DD" to a Date in local time
   function parseDate(s) {
