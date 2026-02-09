@@ -113,32 +113,32 @@ events:
     description: "GIS (maps) for air quality and traffic"
 
   - date: "2013-06-01"
-    label: "💼 5th internship, NASA"
+    label: "🛰️ 5th internship, NASA"
     description: "Satellite Imagery for East Africa conservation"
 
   - date: "2014-06-01"
-    label: "💼 6th internship, NASA"
+    label: "🛰️ 6th internship, NASA"
     description: "Satellite Imagery for Southeast Asia flood impact"
 
   - date: "2015-05-15"
     label: "🎓 Graduated college"
 
   - date: "2015-06-15"
-    label: "💼 7th internship, NASA"
+    label: "🛰️ 7th internship, NASA"
     description: "Satellite Imagery for Navajo climate impact"
 
   - date: "2015-09-01"
-    label: "💼 First job, Software Engineer"
+    label: "💻 First job, Software Engineer"
     description: "Officially a working adult"
 
   - date: "2016-04-01"
-    label: "📈 Promoted"
+    label: "✅ Promoted"
 
   - date: "2017-06-01"
     label: "🚀 New Company"
 
   - date: "2016-11-01"
-    label: "📈 Promoted"
+    label: "✅ Promoted"
 
   - date: "2018-09-02"
     label: "📝 Started a blog"
@@ -148,7 +148,7 @@ events:
     description: "The world changed overnight"
 
   - date: "2020-08-01"
-    label: "📈 Promoted"
+    label: "✅ Promoted"
 
   - date: "2073-03-15"
     label: "Life expectancy (age 80)"
