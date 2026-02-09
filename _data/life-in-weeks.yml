@@ -4,120 +4,91 @@
 birthday: "1993-03-15"
 lifespan_years: 100
 
-# Location colors (border)
-locations:
-  hometown: "#8eb2d6"
-  college:  "#FCC737"
-  city:     "#469046"
-
-# Activity colors (background fill)
-activities:
-  childhood: "#FFF6DA"
-  student:   "#E8F9FF"
-  working:   "#F8E7F6"
-
-# Legend labels shown in the key
-legend:
-  - location: hometown
-    activity: childhood
-    label: "Hometown / Childhood"
-  - location: college
-    activity: student
-    label: "College Town / Student"
-  - location: city
-    activity: working
-    label: "First City / Working"
+# Decade colors (fill = background, border = outline)
+decades:
+  - label: "Childhood"
+    fill: "#FFF8E1"
+    border: "#F0D88A"
+  - label: "Teens"
+    fill: "#E3F2FD"
+    border: "#90CAF9"
+  - label: "20s"
+    fill: "#E8F5E9"
+    border: "#A5D6A7"
+  - label: "30s"
+    fill: "#F3E5F5"
+    border: "#CE93D8"
+  - label: "40s"
+    fill: "#FBE9E7"
+    border: "#EF9A9A"
+  - label: "50s"
+    fill: "#E0F7FA"
+    border: "#80DEEA"
+  - label: "60s"
+    fill: "#FFF3E0"
+    border: "#FFCC80"
+  - label: "70s"
+    fill: "#FCE4EC"
+    border: "#F48FB1"
+  - label: "80s"
+    fill: "#E8EAF6"
+    border: "#9FA8DA"
+  - label: "90s"
+    fill: "#F1F8E9"
+    border: "#AED581"
 
 # Life events — sorted by date.
-# "based" sets the location (border color), "doing" sets the activity (fill color).
-# Both values persist until a later event overrides them.
 events:
   - date: "1993-03-15"
     label: "Born"
-    based: hometown
-    doing: childhood
 
   - date: "1998-09-01"
     label: "Kindergarten"
-    based: hometown
-    doing: childhood
 
   - date: "1999-09-01"
     label: "Elementary school"
-    based: hometown
-    doing: student
 
   - date: "2004-09-01"
     label: "Middle school"
-    based: hometown
-    doing: student
 
   - date: "2007-09-01"
     label: "High school"
-    based: hometown
-    doing: student
 
   - date: "2009-06-15"
     label: "Driver's license"
-    based: hometown
-    doing: student
 
   - date: "2011-06-15"
     label: "Graduated high school"
-    based: hometown
-    doing: student
 
   - date: "2011-09-01"
     label: "Started college"
-    based: college
-    doing: student
 
   - date: "2013-06-01"
     label: "First internship"
-    based: college
-    doing: working
 
   - date: "2015-05-15"
     label: "Graduated college"
-    based: college
-    doing: student
 
   - date: "2015-07-01"
     label: "First job"
-    based: city
-    doing: working
 
   - date: "2017-03-01"
     label: "Promoted"
-    based: city
-    doing: working
 
   - date: "2018-06-01"
     label: "Traveled abroad"
-    based: city
-    doing: working
 
   - date: "2020-03-15"
     label: "Pandemic"
-    based: city
-    doing: working
 
   - date: "2021-01-15"
     label: "Started a blog"
-    based: city
-    doing: working
 
   - date: "2022-06-01"
     label: "New job"
-    based: city
-    doing: working
 
   - date: "2024-01-15"
     label: "Side project launched"
-    based: city
-    doing: working
 
   - date: "2073-03-15"
     label: "Life expectancy (age 80)"
-    based: city
-    doing: working

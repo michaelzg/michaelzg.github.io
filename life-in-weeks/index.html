@@ -164,15 +164,15 @@ title: Life In Weeks
 <div class="liw-container">
   <div class="liw-header">
     <h1>Life In Weeks</h1>
-    <p>Each box is one week. Border color = location. Fill color = activity.</p>
+    <p>Each box is one week. Colors are decades.</p>
   </div>
 
   {% assign liw = site.data.life-in-weeks %}
   <div class="liw-legend">
-    {% for item in liw.legend %}
+    {% for decade in liw.decades %}
     <span class="liw-legend-item">
-      <span class="liw-legend-swatch" style="border: 2px solid {{ liw.locations[item.location] }}; background: {{ liw.activities[item.activity] }};"></span>
-      {{ item.label }}
+      <span class="liw-legend-swatch" style="border: 2px solid {{ decade.border }}; background: {{ decade.fill }};"></span>
+      {{ decade.label }}
     </span>
     {% endfor %}
     <span class="liw-legend-item">
@@ -196,8 +196,7 @@ title: Life In Weeks
   var WEEKS_PER_YEAR = 52;
   var NOW = new Date();
 
-  var LOC_COLORS = CONFIG.locations;
-  var ACT_COLORS = CONFIG.activities;
+  var DECADES = CONFIG.decades;
   var EVENTS = CONFIG.events;
 
   // Row control — matching original's multipliers
@@ -243,8 +242,6 @@ title: Life In Weeks
   }
 
   var gridEl = document.getElementById('grid');
-  var currentBased = EVENTS[0].based;
-  var currentDoing = EVENTS[0].doing;
 
   var currentDecade = -1;
   var decadeDiv = null;
@@ -282,14 +279,8 @@ title: Life In Weeks
       createRow();
     }
 
-    // Update state from events
     var evtsThisWeek = eventsByWeek[w];
-    if (evtsThisWeek) {
-      evtsThisWeek.forEach(function (evt) {
-        if (evt.based) currentBased = evt.based;
-        if (evt.doing) currentDoing = evt.doing;
-      });
-    }
+    var decadeColors = DECADES[decade] || DECADES[DECADES.length - 1];
 
     // Build inline label
     var boxLabel = '';
@@ -305,9 +296,9 @@ title: Life In Weeks
     var box = document.createElement('button');
     box.type = 'button';
     box.className = 'liw-box' + (isFuture ? ' liw-future' : '') + (boxLabel ? ' liw-has-label' : '');
-    box.style.borderColor = LOC_COLORS[currentBased] || '#ccc';
+    box.style.borderColor = decadeColors.border;
     if (!isFuture) {
-      box.style.backgroundColor = ACT_COLORS[currentDoing] || '#f5f5f5';
+      box.style.backgroundColor = decadeColors.fill;
     }
 
     if (boxLabel) {
@@ -323,7 +314,12 @@ title: Life In Weeks
         });
         tipText += descs.join('; ');
       } else {
-        tipText += 'Age ' + yearOfLife;
+        var age = weekStart.getFullYear() - BIRTH.getFullYear();
+        if (weekStart.getMonth() < BIRTH.getMonth() ||
+            (weekStart.getMonth() === BIRTH.getMonth() && weekStart.getDate() < BIRTH.getDate())) {
+          age--;
+        }
+        tipText += 'Age ' + age;
       }
       var tip = document.createElement('span');
       tip.className = 'liw-tip';
