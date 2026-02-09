@@ -31,6 +31,20 @@ title: Life In Weeks
     gap: 1rem;
     margin-bottom: 1rem;
     font-size: 0.8rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .liw-legend.liw-legend-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(255, 255, 255, 0.95);
+    animation: liw-fade-in 0.4s ease forwards;
+  }
+
+  @keyframes liw-fade-in {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .liw-legend-item {
@@ -335,5 +349,15 @@ title: Life In Weeks
       createRow();
     }
   }
+  // Sticky legend: becomes sticky once scrolled past its natural position
+  var legend = document.querySelector('.liw-legend');
+  var legendTop = legend.offsetTop;
+  window.addEventListener('scroll', function () {
+    if (window.scrollY > legendTop) {
+      legend.classList.add('liw-legend-sticky');
+    } else {
+      legend.classList.remove('liw-legend-sticky');
+    }
+  }, { passive: true });
 })();
 </script>
