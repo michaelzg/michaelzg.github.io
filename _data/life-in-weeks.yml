@@ -100,18 +100,24 @@ events:
     label: "💼 2nd internship, City Public Works"
     description: "Waste water and rain barrels"
 
-  - date: "2011-06-01"
+  - date: "2011-01-01"
+    label: "♥️"
+
+  - date: "2011-05-01"
+    label: "🎓 Graduated high school"
+
+  - date: "2011-05-20"
     label: "💼 3rd internship, City Public Works"
     description: "GIS (maps) for water pipes and energy rebates"
 
-  - date: "2011-06-15"
-    label: "🎓 Graduated high school"
-
-  - date: "2011-10-25"
+  - date: "2011-07-25"
     label: "✈️ Moved out of home"
 
-  - date: "2011-11-01"
-    label: "🏛️ Started college"
+  - date: "2011-08-01"
+    label: "🏛️ Started college in Maryland"
+
+  - date: "2011-08-21"
+    label: "🌪 Hurricane Irene"
 
   - date: "2011-11-15"
     label: "🗺️ Library job"
@@ -136,6 +142,9 @@ events:
   - date: "2014-11-01"
     label: "🥷 Naruto manga ended"
 
+  - date: "2015-02-26"
+    label: "🕺 Breakdance: headspin to windmill to shoulderspin"
+
   - date: "2015-05-15"
     label: "🎓 Graduated college"
 
@@ -156,18 +165,113 @@ events:
   - date: "2017-06-01"
     label: "🚀 New Company"
 
+  - date: "2017-10-01"
+    label: "🇹🇭 Thailand"
+
   - date: "2016-11-01"
     label: "✅ Promoted"
 
   - date: "2018-09-02"
     label: "📝 Started a blog"
 
-  - date: "2020-03-15"
+  - date: "2019-02-01"
+    label: "🇸🇬 Singapore"
+
+  - date: "2019-06-01"
+    label: "🎣 Fishing with Dad"
+
+  - date: "2019-07-01"
+    label: "🐈‍ Hello Stella"
+
+  - date: "2019-08-01"
+    label: "🚗 First EV"
+
+  - date: "2019-10-01"
+    label: "🇯🇵 Japan"
+
+  - date: "2020-04-15"
     label: "😷 Pandemic"
-    description: "The world changed overnight"
+
+  - date: "2020-05-29"
+    label: "🐛 Java timestamp timezone bug"
+    description: "Layers of conversions between client, driver, and database"
+
+  - date: "2020-07-26"
+    label: "🌵 Bitten by Excel VLOOKUP" 
+    description: "Can fail if target string with which the lookup refers to is greater than 255 characters"
 
   - date: "2020-08-01"
     label: "✅ Promoted"
+
+  - date: "2020-11-01"
+    label: "🏡"
+
+  - date: "2020-11-15"
+    label: "🎨 Deck stain"
+
+  - date: "2020-12-01"
+    label: "💍"
+
+  - date: "2021-04-01"
+    label: "🐈‍⬛ Hello Macchi"
+
+  - date: "2021-06-15"
+    label: "🔌 I appreciate electricians"
+
+  - date: "2022-02-01"
+    label: "🚽 I appreciate carpenters"
+
+  - date: "2022-03-01"
+    label: "🚽 I appreciate plumbers"
+
+  - date: "2022-09-15"
+    label: "🔨 I can tile floors"
+
+  - date: "2022-10-01"
+    label: "🔨 I understand insulation"
+
+  - date: "2022-10-15"
+    label: "🔨 I can tile walls"
+
+  - date: "2022-11-19"
+    label: "🍴 I understand kitchens"
+
+  - date: "2022-12-01"
+    label: "🚰 Water main break"
+
+  - date: "2022-12-29"
+    label: "🧗 First time bouldering"
+
+  - date: "2023-02-01"
+    label: "🔨 I understand wood floors"
+
+  - date: "2023-02-15"
+    label: "🐟 Drying fish"
+
+  - date: "2023-03-30"
+    label: "😷 Pandemic over"
+
+  - date: "2023-09-20"
+    label: "🇹🇼 Taiwan"
+
+  - date: "2023-12-01"
+    label: "💍"
+
+  - date: "2023-12-31"
+    label: "🦲 Hair party"
+
+  - date: "2024-05-15"
+    label: "🇮🇹 Italy"
+
+  - date: "2024-08-01"
+    label: "🐀 Roof and rats"
+
+  - date: "2024-11-01"
+    label: "🍼 Dad"
+
+  - date: "2025-10-01"
+    label: "📕 Red Rising Book"
+    description: "Binged"
 
   - date: "2026-02-01"
     label: "🎨 I can spray paint doors"
