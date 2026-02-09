@@ -360,6 +360,107 @@ title: Life In Weeks
   }
 
   /* ========================================
+     COLLAPSIBLE DECADE CARD
+     ======================================== */
+
+  .liw-decade-collapsed {
+    background: #FFF8E1;
+    border: 2px solid #F0D88A;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all var(--transition-smooth, 0.3s ease);
+    animation: liw-fade-in 0.4s ease;
+  }
+
+  .liw-decade-collapsed:hover {
+    border-color: var(--color-accent, #D2691E);
+    box-shadow: 0 4px 12px rgba(210, 105, 30, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .liw-collapsed-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  .liw-collapsed-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #1A1A1A);
+  }
+
+  .liw-collapsed-stats {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary, #5A5A5A);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .liw-collapsed-events {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+  }
+
+  .liw-expand-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-accent, #D2691E);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all var(--transition-snappy, 0.15s ease);
+  }
+
+  .liw-expand-btn:hover {
+    color: var(--color-accent-hover, #A0521A);
+    transform: translateY(2px);
+  }
+
+  .liw-expand-arrow {
+    display: inline-block;
+    transition: transform var(--transition-snappy, 0.15s ease);
+  }
+
+  .liw-decade-collapsed:hover .liw-expand-arrow {
+    animation: bounce-arrow 0.6s ease infinite;
+  }
+
+  /* Decade wrapper for collapse/expand functionality */
+  .liw-decade-wrapper[data-collapsed="true"] .liw-decade {
+    display: none;
+  }
+
+  .liw-decade-wrapper[data-collapsed="false"] .liw-decade-collapsed {
+    display: none;
+  }
+
+  .liw-decade-wrapper[data-collapsed="false"] .liw-decade {
+    animation: liw-expand-decade 0.4s ease;
+  }
+
+  @keyframes liw-expand-decade {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* ========================================
      RESPONSIVE
      ======================================== */
 
@@ -518,6 +619,14 @@ title: Life In Weeks
   var currentRow = null;
   var rowUnits = 0;
 
+  // Track collapsed state for each decade
+  var collapsedDecades = {
+    0: true  // Childhood (decade 0) collapsed by default
+  };
+
+  // Store events by decade for summary card
+  var eventsByDecade = {};
+
   function createRow() {
     currentRow = document.createElement('div');
     currentRow.className = 'liw-flex-row';
@@ -531,11 +640,118 @@ title: Life In Weeks
     }
   }
 
+  function createCollapsedCard(decade, events, decadeColors) {
+    var wrapper = document.createElement('div');
+    wrapper.className = 'liw-decade-wrapper';
+    wrapper.setAttribute('data-collapsed', 'true');
+    wrapper.setAttribute('data-decade', decade);
+
+    // Collapsed card
+    var card = document.createElement('div');
+    card.className = 'liw-decade-collapsed';
+    card.style.background = decadeColors.fill;
+    card.style.borderColor = decadeColors.border;
+
+    // Header
+    var header = document.createElement('div');
+    header.className = 'liw-collapsed-header';
+
+    var title = document.createElement('div');
+    title.className = 'liw-collapsed-title';
+    title.textContent = 'Childhood (1993-2003)';
+
+    var stats = document.createElement('div');
+    stats.className = 'liw-collapsed-stats';
+    var eventCount = events.filter(function(e) { return !e.isBirthday; }).length;
+    stats.textContent = eventCount + ' events · 10 years';
+
+    header.appendChild(title);
+    header.appendChild(stats);
+
+    // Event emojis preview
+    var eventPreview = document.createElement('div');
+    eventPreview.className = 'liw-collapsed-events';
+    var previewEvents = events.slice(0, 4); // Show first 4
+    previewEvents.forEach(function(evt) {
+      var emoji = evt.label.match(/[\p{Emoji}]/gu);
+      if (emoji && emoji[0]) {
+        var span = document.createElement('span');
+        span.textContent = emoji[0];
+        span.title = evt.label;
+        eventPreview.appendChild(span);
+      }
+    });
+
+    // Expand button
+    var btn = document.createElement('div');
+    btn.className = 'liw-expand-btn';
+    btn.innerHTML = 'Show 520 weeks <span class="liw-expand-arrow">↓</span>';
+
+    card.appendChild(header);
+    card.appendChild(eventPreview);
+    card.appendChild(btn);
+
+    // Click handler
+    card.addEventListener('click', function() {
+      toggleDecade(wrapper, decade);
+    });
+
+    wrapper.appendChild(card);
+    return wrapper;
+  }
+
+  function toggleDecade(wrapper, decade) {
+    var isCollapsed = wrapper.getAttribute('data-collapsed') === 'true';
+    wrapper.setAttribute('data-collapsed', isCollapsed ? 'false' : 'true');
+
+    // Update button text
+    var btn = wrapper.querySelector('.liw-expand-btn');
+    if (btn) {
+      btn.innerHTML = isCollapsed
+        ? 'Hide details <span class="liw-expand-arrow">↑</span>'
+        : 'Show 520 weeks <span class="liw-expand-arrow">↓</span>';
+    }
+
+    // Scroll to decade if expanding
+    if (isCollapsed) {
+      setTimeout(function() {
+        wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }
+
   var totalWeeks = LIFESPAN * WEEKS_PER_YEAR;
 
   // Track the current week's box for "Go to Now"
   var currentWeekIdx = Math.floor((NOW - BIRTH) / MS_PER_WEEK);
   var nowBox = null;
+
+  // First pass: collect events by decade
+  for (var w = 0; w < totalWeeks; w++) {
+    var yearOfLife = Math.floor(w / WEEKS_PER_YEAR);
+    var decade = Math.floor(yearOfLife / 10);
+
+    if (!eventsByDecade[decade]) {
+      eventsByDecade[decade] = [];
+    }
+
+    var evtsThisWeek = eventsByWeek[w];
+    if (evtsThisWeek) {
+      // Add unique events to decade (avoid duplicate birthdays)
+      evtsThisWeek.forEach(function(evt) {
+        if (!evt.isBirthday || eventsByDecade[decade].length === 0) {
+          var exists = eventsByDecade[decade].some(function(e) {
+            return e.label === evt.label;
+          });
+          if (!exists) {
+            eventsByDecade[decade].push(evt);
+          }
+        }
+      });
+    }
+  }
+
+  var currentDecadeWrapper = null;
 
   for (var w = 0; w < totalWeeks; w++) {
     var yearOfLife = Math.floor(w / WEEKS_PER_YEAR);
@@ -547,9 +763,29 @@ title: Life In Weeks
     // New decade section
     if (decade !== currentDecade) {
       currentDecade = decade;
-      decadeDiv = document.createElement('div');
-      decadeDiv.className = 'liw-decade';
-      gridEl.appendChild(decadeDiv);
+      var decadeColors = DECADES[decade] || DECADES[DECADES.length - 1];
+
+      // Check if this decade should be collapsed
+      if (decade === 0) {  // Collapse childhood
+        currentDecadeWrapper = createCollapsedCard(
+          decade,
+          eventsByDecade[decade] || [],
+          decadeColors
+        );
+        gridEl.appendChild(currentDecadeWrapper);
+
+        // Create actual decade div but inside wrapper
+        decadeDiv = document.createElement('div');
+        decadeDiv.className = 'liw-decade';
+        currentDecadeWrapper.appendChild(decadeDiv);
+      } else {
+        // Normal rendering for other decades
+        currentDecadeWrapper = null;
+        decadeDiv = document.createElement('div');
+        decadeDiv.className = 'liw-decade';
+        gridEl.appendChild(decadeDiv);
+      }
+
       createRow();
     }
 
@@ -653,15 +889,30 @@ title: Life In Weeks
   // "Go to Now" button - pulse animation with accent color
   document.getElementById('go-now').addEventListener('click', function () {
     if (!nowBox) return;
-    nowBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    // Brief pulse animation on arrival using design token color
-    nowBox.style.transition = 'box-shadow 0.3s ease';
-    setTimeout(function () {
-      nowBox.style.boxShadow = '0 0 0 4px #D2691E, 0 0 20px rgba(210, 105, 30, 0.6)';
+
+    // Check if "now" is in a collapsed decade
+    var currentAge = Math.floor((NOW - BIRTH) / (365.25 * 24 * 60 * 60 * 1000));
+    var currentDecade = Math.floor(currentAge / 10);
+
+    if (currentDecade === 0) {
+      // Auto-expand childhood if current age is < 10
+      var wrapper = document.querySelector('.liw-decade-wrapper[data-decade="0"]');
+      if (wrapper && wrapper.getAttribute('data-collapsed') === 'true') {
+        toggleDecade(wrapper, 0);
+      }
+    }
+
+    setTimeout(function() {
+      nowBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Brief pulse animation on arrival using design token color
+      nowBox.style.transition = 'box-shadow 0.3s ease';
       setTimeout(function () {
-        nowBox.style.boxShadow = '0 0 0 2px #D2691E, 0 0 12px rgba(210, 105, 30, 0.4)';
-      }, 600);
-    }, 500);
+        nowBox.style.boxShadow = '0 0 0 4px #D2691E, 0 0 20px rgba(210, 105, 30, 0.6)';
+        setTimeout(function () {
+          nowBox.style.boxShadow = '0 0 0 2px #D2691E, 0 0 12px rgba(210, 105, 30, 0.4)';
+        }, 600);
+      }, 500);
+    }, currentDecade === 0 ? 500 : 0);
   });
 })();
 </script>

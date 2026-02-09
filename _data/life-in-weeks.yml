@@ -67,7 +67,7 @@ events:
     label: "🎻 I can play Violin"
 
   - date: "2005-07-04"
-    label: "⚯ ͛ Harry Potter Book 6"
+    label: "📖 Harry Potter Book 6"
     description: "Binge read 3 days"
 
   - date: "2006-01-10"
@@ -93,6 +93,10 @@ events:
   - date: "2009-03-15"
     label: "🚗 Driver's license"
     description: "Freedom on four wheels"
+
+  - date: "2010-04-18"
+    label: "🌳 Planted trees in a park"
+    description: "Organized a volunteering activity"
 
   - date: "2010-07-01"
     label: "💼 2nd internship, City Public Works"
@@ -170,7 +174,8 @@ events:
     label: "✅ Promoted"
 
   - date: "2018-09-02"
-    label: "📝 Started a blog"
+    label: "📝 1st blog post"
+    description: "Akka actors"
 
   - date: "2019-02-01"
     label: "🇸🇬 Singapore"
@@ -186,6 +191,10 @@ events:
 
   - date: "2019-10-01"
     label: "🇯🇵 Japan"
+
+  - date: "2019-12-13"
+    label: "📝 2nd blog post"
+    description: "Akka streams"
 
   - date: "2020-04-15"
     label: "😷 Pandemic"
