@@ -47,11 +47,9 @@ events:
 
   - date: "1994-01-15"
     label: "👣 Walking"
-    description: "Hello world!"
 
   - date: "1994-06-02"
     label: "💬 Talking"
-    description: "Hello world!"
 
   - date: "1998-09-01"
     label: "🖍️ Kindergarten"
