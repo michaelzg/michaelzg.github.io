@@ -62,6 +62,13 @@ events:
   - date: "2004-09-01"
     label: "🏫 Middle school"
 
+  - date: "2005-07-04"
+    label: "⚯ ͛ Harry Potter Book 6"
+    description: "Binge read 3 days"
+
+  - date: "2007-08-05"
+    label: "🏊🏻‍♂️ I can swim"
+
   - date: "2007-09-01"
     label: "🎒 High school"
 
@@ -86,6 +93,9 @@ events:
 
   - date: "2011-06-15"
     label: "🎓 Graduated high school"
+
+  - date: "2011-10-25"
+    label: "✈️ Moved out of home"
 
   - date: "2011-11-01"
     label: "🏛️ Started college"
