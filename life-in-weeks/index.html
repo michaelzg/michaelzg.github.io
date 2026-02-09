@@ -4,33 +4,69 @@ title: Life In Weeks
 ---
 
 <style>
+  /*
+    Life In Weeks - Enhanced with Technical-Editorial Aesthetic
+    Matches homepage design system
+  */
+
+  /* ========================================
+     CONTAINER & LAYOUT
+     ======================================== */
+
   .liw-container {
     width: 100vw;
     margin-left: calc(-50vw + 50%);
     box-sizing: border-box;
+    animation: liw-page-fade-in 0.6s ease-out;
   }
+
+  @keyframes liw-page-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* ========================================
+     HEADER (Condensed)
+     ======================================== */
 
   .liw-header {
     text-align: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
+    padding-top: 0.5rem;
   }
 
   .liw-header h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    letter-spacing: 0.02em;
     margin-bottom: 0.25rem;
+    color: var(--color-text-primary, #1A1A1A);
+    font-size: 2.5rem;
   }
 
   .liw-header p {
-    color: #666;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--color-text-secondary, #5A5A5A);
     margin-top: 0;
+    font-size: 0.95rem;
   }
+
+  /* ========================================
+     LEGEND (Compact Pill Badge Style)
+     ======================================== */
 
   .liw-legend {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
-    font-size: 0.8rem;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
     padding: 0.5rem 1rem;
   }
 
@@ -38,46 +74,80 @@ title: Life In Weeks
     position: sticky;
     top: 0;
     z-index: 50;
-    background: rgba(255, 255, 255, 0.95);
-    animation: liw-fade-in 0.4s ease forwards;
+    background: rgba(250, 248, 243, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--color-border, #E5DED3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    animation: liw-fade-in 0.3s ease forwards;
   }
 
   @keyframes liw-fade-in {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
+  /* Compact pill badge styling for legend items */
   .liw-legend-item {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.3rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    background: white;
+    border: 1px solid var(--color-border, #E5DED3);
+    border-radius: 10px;
+    color: var(--color-text-primary, #1A1A1A);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.2s ease;
+  }
+
+  .liw-legend-item:hover {
+    border-color: var(--color-accent, #D2691E);
+    background: rgba(210, 105, 30, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(210, 105, 30, 0.15);
   }
 
   .liw-legend-swatch {
     display: inline-block;
-    width: 14px;
-    height: 14px;
-    border-radius: 3px;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
     flex-shrink: 0;
   }
 
-  /* Match original: 60% viewport width, centered */
+  /* ========================================
+     GRID
+     ======================================== */
+
   .liw-grid {
     margin: 0 20%;
+    padding-bottom: 3rem;
   }
 
   .liw-decade {
-    padding: 4px 0;
-    border-radius: 5px;
-    margin-bottom: 2px;
+    padding: 6px 0;
+    border-radius: 6px;
+    margin-bottom: 4px;
   }
 
-  /* Each row is its own flex container */
   .liw-flex-row {
     display: flex;
   }
 
-  /* Base box — button reset + shared styles matching original */
+  /* ========================================
+     WEEK BOXES
+     ======================================== */
+
   .liw-box {
     display: inline-flex;
     align-items: center;
@@ -87,133 +157,253 @@ title: Life In Weeks
     max-height: 2em;
     padding: 2px 5px;
     margin: 2px 1px;
-    border: 2px solid #ccc;
+    border: 2px solid var(--color-border, #ccc);
     border-radius: 4px;
-    background: #f5f5f5;
-    font-family: inherit;
-    font-size: 1rem;
-    color: #444;
+    background: rgba(245, 245, 245, 0.8);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--color-text-primary, #444);
     cursor: default;
     outline: none;
     -webkit-appearance: none;
     appearance: none;
     line-height: 1.2;
     box-sizing: border-box;
+    transition: all 0.2s ease;
   }
 
-  /* Empty boxes — fill available space equally (like original's w-100) */
+  /* Hover effect on past weeks */
+  .liw-box:not(.liw-future):hover {
+    transform: scale(1.05);
+    z-index: 100; /* Higher z-index so tooltip appears above other boxes */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
   .liw-box:not(.liw-has-label) {
     width: 100%;
   }
 
-  /* Labeled boxes — stay at content width */
   .liw-box.liw-has-label {
     white-space: nowrap;
     flex-shrink: 0;
+    font-weight: 600;
   }
 
   .liw-box.liw-future {
-    background-color: #eee !important;
-    border-color: #dee2e6 !important;
+    background-color: rgba(238, 238, 238, 0.5) !important;
+    border-color: var(--color-border, #dee2e6) !important;
+    opacity: 0.6;
   }
 
-  /* Current week marker */
+  /* Current week with accent color */
   .liw-box.liw-now {
-    border-color: #f05d2b !important;
-    box-shadow: 0 0 0 2px #f05d2b, 0 0 8px rgba(240, 93, 43, 0.4);
+    border-color: var(--color-accent, #D2691E) !important;
+    box-shadow: 0 0 0 2px var(--color-accent, #D2691E), 0 0 12px rgba(210, 105, 30, 0.4);
     z-index: 5;
+    font-weight: 700;
   }
 
-  /* Tooltip — below the box, matching original orange */
+  /* ========================================
+     TOOLTIPS
+     ======================================== */
+
   .liw-box .liw-tip {
     display: none;
     position: absolute;
-    top: calc(100% + 5px);
+    top: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
-    background: #f05d2b;
-    color: #fff;
+    background: var(--color-accent, #D2691E);
+    color: white;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 0.7rem;
-    padding: 6px 10px;
-    border-radius: 4px;
+    padding: 8px 12px;
+    border-radius: 6px;
     white-space: nowrap;
-    z-index: 30;
+    z-index: 1000; /* Very high z-index to appear above everything */
     pointer-events: none;
     max-width: 300px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
   .liw-tip-date {
-    font-weight: bold;
-    margin-bottom: 2px;
+    font-weight: 700;
+    margin-bottom: 3px;
+    letter-spacing: 0.02em;
   }
 
   .liw-tip-label {
     margin-bottom: 2px;
+    opacity: 0.95;
   }
 
   .liw-tip-desc {
     white-space: normal;
-    opacity: 0.9;
+    opacity: 0.85;
     font-style: italic;
     border-top: 1px solid rgba(255,255,255,0.3);
-    padding-top: 3px;
-    margin-top: 3px;
+    padding-top: 4px;
+    margin-top: 4px;
+    font-size: 0.65rem;
   }
 
+  /* Tooltip arrow */
   .liw-box .liw-tip::before {
     content: '';
     position: absolute;
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
-    border: 5px solid transparent;
-    border-bottom-color: #f05d2b;
+    border: 6px solid transparent;
+    border-bottom-color: var(--color-accent, #D2691E);
   }
 
   .liw-box:hover .liw-tip,
   .liw-box:focus .liw-tip {
-    display: block;
+    display: block !important;
+    animation: liw-tooltip-appear 0.2s ease forwards;
+  }
+
+  @keyframes liw-tooltip-appear {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
   }
 
   .liw-box.liw-future .liw-tip {
     display: none !important;
   }
 
-  /* Go to Now button */
+  /* ========================================
+     GO TO NOW BUTTON (Compact CTA)
+     ======================================== */
+
+  /* Wrapper to separate button from legend */
+  .liw-cta-wrapper {
+    text-align: center;
+    margin: 0.75rem 0 1.5rem;
+  }
+
   .liw-go-now {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    padding: 0.25rem 0.7rem;
-    border: 2px solid #f05d2b;
-    border-radius: 16px;
-    background: #fff;
-    color: #f05d2b;
-    font-size: 0.8rem;
-    font-family: inherit;
-    font-weight: bold;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1.25rem;
+    border: none;
+    border-radius: 6px;
+    background: var(--color-accent, #D2691E);
+    color: white;
+    font-size: 0.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     cursor: pointer;
-    transition: background 0.2s, color 0.2s, transform 0.15s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     -webkit-appearance: none;
     appearance: none;
+    box-shadow: 0 3px 8px rgba(210, 105, 30, 0.25);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Subtle pulse animation to draw attention */
+  .liw-go-now::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    transform: translate(-50%, -50%) scale(0);
+    transition: transform 0.6s ease;
+  }
+
+  .liw-go-now:hover::before {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
   }
 
   .liw-go-now:hover {
-    background: #f05d2b;
-    color: #fff;
-    transform: scale(1.05);
+    background: var(--color-accent-hover, #A0521A);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(210, 105, 30, 0.4);
   }
 
   .liw-go-now:active {
-    transform: scale(0.97);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(210, 105, 30, 0.3);
   }
+
+  /* Animate arrow icon */
+  .liw-go-now .arrow {
+    display: inline-block;
+    transition: transform 0.3s ease;
+  }
+
+  .liw-go-now:hover .arrow {
+    transform: translateY(3px);
+    animation: bounce-arrow 0.6s ease infinite;
+  }
+
+  @keyframes bounce-arrow {
+    0%, 100% { transform: translateY(3px); }
+    50% { transform: translateY(6px); }
+  }
+
+  /* ========================================
+     RESPONSIVE
+     ======================================== */
 
   @media only screen and (max-width: 768px) {
     .liw-grid {
       margin: 0 2%;
     }
+
     .liw-box {
       font-size: 0.75rem;
+    }
+
+    .liw-header {
+      margin-bottom: 0.75rem;
+      padding-top: 0;
+    }
+
+    .liw-header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.15rem;
+    }
+
+    .liw-header p {
+      font-size: 0.85rem;
+    }
+
+    .liw-legend {
+      gap: 0.35rem;
+      padding: 0.35rem 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .liw-legend-item {
+      font-size: 0.6rem;
+      padding: 0.2rem 0.45rem;
+    }
+
+    .liw-cta-wrapper {
+      margin: 0.5rem 0 1rem;
+    }
+
+    .liw-go-now {
+      font-size: 0.7rem;
+      padding: 0.45rem 1rem;
     }
   }
 </style>
@@ -236,7 +426,12 @@ title: Life In Weeks
       <span class="liw-legend-swatch" style="border: 2px solid #dee2e6; background: #eee;"></span>
       Future
     </span>
-    <button class="liw-go-now" id="go-now" type="button">&#x2193; Go to Now</button>
+  </div>
+
+  <div class="liw-cta-wrapper">
+    <button class="liw-go-now" id="go-now" type="button">
+      <span class="arrow">↓</span> Jump to Now
+    </button>
   </div>
 
   <div class="liw-grid" id="grid"></div>
@@ -455,16 +650,16 @@ title: Life In Weeks
     }
   }, { passive: true });
 
-  // "Go to Now" button
+  // "Go to Now" button - pulse animation with accent color
   document.getElementById('go-now').addEventListener('click', function () {
     if (!nowBox) return;
     nowBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    // Brief pulse animation on arrival
+    // Brief pulse animation on arrival using design token color
     nowBox.style.transition = 'box-shadow 0.3s ease';
     setTimeout(function () {
-      nowBox.style.boxShadow = '0 0 0 4px #f05d2b, 0 0 20px rgba(240, 93, 43, 0.6)';
+      nowBox.style.boxShadow = '0 0 0 4px #D2691E, 0 0 20px rgba(210, 105, 30, 0.6)';
       setTimeout(function () {
-        nowBox.style.boxShadow = '0 0 0 2px #f05d2b, 0 0 8px rgba(240, 93, 43, 0.4)';
+        nowBox.style.boxShadow = '0 0 0 2px #D2691E, 0 0 12px rgba(210, 105, 30, 0.4)';
       }, 600);
     }, 500);
   });
