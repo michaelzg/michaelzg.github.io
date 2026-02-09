@@ -179,18 +179,6 @@ title: Life In Weeks
     display: none !important;
   }
 
-  /* Decade background bands */
-  .liw-decade[data-decade="0"] { background-color: #eef3fb; }
-  .liw-decade[data-decade="1"] { background-color: #eefbf3; }
-  .liw-decade[data-decade="2"] { background-color: #fdf6ee; }
-  .liw-decade[data-decade="3"] { background-color: #f5eefb; }
-  .liw-decade[data-decade="4"] { background-color: #eefbfb; }
-  .liw-decade[data-decade="5"] { background-color: #fbeef0; }
-  .liw-decade[data-decade="6"] { background-color: #f0f2f4; }
-  .liw-decade[data-decade="7"] { background-color: #fbf9ee; }
-  .liw-decade[data-decade="8"] { background-color: #f1eefb; }
-  .liw-decade[data-decade="9"] { background-color: #eef4f1; }
-
   /* Go to Now button */
   .liw-go-now {
     display: inline-flex;
@@ -366,7 +354,6 @@ title: Life In Weeks
       currentDecade = decade;
       decadeDiv = document.createElement('div');
       decadeDiv.className = 'liw-decade';
-      decadeDiv.setAttribute('data-decade', decade);
       gridEl.appendChild(decadeDiv);
       createRow();
     }
