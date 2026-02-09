@@ -133,6 +133,9 @@ events:
     label: "🛰️ 6th internship, NASA"
     description: "Satellite Imagery for Southeast Asia flood impact"
 
+  - date: "2014-11-01"
+    label: "🥷 Naruto manga ended"
+
   - date: "2015-05-15"
     label: "🎓 Graduated college"
 
