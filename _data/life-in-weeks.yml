@@ -38,57 +38,66 @@ decades:
     border: "#AED581"
 
 # Life events — sorted by date.
+# Labels support emojis! Just paste them directly, e.g. "🎓 Graduated"
+# Add an optional 'description' field for extra detail shown in the hover tooltip.
 events:
   - date: "1993-03-15"
-    label: "Born"
+    label: "👶 Born"
+    description: "Hello world!"
 
   - date: "1998-09-01"
-    label: "Kindergarten"
+    label: "🖍️ Kindergarten"
 
   - date: "1999-09-01"
-    label: "Elementary school"
+    label: "📚 Elementary school"
 
   - date: "2004-09-01"
-    label: "Middle school"
+    label: "🏫 Middle school"
 
   - date: "2007-09-01"
-    label: "High school"
+    label: "🎒 High school"
 
-  - date: "2009-06-15"
-    label: "Driver's license"
+  - date: "2009-03-15"
+    label: "🚗 Driver's license"
+    description: "Freedom on four wheels"
 
   - date: "2011-06-15"
-    label: "Graduated high school"
+    label: "🎓 Graduated high school"
 
   - date: "2011-09-01"
-    label: "Started college"
+    label: "🏛️ Started college"
 
   - date: "2013-06-01"
-    label: "First internship"
+    label: "💼 First internship"
+    description: "First taste of the real world"
 
   - date: "2015-05-15"
-    label: "Graduated college"
+    label: "🎓 Graduated college"
 
   - date: "2015-07-01"
-    label: "First job"
+    label: "💼 First job"
+    description: "Officially a working adult"
 
   - date: "2017-03-01"
-    label: "Promoted"
+    label: "📈 Promoted"
+
+  - date: "2018-09-02"
+    label: "📝 Started a blog"
 
   - date: "2018-06-01"
-    label: "Traveled abroad"
+    label: "✈️ Traveled abroad"
+    description: "First international adventure"
 
   - date: "2020-03-15"
-    label: "Pandemic"
-
-  - date: "2021-01-15"
-    label: "Started a blog"
+    label: "😷 Pandemic"
+    description: "The world changed overnight"
 
   - date: "2022-06-01"
-    label: "New job"
+    label: "🚀 New job"
+    description: "New chapter, new challenges"
 
   - date: "2024-01-15"
-    label: "Side project launched"
+    label: "🛠️ Side project launched"
 
   - date: "2073-03-15"
     label: "Life expectancy (age 80)"

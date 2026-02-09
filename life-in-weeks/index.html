@@ -117,6 +117,13 @@ title: Life In Weeks
     border-color: #dee2e6 !important;
   }
 
+  /* Current week marker */
+  .liw-box.liw-now {
+    border-color: #f05d2b !important;
+    box-shadow: 0 0 0 2px #f05d2b, 0 0 8px rgba(240, 93, 43, 0.4);
+    z-index: 5;
+  }
+
   /* Tooltip — below the box, matching original orange */
   .liw-box .liw-tip {
     display: none;
@@ -127,11 +134,30 @@ title: Life In Weeks
     background: #f05d2b;
     color: #fff;
     font-size: 0.7rem;
-    padding: 4px 8px;
+    padding: 6px 10px;
     border-radius: 4px;
     white-space: nowrap;
     z-index: 30;
     pointer-events: none;
+    max-width: 300px;
+  }
+
+  .liw-tip-date {
+    font-weight: bold;
+    margin-bottom: 2px;
+  }
+
+  .liw-tip-label {
+    margin-bottom: 2px;
+  }
+
+  .liw-tip-desc {
+    white-space: normal;
+    opacity: 0.9;
+    font-style: italic;
+    border-top: 1px solid rgba(255,255,255,0.3);
+    padding-top: 3px;
+    margin-top: 3px;
   }
 
   .liw-box .liw-tip::before {
@@ -165,6 +191,35 @@ title: Life In Weeks
   .liw-decade[data-decade="8"] { background-color: #f1eefb; }
   .liw-decade[data-decade="9"] { background-color: #eef4f1; }
 
+  /* Go to Now button */
+  .liw-go-now {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.7rem;
+    border: 2px solid #f05d2b;
+    border-radius: 16px;
+    background: #fff;
+    color: #f05d2b;
+    font-size: 0.8rem;
+    font-family: inherit;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, transform 0.15s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .liw-go-now:hover {
+    background: #f05d2b;
+    color: #fff;
+    transform: scale(1.05);
+  }
+
+  .liw-go-now:active {
+    transform: scale(0.97);
+  }
+
   @media only screen and (max-width: 768px) {
     .liw-grid {
       margin: 0 2%;
@@ -193,6 +248,7 @@ title: Life In Weeks
       <span class="liw-legend-swatch" style="border: 2px solid #dee2e6; background: #eee;"></span>
       Future
     </span>
+    <button class="liw-go-now" id="go-now" type="button">&#x2193; Go to Now</button>
   </div>
 
   <div class="liw-grid" id="grid"></div>
@@ -250,9 +306,26 @@ title: Life In Weeks
     return MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
   }
 
+  // Count visual characters (treat each emoji/grapheme as ~2 chars width)
+  function visualLength(str) {
+    if (!str) return 0;
+    // Use Intl.Segmenter if available for accurate grapheme counting
+    if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+      var segmenter = new Intl.Segmenter('en', { granularity: 'grapheme' });
+      var len = 0;
+      for (var seg of segmenter.segment(str)) {
+        // Emojis and multi-codepoint chars get extra width
+        len += seg.segment.length > 1 ? 2 : 1;
+      }
+      return len;
+    }
+    // Fallback: rough heuristic using string length
+    return str.length;
+  }
+
   function boxUnits(label) {
     if (!label) return 1;
-    return 2 * BOX_END_MULT + label.length * BOX_CHAR_MULT;
+    return 2 * BOX_END_MULT + visualLength(label) * BOX_CHAR_MULT;
   }
 
   var gridEl = document.getElementById('grid');
@@ -277,11 +350,16 @@ title: Life In Weeks
 
   var totalWeeks = LIFESPAN * WEEKS_PER_YEAR;
 
+  // Track the current week's box for "Go to Now"
+  var currentWeekIdx = Math.floor((NOW - BIRTH) / MS_PER_WEEK);
+  var nowBox = null;
+
   for (var w = 0; w < totalWeeks; w++) {
     var yearOfLife = Math.floor(w / WEEKS_PER_YEAR);
     var decade = Math.floor(yearOfLife / 10);
     var weekStart = new Date(BIRTH.getTime() + w * MS_PER_WEEK);
     var isFuture = weekStart > NOW;
+    var isNow = (w === currentWeekIdx);
 
     // New decade section
     if (decade !== currentDecade) {
@@ -309,10 +387,14 @@ title: Life In Weeks
     // Create box
     var box = document.createElement('button');
     box.type = 'button';
-    box.className = 'liw-box' + (isFuture ? ' liw-future' : '') + (boxLabel ? ' liw-has-label' : '');
+    box.className = 'liw-box' + (isFuture ? ' liw-future' : '') + (boxLabel ? ' liw-has-label' : '') + (isNow ? ' liw-now' : '');
     box.style.borderColor = decadeColors.border;
     if (!isFuture) {
       box.style.backgroundColor = decadeColors.fill;
+    }
+
+    if (isNow) {
+      nowBox = box;
     }
 
     if (boxLabel) {
@@ -321,23 +403,49 @@ title: Life In Weeks
 
     // Tooltip
     if (!isFuture) {
-      var tipText = fmtDate(weekStart) + ' \u2013 ';
+      var tip = document.createElement('span');
+      tip.className = 'liw-tip';
+
+      var dateDiv = document.createElement('div');
+      dateDiv.className = 'liw-tip-date';
+      dateDiv.textContent = fmtDate(weekStart);
+      tip.appendChild(dateDiv);
+
       if (evtsThisWeek) {
-        var descs = evtsThisWeek.map(function (e) {
-          return e.description || e.label;
-        });
-        tipText += descs.join('; ');
+        var labels = evtsThisWeek.map(function (e) { return e.label; });
+        var labelDiv = document.createElement('div');
+        labelDiv.className = 'liw-tip-label';
+        labelDiv.textContent = labels.join(' \u00b7 ');
+        tip.appendChild(labelDiv);
+
+        // Show descriptions if any event has one
+        var descs = evtsThisWeek.filter(function (e) { return e.description; });
+        if (descs.length > 0) {
+          var descDiv = document.createElement('div');
+          descDiv.className = 'liw-tip-desc';
+          descDiv.textContent = descs.map(function (e) { return e.description; }).join(' \u00b7 ');
+          tip.appendChild(descDiv);
+        }
       } else {
         var age = weekStart.getFullYear() - BIRTH.getFullYear();
         if (weekStart.getMonth() < BIRTH.getMonth() ||
             (weekStart.getMonth() === BIRTH.getMonth() && weekStart.getDate() < BIRTH.getDate())) {
           age--;
         }
-        tipText += 'Age ' + age;
+        var ageDiv = document.createElement('div');
+        ageDiv.className = 'liw-tip-label';
+        ageDiv.textContent = 'Age ' + age;
+        tip.appendChild(ageDiv);
       }
-      var tip = document.createElement('span');
-      tip.className = 'liw-tip';
-      tip.textContent = tipText;
+
+      if (isNow) {
+        var nowDiv = document.createElement('div');
+        nowDiv.className = 'liw-tip-label';
+        nowDiv.style.fontWeight = 'bold';
+        nowDiv.textContent = '\u2190 You are here';
+        tip.appendChild(nowDiv);
+      }
+
       box.appendChild(tip);
     }
 
@@ -359,5 +467,19 @@ title: Life In Weeks
       legend.classList.remove('liw-legend-sticky');
     }
   }, { passive: true });
+
+  // "Go to Now" button
+  document.getElementById('go-now').addEventListener('click', function () {
+    if (!nowBox) return;
+    nowBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Brief pulse animation on arrival
+    nowBox.style.transition = 'box-shadow 0.3s ease';
+    setTimeout(function () {
+      nowBox.style.boxShadow = '0 0 0 4px #f05d2b, 0 0 20px rgba(240, 93, 43, 0.6)';
+      setTimeout(function () {
+        nowBox.style.boxShadow = '0 0 0 2px #f05d2b, 0 0 8px rgba(240, 93, 43, 0.4)';
+      }, 600);
+    }, 500);
+  });
 })();
 </script>
