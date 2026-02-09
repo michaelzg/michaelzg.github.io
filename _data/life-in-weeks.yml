@@ -75,6 +75,9 @@ events:
   - date: "2008-09-15"
     label: "🚗 I can drive"
 
+  - date: "2009-01-01"
+    label: "🗺️ I can make maps"
+
   - date: "2009-05-01"
     label: "💼 1st internship, County Public Works"
     description: "GIS (maps) for roads and traffic signs"
