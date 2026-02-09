@@ -236,8 +236,9 @@ events:
   - date: "2022-11-19"
     label: "🍴 I understand kitchens"
 
-  - date: "2022-12-01"
-    label: "🚰 Water main break"
+  - date: "2022-11-30"
+    label: "💬 ChatGPT announced"
+    description: "https://x.com/sama/status/1598038815599661056"
 
   - date: "2022-12-29"
     label: "🧗 First time bouldering"
