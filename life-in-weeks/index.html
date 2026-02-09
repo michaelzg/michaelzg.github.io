@@ -7,7 +7,6 @@ title: Life In Weeks
   .liw-container {
     width: 100vw;
     margin-left: calc(-50vw + 50%);
-    padding: 0 1rem;
     box-sizing: border-box;
   }
 
@@ -48,56 +47,70 @@ title: Life In Weeks
     flex-shrink: 0;
   }
 
+  /* Match original: 60% viewport width, centered */
   .liw-grid {
-    margin: 0 auto;
-    overflow-x: auto;
+    margin: 0 20%;
   }
 
-  .liw-row {
+  .liw-decade {
+    padding: 4px 0;
+    border-radius: 5px;
+    margin-bottom: 2px;
+  }
+
+  /* Each row is its own flex container */
+  .liw-flex-row {
     display: flex;
-    align-items: center;
-    padding: 1px 4px;
   }
 
-  .liw-year-label {
-    width: 42px;
-    font-size: 0.75rem;
-    color: #888;
-    text-align: right;
-    padding-right: 8px;
-    flex-shrink: 0;
-    font-variant-numeric: tabular-nums;
-    font-weight: 600;
-  }
-
-  .liw-row-boxes {
-    display: flex;
-    gap: 2px;
-  }
-
+  /* Base box — button reset + shared styles matching original */
   .liw-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     position: relative;
-    width: 18px;
-    height: 18px;
-    border-radius: 3px;
+    height: 2em;
+    max-height: 2em;
+    padding: 2px 5px;
+    margin: 2px 1px;
     border: 2px solid #ccc;
+    border-radius: 4px;
     background: #f5f5f5;
+    font-family: inherit;
+    font-size: 1rem;
+    color: #444;
     cursor: default;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    line-height: 1.2;
+    box-sizing: border-box;
+  }
+
+  /* Empty boxes — fill available space equally (like original's w-100) */
+  .liw-box:not(.liw-has-label) {
+    width: 100%;
+  }
+
+  /* Labeled boxes — stay at content width */
+  .liw-box.liw-has-label {
+    white-space: nowrap;
     flex-shrink: 0;
   }
 
   .liw-box.liw-future {
-    opacity: 0.25;
+    background-color: #eee !important;
+    border-color: #dee2e6 !important;
   }
 
-  /* Hover tooltip (date + age detail) */
+  /* Tooltip — below the box, matching original orange */
   .liw-box .liw-tip {
     display: none;
     position: absolute;
-    bottom: calc(100% + 6px);
+    top: calc(100% + 5px);
     left: 50%;
     transform: translateX(-50%);
-    background: #333;
+    background: #f05d2b;
     color: #fff;
     font-size: 0.7rem;
     padding: 4px 8px;
@@ -105,6 +118,16 @@ title: Life In Weeks
     white-space: nowrap;
     z-index: 30;
     pointer-events: none;
+  }
+
+  .liw-box .liw-tip::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-bottom-color: #f05d2b;
   }
 
   .liw-box:hover .liw-tip,
@@ -116,81 +139,24 @@ title: Life In Weeks
     display: none !important;
   }
 
-  /* Always-visible event label */
-  .liw-event-label {
-    position: absolute;
-    left: calc(100% + 4px);
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.7rem;
-    line-height: 1;
-    white-space: nowrap;
-    color: #444;
-    background: rgba(255, 255, 255, 0.92);
-    padding: 2px 5px;
-    border-radius: 3px;
-    z-index: 10;
-    pointer-events: none;
-  }
-
-  .liw-future .liw-event-label {
-    opacity: 0.5;
-  }
-
   /* Decade background bands */
-  .liw-row[data-decade="0"] { background-color: #eef3fb; }
-  .liw-row[data-decade="1"] { background-color: #eefbf3; }
-  .liw-row[data-decade="2"] { background-color: #fdf6ee; }
-  .liw-row[data-decade="3"] { background-color: #f5eefb; }
-  .liw-row[data-decade="4"] { background-color: #eefbfb; }
-  .liw-row[data-decade="5"] { background-color: #fbeef0; }
-  .liw-row[data-decade="6"] { background-color: #f0f2f4; }
-  .liw-row[data-decade="7"] { background-color: #fbf9ee; }
-  .liw-row[data-decade="8"] { background-color: #f1eefb; }
-  .liw-row[data-decade="9"] { background-color: #eef4f1; }
+  .liw-decade[data-decade="0"] { background-color: #eef3fb; }
+  .liw-decade[data-decade="1"] { background-color: #eefbf3; }
+  .liw-decade[data-decade="2"] { background-color: #fdf6ee; }
+  .liw-decade[data-decade="3"] { background-color: #f5eefb; }
+  .liw-decade[data-decade="4"] { background-color: #eefbfb; }
+  .liw-decade[data-decade="5"] { background-color: #fbeef0; }
+  .liw-decade[data-decade="6"] { background-color: #f0f2f4; }
+  .liw-decade[data-decade="7"] { background-color: #fbf9ee; }
+  .liw-decade[data-decade="8"] { background-color: #f1eefb; }
+  .liw-decade[data-decade="9"] { background-color: #eef4f1; }
 
-  @media (max-width: 900px) {
+  @media only screen and (max-width: 768px) {
+    .liw-grid {
+      margin: 0 2%;
+    }
     .liw-box {
-      width: 12px;
-      height: 12px;
-      border-width: 1.5px;
-      border-radius: 2px;
-    }
-    .liw-year-label {
-      width: 34px;
-      font-size: 0.65rem;
-      padding-right: 5px;
-    }
-    .liw-row-boxes {
-      gap: 1.5px;
-    }
-    .liw-event-label {
-      font-size: 0.6rem;
-    }
-  }
-
-  @media (max-width: 600px) {
-    .liw-box {
-      width: 8px;
-      height: 8px;
-      border-width: 1px;
-      border-radius: 1px;
-    }
-    .liw-year-label {
-      width: 28px;
-      font-size: 0.5rem;
-      padding-right: 3px;
-    }
-    .liw-row-boxes {
-      gap: 1px;
-    }
-    .liw-legend {
-      gap: 0.5rem;
-      font-size: 0.7rem;
-    }
-    .liw-event-label {
-      font-size: 0.5rem;
-      padding: 1px 3px;
+      font-size: 0.75rem;
     }
   }
 </style>
@@ -210,7 +176,7 @@ title: Life In Weeks
     </span>
     {% endfor %}
     <span class="liw-legend-item">
-      <span class="liw-legend-swatch" style="border: 2px solid #ccc; background: #f5f5f5; opacity: 0.3;"></span>
+      <span class="liw-legend-swatch" style="border: 2px solid #dee2e6; background: #eee;"></span>
       Future
     </span>
   </div>
@@ -227,18 +193,24 @@ title: Life In Weeks
   var BIRTH = new Date(parseInt(birthParts[0], 10), parseInt(birthParts[1], 10) - 1, parseInt(birthParts[2], 10));
   var LIFESPAN = CONFIG.lifespan_years;
   var MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
-  var WEEKS_PER_ROW = 52;
+  var WEEKS_PER_YEAR = 52;
   var NOW = new Date();
 
   var LOC_COLORS = CONFIG.locations;
   var ACT_COLORS = CONFIG.activities;
   var EVENTS = CONFIG.events;
 
+  // Row control — matching original's multipliers
+  var MAX_BOXES_IN_ROW = 21;
+  var BOX_END_MULT = 0.45;
+  var BOX_CHAR_MULT = 0.319;
+
   function parseDate(s) {
     var parts = s.split('-');
     return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
   }
 
+  // Build week-index -> event(s) lookup
   var eventsByWeek = {};
   EVENTS.forEach(function (evt) {
     var d = parseDate(evt.date);
@@ -247,85 +219,125 @@ title: Life In Weeks
     eventsByWeek[weekIdx].push(evt);
   });
 
+  // Auto-generate birthday events
+  for (var age = 1; age < LIFESPAN; age++) {
+    var bdayDate = new Date(BIRTH.getFullYear() + age, BIRTH.getMonth(), BIRTH.getDate());
+    var weekIdx = Math.floor((bdayDate - BIRTH) / MS_PER_WEEK);
+    var bdayEvt = {
+      label: '\uD83C\uDF82 ' + age + ' in ' + (BIRTH.getFullYear() + age),
+      description: 'Turned ' + age + ' year' + (age !== 1 ? 's' : '') + ' old',
+      isBirthday: true
+    };
+    if (!eventsByWeek[weekIdx]) eventsByWeek[weekIdx] = [];
+    eventsByWeek[weekIdx].unshift(bdayEvt);
+  }
+
   var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   function fmtDate(d) {
     return MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
   }
 
-  function ageStr(d) {
-    var years = d.getFullYear() - BIRTH.getFullYear();
-    var m = d.getMonth() - BIRTH.getMonth();
-    if (m < 0 || (m === 0 && d.getDate() < BIRTH.getDate())) years--;
-    return 'Age ' + years;
+  function boxUnits(label) {
+    if (!label) return 1;
+    return 2 * BOX_END_MULT + label.length * BOX_CHAR_MULT;
   }
 
   var gridEl = document.getElementById('grid');
   var currentBased = EVENTS[0].based;
   var currentDoing = EVENTS[0].doing;
 
-  for (var yearIdx = 0; yearIdx < LIFESPAN; yearIdx++) {
-    var decade = Math.floor(yearIdx / 10);
-    var calendarYear = BIRTH.getFullYear() + yearIdx;
+  var currentDecade = -1;
+  var decadeDiv = null;
+  var currentRow = null;
+  var rowUnits = 0;
 
-    var row = document.createElement('div');
-    row.className = 'liw-row';
-    row.setAttribute('data-decade', decade);
+  function createRow() {
+    currentRow = document.createElement('div');
+    currentRow.className = 'liw-flex-row';
+    decadeDiv.appendChild(currentRow);
+    rowUnits = 0;
+  }
 
-    var label = document.createElement('span');
-    label.className = 'liw-year-label';
-    if (yearIdx % 5 === 0) {
-      label.textContent = calendarYear;
+  function ensureRowSpace(units) {
+    if (rowUnits > 0 && rowUnits + units >= MAX_BOXES_IN_ROW) {
+      createRow();
     }
-    row.appendChild(label);
+  }
 
-    var boxesDiv = document.createElement('div');
-    boxesDiv.className = 'liw-row-boxes';
+  var totalWeeks = LIFESPAN * WEEKS_PER_YEAR;
 
-    for (var w = 0; w < WEEKS_PER_ROW; w++) {
-      var globalWeek = yearIdx * WEEKS_PER_ROW + w;
-      var weekStart = new Date(BIRTH.getTime() + globalWeek * MS_PER_WEEK);
-      var isFuture = weekStart > NOW;
+  for (var w = 0; w < totalWeeks; w++) {
+    var yearOfLife = Math.floor(w / WEEKS_PER_YEAR);
+    var decade = Math.floor(yearOfLife / 10);
+    var weekStart = new Date(BIRTH.getTime() + w * MS_PER_WEEK);
+    var isFuture = weekStart > NOW;
 
-      var evtsThisWeek = eventsByWeek[globalWeek];
+    // New decade section
+    if (decade !== currentDecade) {
+      currentDecade = decade;
+      decadeDiv = document.createElement('div');
+      decadeDiv.className = 'liw-decade';
+      decadeDiv.setAttribute('data-decade', decade);
+      gridEl.appendChild(decadeDiv);
+      createRow();
+    }
+
+    // Update state from events
+    var evtsThisWeek = eventsByWeek[w];
+    if (evtsThisWeek) {
+      evtsThisWeek.forEach(function (evt) {
+        if (evt.based) currentBased = evt.based;
+        if (evt.doing) currentDoing = evt.doing;
+      });
+    }
+
+    // Build inline label
+    var boxLabel = '';
+    if (evtsThisWeek) {
+      boxLabel = evtsThisWeek.map(function (e) { return e.label; }).join(' \u00b7 ');
+    }
+
+    // Check row space before inserting
+    var units = boxUnits(boxLabel);
+    ensureRowSpace(units);
+
+    // Create box
+    var box = document.createElement('button');
+    box.type = 'button';
+    box.className = 'liw-box' + (isFuture ? ' liw-future' : '') + (boxLabel ? ' liw-has-label' : '');
+    box.style.borderColor = LOC_COLORS[currentBased] || '#ccc';
+    if (!isFuture) {
+      box.style.backgroundColor = ACT_COLORS[currentDoing] || '#f5f5f5';
+    }
+
+    if (boxLabel) {
+      box.textContent = boxLabel;
+    }
+
+    // Tooltip
+    if (!isFuture) {
+      var tipText = fmtDate(weekStart) + ' \u2013 ';
       if (evtsThisWeek) {
-        evtsThisWeek.forEach(function (evt) {
-          if (evt.based) currentBased = evt.based;
-          if (evt.doing) currentDoing = evt.doing;
+        var descs = evtsThisWeek.map(function (e) {
+          return e.description || e.label;
         });
+        tipText += descs.join('; ');
+      } else {
+        tipText += 'Age ' + yearOfLife;
       }
-
-      var box = document.createElement('span');
-      box.className = 'liw-box' + (isFuture ? ' liw-future' : '');
-      box.style.borderColor = LOC_COLORS[currentBased] || '#ccc';
-      box.style.background = ACT_COLORS[currentDoing] || '#f5f5f5';
-
-      if (!isFuture) {
-        box.setAttribute('tabindex', '0');
-        var tipText = fmtDate(weekStart) + ' \u2014 ' + ageStr(weekStart);
-        if (evtsThisWeek) {
-          evtsThisWeek.forEach(function (evt) {
-            tipText += ' \u2022 ' + evt.label;
-          });
-        }
-        var tip = document.createElement('span');
-        tip.className = 'liw-tip';
-        tip.textContent = tipText;
-        box.appendChild(tip);
-      }
-
-      // Always-visible event label
-      if (evtsThisWeek) {
-        var eventLabel = document.createElement('span');
-        eventLabel.className = 'liw-event-label';
-        eventLabel.textContent = evtsThisWeek.map(function (e) { return e.label; }).join(' \u00b7 ');
-        box.appendChild(eventLabel);
-      }
-
-      boxesDiv.appendChild(box);
+      var tip = document.createElement('span');
+      tip.className = 'liw-tip';
+      tip.textContent = tipText;
+      box.appendChild(tip);
     }
 
-    row.appendChild(boxesDiv);
-    gridEl.appendChild(row);
+    currentRow.appendChild(box);
+    rowUnits += units;
+
+    // Break after if row is full
+    if (rowUnits >= MAX_BOXES_IN_ROW) {
+      createRow();
+    }
   }
 })();
 </script>
