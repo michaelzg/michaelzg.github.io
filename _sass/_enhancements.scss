@@ -1,36 +1,41 @@
 /*
-  Homepage Design Enhancements
+  ========================================
+  HOMEPAGE DESIGN ENHANCEMENTS
   Technical-Editorial Aesthetic
+  ========================================
+
+  Design System:
+  - Typography: JetBrains Mono (headings/UI) + System Fonts (body)
+  - Colors: Warm earthy palette with burnt sienna accent
+  - Motion: Staggered entry animations + hover micro-interactions
+  - Layout: Left accent bars + geometric indicators
 */
 
-// ============================================
-// CSS Custom Properties (Design Tokens)
-// ============================================
+// ========================================
+// 1. DESIGN TOKENS
+// ========================================
 
 :root {
-  // Color Palette - Warm, earthy, technical
-  --color-bg: #FAF8F3;
-  --color-text-primary: #1A1A1A;
-  --color-text-secondary: #5A5A5A;
-  --color-accent: #D2691E; // Burnt Sienna
-  --color-accent-hover: #A0521A;
-  --color-link: #2D5016; // Forest Green
-  --color-link-hover: #1A2F0D;
-  --color-border: #E5DED3;
-  --color-post-accent: #D2691E;
+  // Colors
+  --color-bg: #FAF8F3;           // Warm cream background
+  --color-text-primary: #1A1A1A; // Near-black text
+  --color-text-secondary: #5A5A5A; // Gray text
+  --color-accent: #D2691E;       // Burnt sienna (signature color)
+  --color-link: #2D5016;         // Forest green for links
+  --color-border: #E5DED3;       // Subtle border color
 
   // Typography
   --font-mono: 'JetBrains Mono', 'Courier New', monospace;
-  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
-  // Spacing & Timing
+  // Transitions
   --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-snappy: 0.15s ease-out;
 }
 
-// ============================================
-// Global Overrides
-// ============================================
+// ========================================
+// 2. GLOBAL STYLES
+// ========================================
 
 body {
   background-color: var(--color-bg);
@@ -38,7 +43,7 @@ body {
   font-family: var(--font-body);
 }
 
-// Add subtle texture to body
+// Subtle texture overlay for depth
 body::before {
   content: '';
   position: fixed;
@@ -48,43 +53,68 @@ body::before {
   height: 100%;
   opacity: 0.03;
   z-index: -1;
-  background-image:
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,0,0,0.05) 2px,
-      rgba(0,0,0,0.05) 4px
-    );
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.05) 2px,
+    rgba(0,0,0,0.05) 4px
+  );
   pointer-events: none;
 }
 
-// ============================================
-// Typography Enhancements
-// ============================================
+// ========================================
+// 3. TYPOGRAPHY SYSTEM
+// ========================================
 
-// GLOBAL HEADING OVERRIDES - Apply monospace to ALL headings
-h1, .h1,
-h2, .h2,
-h3, .h3,
-h4, .h4,
-h5, .h5,
-h6, .h6 {
+// All headings use monospace for technical aesthetic
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
   font-family: var(--font-mono) !important;
   font-weight: 700 !important;
   letter-spacing: -0.01em !important;
 }
 
-// Site title with distinctive monospace
+// Body text uses system fonts for readability
+p, li, .post-summary, .post-content, article {
+  font-family: var(--font-body) !important;
+}
+
+// Code blocks remain monospace
+pre, code {
+  font-family: var(--font-mono) !important;
+}
+
+// ========================================
+// 4. HEADER
+// ========================================
+
+.site-header {
+  padding: 1.5rem 0;
+
+  .measure {
+    display: flex;
+    align-items: baseline; // Align text baselines instead of centers
+    justify-content: space-between;
+  }
+
+  nav {
+    display: flex;
+    align-items: baseline;
+    gap: 0; // Remove gap, use margin on links instead
+  }
+}
+
+// Site title with blinking cursor
 .site-header .site-title {
   font-family: var(--font-mono) !important;
   font-weight: 700 !important;
   font-size: 1.5rem;
   letter-spacing: 0.05em;
   color: var(--color-text-primary) !important;
-  position: relative;
-  transition: var(--transition-smooth);
   text-transform: lowercase;
+  transition: var(--transition-smooth);
+  line-height: 1; // Tighten line height for better alignment
 
   &::after {
     content: '_';
@@ -104,16 +134,18 @@ h6, .h6 {
   50%, 100% { opacity: 0; }
 }
 
-// Navigation styling
+// Navigation links
 .site-header nav a {
   font-family: var(--font-mono) !important;
-  font-size: 0.875rem;
+  font-size: 0.75rem; // Slightly smaller for better proportion
   font-weight: 600 !important;
   color: var(--color-text-secondary) !important;
   border-bottom: 2px solid transparent;
-  transition: all var(--transition-snappy);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em; // Slightly more spacing for uppercase
+  transition: all var(--transition-snappy);
+  line-height: 1; // Match title line height
+  padding-bottom: 2px; // Account for border so hover doesn't shift
 
   &:hover {
     color: var(--color-link) !important;
@@ -123,53 +155,40 @@ h6, .h6 {
   }
 }
 
-// Ensure header layout consistency
-.site-header {
-  .site-title,
-  nav a {
-    font-family: var(--font-mono) !important;
+// ========================================
+// 5. HOMEPAGE POST LIST
+// ========================================
+
+.home {
+  animation: fadeIn 0.4s ease-in;
+
+  .posts {
+    margin-top: 3rem;
   }
 }
 
-// Better header alignment
-.site-header .measure {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-// ============================================
-// Homepage Post List Enhancements
-// ============================================
-
-.home .posts {
-  margin-top: 3rem;
-}
-
+// Individual post item
 .posts .post {
   position: relative;
   padding: 2rem 0 2rem 1.5rem;
   border-bottom: 1px solid var(--color-border);
   border-left: 3px solid transparent;
   transition: all var(--transition-smooth);
+
+  // Entry animation
   opacity: 0;
   animation: slideInUp 0.6s ease-out forwards;
 
-  // Staggered animation delays
-  &:nth-child(1) { animation-delay: 0.1s; }
-  &:nth-child(2) { animation-delay: 0.2s; }
-  &:nth-child(3) { animation-delay: 0.3s; }
-  &:nth-child(4) { animation-delay: 0.4s; }
-  &:nth-child(5) { animation-delay: 0.5s; }
-  &:nth-child(6) { animation-delay: 0.6s; }
-  &:nth-child(7) { animation-delay: 0.7s; }
-  &:nth-child(8) { animation-delay: 0.8s; }
-  &:nth-child(9) { animation-delay: 0.9s; }
-  &:nth-child(10) { animation-delay: 1.0s; }
+  // Staggered delays (up to 10 posts)
+  @for $i from 1 through 10 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.1}s;
+    }
+  }
 
-  // Colored accent bar on hover
+  // Hover effects
   &:hover {
-    border-left-color: var(--color-post-accent);
+    border-left-color: var(--color-accent);
     background: linear-gradient(
       90deg,
       rgba(210, 105, 30, 0.02) 0%,
@@ -177,7 +196,7 @@ h6, .h6 {
     );
   }
 
-  // Geometric accent indicator
+  // "//" indicator appears on hover
   &::before {
     content: '//';
     position: absolute;
@@ -195,18 +214,7 @@ h6, .h6 {
   }
 }
 
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-// Post title styling
+// Post link and title
 .post-link {
   display: block;
   text-decoration: none;
@@ -218,13 +226,12 @@ h6, .h6 {
     color: var(--color-text-primary);
     margin-bottom: 0.5rem;
     line-height: 1.3;
-    transition: all var(--transition-snappy);
     display: inline;
+
+    // Underline reveal effect on hover
     background-image: linear-gradient(
-      transparent 0%,
       transparent 60%,
-      rgba(210, 105, 30, 0.2) 60%,
-      rgba(210, 105, 30, 0.2) 100%
+      rgba(210, 105, 30, 0.2) 60%
     );
     background-size: 0% 100%;
     background-repeat: no-repeat;
@@ -237,7 +244,7 @@ h6, .h6 {
   }
 }
 
-// Post date badge styling
+// Date badge
 .post-meta {
   display: inline-block;
   font-family: var(--font-mono);
@@ -253,18 +260,17 @@ h6, .h6 {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   transition: all var(--transition-snappy);
-  float: none !important;
+  float: none !important; // Override default float:right
 }
 
 .posts .post a:hover .post-meta {
   background-color: var(--color-accent);
   color: white;
-  opacity: 1;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(210, 105, 30, 0.2);
 }
 
-// Post summary
+// Post summary text
 .post-summary {
   color: var(--color-text-secondary);
   line-height: 1.7;
@@ -275,12 +281,11 @@ h6, .h6 {
 
 .posts .post a:hover .post-summary {
   color: var(--color-text-primary);
-  opacity: 1;
 }
 
-// ============================================
-// Pagination Enhancements
-// ============================================
+// ========================================
+// 6. PAGINATION
+// ========================================
 
 .pagination a,
 .pagination .disabled {
@@ -302,14 +307,30 @@ h6, .h6 {
 
 .pagination .disabled {
   background: var(--color-bg);
-  border-color: var(--color-border);
-  color: var(--color-text-secondary);
   opacity: 0.5;
 }
 
-// ============================================
-// Link Styling
-// ============================================
+// ========================================
+// 7. FOOTER
+// ========================================
+
+footer {
+  border-top: 1px solid var(--color-border);
+  background-color: rgba(250, 248, 243, 0.8);
+  backdrop-filter: blur(10px);
+
+  &,
+  .wrap {
+    background-color: transparent;
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+  }
+}
+
+// ========================================
+// 8. LINKS & UI ELEMENTS
+// ========================================
 
 a {
   color: var(--color-link);
@@ -320,27 +341,72 @@ a {
   }
 }
 
-// ============================================
-// Footer Enhancements
-// ============================================
-
-footer {
-  border-top: 1px solid var(--color-border);
-  background-color: rgba(250, 248, 243, 0.8);
-  backdrop-filter: blur(10px);
+// Ensure UI elements use monospace
+.button,
+.pagination,
+form {
+  font-family: var(--font-mono) !important;
 }
 
-footer,
-footer .wrap {
-  background-color: transparent;
-  color: var(--color-text-secondary);
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
+// ========================================
+// 9. TEXT SELECTION
+// ========================================
+
+::selection {
+  background-color: var(--color-accent);
+  color: white;
 }
 
-// ============================================
-// Responsive Adjustments
-// ============================================
+::-moz-selection {
+  background-color: var(--color-accent);
+  color: white;
+}
+
+// ========================================
+// 10. ANIMATIONS
+// ========================================
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ========================================
+// 11. LIFE IN WEEKS PAGE
+// ========================================
+
+.liw-header {
+  h1 {
+    font-family: var(--font-mono) !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.02em !important;
+  }
+
+  p {
+    font-family: var(--font-body) !important;
+    color: var(--color-text-secondary) !important;
+  }
+}
+
+.liw-legend,
+.liw-go-now {
+  font-family: var(--font-mono) !important;
+}
+
+// ========================================
+// 12. RESPONSIVE BREAKPOINTS
+// ========================================
 
 @media screen and (min-width: 48em) {
   .site-header .site-title {
@@ -348,7 +414,7 @@ footer .wrap {
   }
 
   .site-header nav a {
-    font-size: 0.9rem;
+    font-size: 1.1rem; // Keep proportional to title
   }
 
   .post-link .post-title {
@@ -368,87 +434,4 @@ footer .wrap {
   .posts .post {
     padding: 3rem 0 3rem 2.5rem;
   }
-}
-
-// ============================================
-// Loading Animation for Page
-// ============================================
-
-.home {
-  animation: fadeIn 0.4s ease-in;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-// ============================================
-// Life In Weeks Page Enhancements
-// ============================================
-
-.liw-header h1 {
-  font-family: var(--font-mono) !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.02em !important;
-}
-
-.liw-header p {
-  font-family: var(--font-body) !important;
-  color: var(--color-text-secondary) !important;
-}
-
-.liw-legend {
-  font-family: var(--font-mono) !important;
-  font-size: 0.8rem !important;
-}
-
-.liw-go-now {
-  font-family: var(--font-mono) !important;
-}
-
-// ============================================
-// Selection Styling
-// ============================================
-
-::selection {
-  background-color: var(--color-accent);
-  color: white;
-}
-
-::-moz-selection {
-  background-color: var(--color-accent);
-  color: white;
-}
-
-// ============================================
-// FINAL OVERRIDES - Ensure Consistency
-// ============================================
-
-// Override any Lato/Merriweather instances
-.button,
-.pagination,
-.pagination a,
-.pagination .button,
-form,
-footer,
-footer .wrap {
-  font-family: var(--font-mono) !important;
-}
-
-// Ensure body text stays readable
-p, li,
-.post-summary,
-.post-content,
-article {
-  font-family: var(--font-body) !important;
-}
-
-// Code blocks should use monospace
-pre, code {
-  font-family: var(--font-mono) !important;
 }
