@@ -150,5 +150,11 @@ events:
   - date: "2020-08-01"
     label: "✅ Promoted"
 
+  - date: "2026-02-01"
+    label: "🎨 I can spray paint doors"
+
+  - date: "2026-02-08"
+    label: "🌟 Started Life-in-weeks page"
+
   - date: "2073-03-15"
     label: "Life expectancy (age 80)"
