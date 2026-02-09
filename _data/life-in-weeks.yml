@@ -45,6 +45,14 @@ events:
     label: "👶 Born"
     description: "Hello world!"
 
+  - date: "1994-01-15"
+    label: "👣 Walking"
+    description: "Hello world!"
+
+  - date: "1994-06-02"
+    label: "💬 Talking"
+    description: "Hello world!"
+
   - date: "1998-09-01"
     label: "🖍️ Kindergarten"
 
@@ -57,47 +65,80 @@ events:
   - date: "2007-09-01"
     label: "🎒 High school"
 
+  - date: "2008-09-15"
+    label: "🚗 I can drive"
+
+  - date: "2009-05-01"
+    label: "💼 1st internship, County Public Works"
+    description: "GIS (maps) for roads and traffic signs"
+
   - date: "2009-03-15"
     label: "🚗 Driver's license"
     description: "Freedom on four wheels"
 
+  - date: "2010-07-01"
+    label: "💼 2nd internship, City Public Works"
+    description: "Waste water and rain barrels"
+
+  - date: "2011-06-01"
+    label: "💼 3rd internship, City Public Works"
+    description: "GIS (maps) for water pipes and energy rebates"
+
   - date: "2011-06-15"
     label: "🎓 Graduated high school"
 
-  - date: "2011-09-01"
+  - date: "2011-11-01"
     label: "🏛️ Started college"
 
+  - date: "2011-11-15"
+    label: "🗺️ Library job"
+    description: "GIS Maps for Maryland"
+
+  - date: "2012-03-01"
+    label: "🔍 Research Assistant"
+    description: "Helping predict hurricane power outages"
+
+  - date: "2012-06-01"
+    label: "💼 4th internship, Federal High Admin"
+    description: "GIS (maps) for air quality and traffic"
+
   - date: "2013-06-01"
-    label: "💼 First internship"
-    description: "First taste of the real world"
+    label: "💼 5th internship, NASA"
+    description: "Satellite Imagery for East Africa conservation"
+
+  - date: "2014-06-01"
+    label: "💼 6th internship, NASA"
+    description: "Satellite Imagery for Southeast Asia flood impact"
 
   - date: "2015-05-15"
     label: "🎓 Graduated college"
 
-  - date: "2015-07-01"
-    label: "💼 First job"
+  - date: "2015-06-15"
+    label: "💼 7th internship, NASA"
+    description: "Satellite Imagery for Navajo climate impact"
+
+  - date: "2015-09-01"
+    label: "💼 First job, Software Engineer"
     description: "Officially a working adult"
 
-  - date: "2017-03-01"
+  - date: "2016-04-01"
+    label: "📈 Promoted"
+
+  - date: "2017-06-01"
+    label: "🚀 New Company"
+
+  - date: "2016-11-01"
     label: "📈 Promoted"
 
   - date: "2018-09-02"
     label: "📝 Started a blog"
 
-  - date: "2018-06-01"
-    label: "✈️ Traveled abroad"
-    description: "First international adventure"
-
   - date: "2020-03-15"
     label: "😷 Pandemic"
     description: "The world changed overnight"
 
-  - date: "2022-06-01"
-    label: "🚀 New job"
-    description: "New chapter, new challenges"
-
-  - date: "2024-01-15"
-    label: "🛠️ Side project launched"
+  - date: "2020-08-01"
+    label: "📈 Promoted"
 
   - date: "2073-03-15"
     label: "Life expectancy (age 80)"

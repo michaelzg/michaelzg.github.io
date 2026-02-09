@@ -41,7 +41,7 @@ Paste emojis directly into the `label` field. They render inline with the text:
 Some handy emojis for life events:
 
 - Milestones: 🎓 🏆 ⭐ 🎯 📈
-- Work: 💼 🚀 🛠️ 💻 📝
+- Work: 💼 🚀 🛠️ 💻 📝 🔍
 - Life: 👶 💍 🏠 🚗 ✈️
 - Feelings: 🎉 😷 ❤️ 🌟 🎂
 
