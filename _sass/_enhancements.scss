@@ -40,13 +40,13 @@
 // ========================================
 
 html.dark {
-  --color-bg: #0D0F1A;           // Deep indigo-black
-  --color-text-primary: #ECF0FF; // Bright blue-white — crisp, high contrast
-  --color-text-secondary: #C4CCE8; // Light periwinkle — readable body text
-  --color-accent: #F5923E;       // Warm orange — punchy highlight
-  --color-accent-hover: #F7A85E; // Lighter orange for hover
-  --color-link: #7EB8FF;         // Clear sky blue for links
-  --color-border: #1E2235;       // Indigo-tinted dark border
+  --color-bg: #1A1714;           // Warm charcoal — like dark oak
+  --color-text-primary: #F0EAE0; // Warm parchment white
+  --color-text-secondary: #B8A089;    // Muted sand — warm, readable
+  --color-accent: #E8853A;       // Amber-sienna — warm continuity with light mode
+  --color-accent-hover: #F09A55; // Lighter amber for hover
+  --color-link: #D4A574;         // Warm copper for links — earthy, readable
+  --color-border: #2C2520;       // Dark warm brown border
 }
 
 // ========================================
@@ -67,14 +67,13 @@ html.dark body {
 }
 
 html.dark {
-  // Explicitly override hard-coded colors from _main.scss with !important
-  // to guarantee body text, summaries, and titles are visible
+  // Override hard-coded colors from _main.scss
   .post-summary {
-    color: #C4CCE8 !important;
+    color: var(--color-text-secondary) !important;
   }
 
   p, li {
-    color: #C4CCE8;
+    color: #B8A089;
   }
 
   .site-header a {
@@ -96,7 +95,7 @@ html.dark {
 
   // Footer
   footer {
-    background-color: rgba(13, 15, 26, 0.95) !important;
+    background-color: rgba(26, 23, 20, 0.95) !important;
     border-top-color: var(--color-border);
 
     .wrap {
@@ -108,7 +107,7 @@ html.dark {
   // Pagination
   .pagination a,
   .pagination .disabled {
-    background: #13162A;
+    background: #211E1A;
     border-color: var(--color-border);
     color: var(--color-text-primary);
   }
@@ -169,14 +168,14 @@ pre, code {
 
   .measure {
     display: flex;
-    align-items: baseline; // Align text baselines instead of centers
-    justify-content: space-between;
+    align-items: baseline;
+    gap: 2.5rem; // Controlled gap instead of space-between
   }
 
   nav {
     display: flex;
     align-items: baseline;
-    gap: 0; // Remove gap, use margin on links instead
+    gap: 1.5rem;
   }
 }
 
@@ -212,21 +211,22 @@ pre, code {
 // Navigation links
 .site-header nav a {
   font-family: var(--font-mono) !important;
-  font-size: 0.75rem; // Slightly smaller for better proportion
+  font-size: 0.8rem;
   font-weight: 600 !important;
   color: var(--color-text-secondary) !important;
   border-bottom: 2px solid transparent;
   text-transform: uppercase;
-  letter-spacing: 0.08em; // Slightly more spacing for uppercase
+  letter-spacing: 0.08em;
   transition: all var(--transition-snappy);
-  line-height: 1; // Match title line height
-  padding-bottom: 2px; // Account for border so hover doesn't shift
+  line-height: 1;
+  padding-bottom: 2px;
+  white-space: nowrap;
 
   &:hover {
-    color: var(--color-link) !important;
+    color: var(--color-accent) !important;
     border-bottom-color: var(--color-accent);
     opacity: 1 !important;
-    transform: translateY(-2px);
+    transform: translateY(-1px);
   }
 }
 
@@ -527,15 +527,15 @@ form {
 }
 
 html.dark .global-theme-toggle {
-  background: #13162A;
-  border-color: #2A2F4A;
+  background: #211E1A;
+  border-color: #3A332C;
   color: var(--color-text-secondary);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
 
   &:hover {
     border-color: var(--color-accent);
     color: var(--color-accent);
-    box-shadow: 0 4px 16px rgba(232, 131, 42, 0.25);
+    box-shadow: 0 4px 16px rgba(232, 133, 58, 0.25);
   }
 }
 
@@ -549,7 +549,7 @@ html.dark .global-theme-toggle {
   }
 
   .site-header nav a {
-    font-size: 1.1rem; // Keep proportional to title
+    font-size: 0.85rem;
   }
 
   .post-link .post-title {
