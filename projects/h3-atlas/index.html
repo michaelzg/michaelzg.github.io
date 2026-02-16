@@ -3,10 +3,11 @@ layout: default
 title: H3 Atlas Lab
 permalink: /projects/h3-atlas/
 body_class: page-h3-simple
+uses_leaflet: true
 ---
 
 <section class="h3-simple" data-initial-lat="39.5" data-initial-lng="-98.35" data-initial-zoom="5">
-  <div id="h3-simple-map" class="h3-simple__map" role="img" aria-label="Satellite map with dynamic H3 grid overlay"></div>
+  <div id="h3-simple-map" class="h3-simple__map" role="region" aria-label="Interactive satellite map with dynamic H3 grid overlay"></div>
 
   <div class="h3-simple__topbar">
     <div class="h3-simple__brand">
@@ -33,7 +34,7 @@ body_class: page-h3-simple
   </div>
 
   <aside class="h3-simple__panel" aria-live="polite">
-    <button id="h3-panel-toggle" class="h3-panel-toggle" type="button" aria-label="Toggle inspector panel">
+    <button id="h3-panel-toggle" class="h3-panel-toggle" type="button" aria-label="Toggle inspector panel" aria-expanded="false" aria-controls="h3-panel-body">
       <span class="h3-panel-toggle__icon"></span>
       <span class="h3-panel-toggle__label">Inspector</span>
     </button>
@@ -64,7 +65,6 @@ body_class: page-h3-simple
   </aside>
 </section>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://unpkg.com/h3-js@4.1.0/dist/h3-js.umd.js"></script>
 

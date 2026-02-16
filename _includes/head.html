@@ -10,6 +10,9 @@
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ "/css/pixyll.css" | prepend: site.baseurl }}" type="text/css">
+    {% if page.uses_leaflet %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    {% endif %}
 
     <!-- Fonts -->
     <link href='//fonts.googleapis.com/css?family=Merriweather:900,900italic,300,300italic' rel='stylesheet' type='text/css'>
