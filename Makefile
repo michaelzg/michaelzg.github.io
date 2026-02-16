@@ -1,10 +1,20 @@
-export JEKYLL_VERSION=3.8
-# TODO: takes a bit long, need to clean up the build images to utilize resolved dependencies.
+IMAGE ?= michaelzg.github.io
+PORT ?= 4000
 
-build:
-	# https://github.com/envygeeks/jekyll-docker
-	docker run --volume="${PWD}:/srv/jekyll" -it jekyll/jekyll:${JEKYLL_VERSION} jekyll build
-run:
-	# https://github.com/BretFisher/jekyll-serve 
-	docker run -p 4000:4000 -v "${PWD}:/site" bretfisher/jekyll-serve
-build-run: build run
+.PHONY: help image serve build build-run
+
+help:
+	@printf "Targets:\n"
+	@printf "  make serve  - build image and run local site\n"
+	@printf "  make build  - build static site into _site/\n"
+
+image:
+	docker build -t $(IMAGE) .
+
+serve: image
+	docker run --rm -it -p $(PORT):4000 -v "$(PWD):/srv/jekyll" $(IMAGE)
+
+build: image
+	docker run --rm -v "$(PWD):/srv/jekyll" $(IMAGE) build
+
+build-run: serve
