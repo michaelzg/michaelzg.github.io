@@ -5,14 +5,14 @@ author:      Michael Gao
 description: "Michael G."
 baseurl:     ""
 url:         "https://michaelzg.com"
-github:      "https://github.com/michaelzg"
+github:      ""
 twitter:     "https://twitter.com/mchlgao"
 
 # Google analytics
 google_analytics:
 
 # Optional features
-animated:           true
+animated:           false
 show_related_posts: false
 show_post_footers:  false
 

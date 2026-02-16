@@ -42,7 +42,7 @@ title: Life In Weeks
   }
 
   .liw-header h1 {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Merriweather', 'PT Serif', Georgia, 'Times New Roman', serif;
     font-weight: 700;
     letter-spacing: 0.02em;
     margin-bottom: 0.25rem;
@@ -101,7 +101,7 @@ title: Life In Weeks
     font-size: 0.65rem;
     font-weight: 600;
     padding: 0.25rem 0.5rem;
-    background: white;
+    background: var(--color-bg, #FAF8F3);
     border: 1px solid var(--color-border, #E5DED3);
     border-radius: 10px;
     color: var(--color-text-primary, #1A1A1A);
@@ -123,6 +123,11 @@ title: Life In Weeks
     height: 10px;
     border-radius: 2px;
     flex-shrink: 0;
+  }
+
+  .liw-swatch-future {
+    border: 2px solid var(--color-border, #E5DED3);
+    background: var(--color-bg, #FAF8F3);
   }
 
   /* ========================================
@@ -364,8 +369,8 @@ title: Life In Weeks
      ======================================== */
 
   .liw-decade-collapsed {
-    background: #FFF8E1;
-    border: 2px solid #F0D88A;
+    background: rgba(250, 248, 243, 0.8);
+    border: 2px solid var(--color-border, #E5DED3);
     border-radius: 8px;
     padding: 1.5rem;
     margin-bottom: 1rem;
@@ -607,7 +612,7 @@ title: Life In Weeks
     </span>
     {% endfor %}
     <span class="liw-legend-item">
-      <span class="liw-legend-swatch" style="border: 2px solid #dee2e6; background: #eee;"></span>
+      <span class="liw-legend-swatch liw-swatch-future"></span>
       Future
     </span>
   </div>
@@ -989,10 +994,12 @@ title: Life In Weeks
       nowBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
       // Brief pulse animation on arrival using design token color
       nowBox.style.transition = 'box-shadow 0.3s ease';
+      var accent = getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim() || '#D2691E';
+      var accentRgb = document.documentElement.classList.contains('dark') ? '232, 133, 58' : '210, 105, 30';
       setTimeout(function () {
-        nowBox.style.boxShadow = '0 0 0 4px #D2691E, 0 0 20px rgba(210, 105, 30, 0.6)';
+        nowBox.style.boxShadow = '0 0 0 4px ' + accent + ', 0 0 20px rgba(' + accentRgb + ', 0.6)';
         setTimeout(function () {
-          nowBox.style.boxShadow = '0 0 0 2px #D2691E, 0 0 12px rgba(210, 105, 30, 0.4)';
+          nowBox.style.boxShadow = '0 0 0 2px ' + accent + ', 0 0 12px rgba(' + accentRgb + ', 0.4)';
         }, 600);
       }, 500);
     }, currentDecade === 0 ? 500 : 0);
