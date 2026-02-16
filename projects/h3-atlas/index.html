@@ -17,7 +17,7 @@ body_class: page-h3-simple
     <div class="h3-simple__controls">
       <div class="h3-control-info" aria-live="polite">
         <span id="h3-zoom-chip" class="h3-level-chip h3-level-chip--info">zoom -</span>
-        <span id="h3-level-chip" class="h3-level-chip h3-level-chip--info">level -</span>
+        <span id="h3-level-chip" class="h3-level-chip h3-level-chip--info">h3 res -</span>
       </div>
       <div class="h3-zoom-meter" aria-label="Map zoom range indicator">
         <span class="h3-zoom-meter__label">zoom range</span>
@@ -42,7 +42,7 @@ body_class: page-h3-simple
       <div class="h3-simple__status">
         <span id="h3-status-cells">0 cells</span>
         <span id="h3-status-area">area -</span>
-        <span id="h3-status-note">zoom - -> level -</span>
+        <span id="h3-status-note">zoom - &#8594; h3 res -</span>
       </div>
 
       <h3>Selected Cell</h3>
@@ -50,7 +50,7 @@ body_class: page-h3-simple
 
       <dl class="h3-simple__meta">
         <div><dt>Cell ID</dt><dd id="meta-cell">-</dd></div>
-        <div><dt>Resolution</dt><dd id="meta-res">-</dd></div>
+        <div><dt>H3 Resolution</dt><dd id="meta-res">-</dd></div>
         <div><dt>Avg Area</dt><dd id="meta-area">-</dd></div>
         <div><dt>Use Case</dt><dd id="meta-usecase">-</dd></div>
         <div class="h3-meta__row--long"><dt>Examples</dt><dd id="meta-examples">-</dd></div>
@@ -376,11 +376,11 @@ body_class: page-h3-simple
     var zoomPct = ((zoomNow - zoomMin) / (zoomMax - zoomMin)) * 100;
 
     zoomChip.textContent = 'zoom ' + zoomDisplay;
-    levelChip.textContent = 'level ' + res;
+    levelChip.textContent = 'h3 res ' + res;
     zoomMeterFill.style.width = Math.max(0, Math.min(100, zoomPct)).toFixed(1) + '%';
     statusCells.textContent = cells.length + ' cells';
     statusArea.textContent = isFinite(area) ? '~' + formatNum(area, 2) + ' km\u00B2/cell' : 'area n/a';
-    statusNote.textContent = 'zoom ' + zoomDisplay + ' \u2192 level ' + res;
+    statusNote.textContent = 'zoom ' + zoomDisplay + ' \u2192 h3 res ' + res;
 
     var hasSelected = false;
 
@@ -424,7 +424,7 @@ body_class: page-h3-simple
     recenterButton.textContent = 'Locating\u2026';
 
     navigator.geolocation.getCurrentPosition(function(pos) {
-      map.setView([pos.coords.latitude, pos.coords.longitude], 13);
+      map.setView([pos.coords.latitude, pos.coords.longitude], 14);
       recenterButton.disabled = false;
       recenterButton.textContent = 'Use My Location';
       drawGrid();
