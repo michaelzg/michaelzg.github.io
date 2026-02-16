@@ -22,6 +22,19 @@
     <!-- Favicon -->
     <link rel="shortcut icon" type="image/x-icon" href="/assets/img/favicon.ico">
 
+    <!-- Dark mode: apply before first paint to avoid flash -->
+    <script>
+      (function() {
+        var DARK_START = 21, DARK_END = 7;
+        var h = new Date().getHours();
+        var autoDark = h >= DARK_START || h < DARK_END;
+        var override = sessionStorage.getItem('theme-override');
+        if (override === 'dark' || (!override && autoDark)) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+
 
     <!-- Open Graph -->
     <meta property="og:locale" content="en_US">

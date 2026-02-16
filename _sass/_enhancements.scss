@@ -21,6 +21,7 @@
   --color-text-primary: #1A1A1A; // Near-black text
   --color-text-secondary: #5A5A5A; // Gray text
   --color-accent: #D2691E;       // Burnt sienna (signature color)
+  --color-accent-hover: #A0521A; // Darker burnt sienna for hover
   --color-link: #2D5016;         // Forest green for links
   --color-border: #E5DED3;       // Subtle border color
 
@@ -34,6 +35,21 @@
 }
 
 // ========================================
+// DARK MODE TOKENS (applied via .dark class on <html>)
+// Activated by time-of-day (9PM–7AM) or manual toggle
+// ========================================
+
+html.dark {
+  --color-bg: #0D0F1A;           // Deep indigo-black
+  --color-text-primary: #ECF0FF; // Bright blue-white — crisp, high contrast
+  --color-text-secondary: #C4CCE8; // Light periwinkle — readable body text
+  --color-accent: #F5923E;       // Warm orange — punchy highlight
+  --color-accent-hover: #F7A85E; // Lighter orange for hover
+  --color-link: #7EB8FF;         // Clear sky blue for links
+  --color-border: #1E2235;       // Indigo-tinted dark border
+}
+
+// ========================================
 // 2. GLOBAL STYLES
 // ========================================
 
@@ -41,6 +57,65 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text-primary);
   font-family: var(--font-body);
+  transition: background-color 0.5s ease, color 0.4s ease;
+}
+
+// Dark mode overrides for components with hard-coded light colors
+html.dark body {
+  background-color: var(--color-bg) !important;
+  color: var(--color-text-primary) !important;
+}
+
+html.dark {
+  // Explicitly override hard-coded colors from _main.scss with !important
+  // to guarantee body text, summaries, and titles are visible
+  .post-summary {
+    color: #C4CCE8 !important;
+  }
+
+  p, li {
+    color: #C4CCE8;
+  }
+
+  .site-header a {
+    color: var(--color-text-primary) !important;
+  }
+
+  .site-header nav a {
+    color: var(--color-text-secondary) !important;
+  }
+
+  .post-link .post-title,
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-text-primary) !important;
+  }
+
+  a {
+    color: var(--color-link) !important;
+  }
+
+  // Footer
+  footer {
+    background-color: rgba(13, 15, 26, 0.95) !important;
+    border-top-color: var(--color-border);
+
+    .wrap {
+      background-color: transparent !important;
+      color: var(--color-text-secondary) !important;
+    }
+  }
+
+  // Pagination
+  .pagination a,
+  .pagination .disabled {
+    background: #13162A;
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+  }
+
+  .pagination .disabled {
+    background: var(--color-bg);
+  }
 }
 
 // Subtle texture overlay for depth
@@ -405,7 +480,67 @@ form {
 }
 
 // ========================================
-// 12. RESPONSIVE BREAKPOINTS
+// 12. GLOBAL DARK MODE TOGGLE BUTTON
+// ========================================
+
+.global-theme-toggle {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.85rem;
+  border: 2px solid var(--color-border);
+  border-radius: 100px;
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  -webkit-appearance: none;
+  appearance: none;
+
+  &:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(210, 105, 30, 0.2);
+  }
+
+  .toggle-icon {
+    font-size: 0.9rem;
+    line-height: 1;
+    display: inline-block;
+    transition: transform 0.4s ease;
+  }
+
+  &:hover .toggle-icon {
+    transform: rotate(20deg);
+  }
+}
+
+html.dark .global-theme-toggle {
+  background: #13162A;
+  border-color: #2A2F4A;
+  color: var(--color-text-secondary);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+
+  &:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    box-shadow: 0 4px 16px rgba(232, 131, 42, 0.25);
+  }
+}
+
+// ========================================
+// 13. RESPONSIVE BREAKPOINTS
 // ========================================
 
 @media screen and (min-width: 48em) {

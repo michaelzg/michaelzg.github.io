@@ -17,6 +17,50 @@
   {% include footer.html %}
 
 <script>
+(function() {
+  var DARK_START = 21, DARK_END = 7;
+
+  function isDarkHour() {
+    var h = new Date().getHours();
+    return h >= DARK_START || h < DARK_END;
+  }
+
+  function applyTheme(dark) {
+    if (dark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    var icon  = document.getElementById('global-toggle-icon');
+    var label = document.getElementById('global-toggle-label');
+    if (icon)  icon.textContent  = dark ? '☀️' : '🌙';
+    if (label) label.textContent = dark ? 'Day' : 'Night';
+  }
+
+  // Build button and append to <html> (not <body>) so that body's
+  // transform animation (fadeInDown) never breaks position:fixed
+  var btn = document.createElement('button');
+  btn.className = 'global-theme-toggle';
+  btn.id = 'global-theme-toggle';
+  btn.type = 'button';
+  btn.setAttribute('aria-label', 'Toggle dark mode');
+  btn.innerHTML = '<span class="toggle-icon" id="global-toggle-icon"></span><span id="global-toggle-label"></span>';
+  document.documentElement.appendChild(btn);
+
+  var override = sessionStorage.getItem('theme-override');
+  var isDark = override === 'dark' || (!override && isDarkHour());
+  applyTheme(isDark);
+
+  btn.addEventListener('click', function() {
+    var nowDark = document.documentElement.classList.contains('dark');
+    var newDark = !nowDark;
+    sessionStorage.setItem('theme-override', newDark ? 'dark' : 'light');
+    applyTheme(newDark);
+  });
+})();
+</script>
+
+<script>
   document.addEventListener("DOMContentLoaded", function(event) {
   anchors.options.placement = 'left';
   anchors.add();

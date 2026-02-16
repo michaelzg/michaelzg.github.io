@@ -461,6 +461,69 @@ title: Life In Weeks
   }
 
   /* ========================================
+     DARK MODE — Life In Weeks overrides
+     Hard-coded colors in this page that need
+     to respond to html.dark
+     ======================================== */
+
+  html.dark .liw-legend.liw-legend-sticky {
+    background: rgba(13, 15, 26, 0.97) !important;
+    border-bottom-color: var(--color-border);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  }
+
+  html.dark .liw-legend-item {
+    background: #13162A;
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+  }
+
+  html.dark .liw-legend-item:hover {
+    background: rgba(245, 146, 62, 0.1);
+    border-color: var(--color-accent);
+  }
+
+  /* Boxes keep their original decade colors in dark mode */
+  html.dark .liw-box {
+    color: #1A1A1A;
+  }
+
+  html.dark .liw-box.liw-now {
+    border-color: var(--color-accent) !important;
+    box-shadow: 0 0 0 2px var(--color-accent), 0 0 16px rgba(245, 146, 62, 0.45) !important;
+  }
+
+  html.dark .liw-box.liw-future {
+    background-color: rgba(238, 238, 238, 0.5) !important;
+    border-color: #dee2e6 !important;
+    opacity: 0.4;
+  }
+
+  /* Tooltips: indigo-dark background, blue accent border */
+  html.dark .liw-box .liw-tip {
+    z-index: 1001;
+    background: #111428;
+    border: 1px solid var(--color-accent);
+    color: #ECF0FF;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+  }
+
+  html.dark .liw-box .liw-tip::before {
+    border-bottom-color: #111428;
+  }
+
+
+  html.dark .liw-decade-collapsed {
+    background: #0F1120 !important;
+    border-color: #1E2235 !important;
+  }
+
+  html.dark .liw-decade-collapsed:hover {
+    border-color: var(--color-accent) !important;
+    box-shadow: 0 4px 12px rgba(245, 146, 62, 0.25);
+  }
+
+  /* ========================================
      RESPONSIVE
      ======================================== */
 
