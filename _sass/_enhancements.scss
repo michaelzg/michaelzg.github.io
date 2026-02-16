@@ -32,6 +32,14 @@
   // Transitions
   --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-snappy: 0.15s ease-out;
+
+  // Border radii
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+
+  // Z-index layers (Leaflet uses 400 for controls)
+  --z-map-overlay: 420;
 }
 
 // ========================================
@@ -571,7 +579,109 @@ html.dark .global-theme-toggle {
 }
 
 // ========================================
-// 13. RESPONSIVE BREAKPOINTS
+// 13. PROJECTS INDEX
+// ========================================
+
+.projects-shell {
+  margin-top: 1rem;
+}
+
+.project-grid {
+  display: grid;
+  gap: 1.4rem;
+}
+
+.project-card {
+  border: 1px solid var(--color-border);
+  background: linear-gradient(
+    140deg,
+    rgba(255, 255, 255, 0.78) 0%,
+    rgba(250, 248, 243, 0.84) 100%
+  );
+  transition: transform var(--transition-smooth), border-color var(--transition-smooth), box-shadow var(--transition-smooth);
+  overflow: hidden;
+}
+
+.project-card__link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  text-decoration: none;
+  color: inherit;
+}
+
+.project-card__link--textonly {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.project-card__content {
+  padding: 1.25rem 1.3rem 1.35rem;
+}
+
+.project-card__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.project-card__title {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--color-text-primary);
+}
+
+.project-card__status {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--project-accent);
+  color: var(--project-accent);
+  padding: 0.2rem 0.5rem;
+}
+
+.project-card__summary {
+  margin: 0.65rem 0 0;
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+}
+
+.project-inline-link {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-bottom: 1px solid var(--project-accent);
+  color: var(--project-accent);
+  white-space: nowrap;
+}
+
+.project-inline-link:hover {
+  opacity: 0.85;
+}
+
+.project-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(210, 105, 30, 0.55);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
+}
+
+.project-card:hover .project-card__title {
+  color: var(--project-accent);
+}
+
+html.dark .project-card {
+  background: linear-gradient(140deg, rgba(29, 25, 21, 0.88), rgba(24, 20, 17, 0.95));
+}
+
+.project-card__footer {
+  padding: 0 1.3rem 1.1rem;
+}
+
+// ========================================
+// 14. RESPONSIVE BREAKPOINTS
 // ========================================
 
 @media screen and (min-width: 48em) {
@@ -590,6 +700,10 @@ html.dark .global-theme-toggle {
   .posts .post {
     padding: 2.5rem 0 2.5rem 2rem;
   }
+
+  .project-card__link {
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  }
 }
 
 @media screen and (min-width: 64em) {
@@ -599,5 +713,405 @@ html.dark .global-theme-toggle {
 
   .posts .post {
     padding: 3rem 0 3rem 2.5rem;
+  }
+
+  .project-grid {
+    gap: 1.6rem;
+  }
+}
+
+// ========================================
+// 15. H3 SIMPLE FULLSCREEN MAP
+// ========================================
+
+body.page-h3-simple {
+  overflow: hidden;
+}
+
+.page-h3-simple .site-wrap {
+  min-height: 100vh;
+  margin-bottom: 0;
+}
+
+.page-h3-simple .site-wrap:after,
+.page-h3-simple .footer,
+.page-h3-simple footer {
+  display: none;
+}
+
+.page-h3-simple .post.p2.p-responsive.wrap,
+.page-h3-simple .post.p2.p-responsive.wrap .measure {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+}
+
+.page-h3-simple .leaflet-bottom.leaflet-right {
+  bottom: 4.9rem;
+}
+
+.h3-simple {
+  // Scoped panel variables — light mode
+  --panel-bg: rgba(255, 255, 255, 0.78);
+  --panel-border: rgba(30, 30, 30, 0.08);
+  --panel-text: var(--color-text-primary);
+  --panel-text-muted: var(--color-text-secondary);
+  --shadow-soft: 0 12px 35px rgba(16, 24, 40, 0.15);
+  --shadow-strong: 0 18px 42px rgba(16, 24, 40, 0.22);
+
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  height: var(--h3-app-height, calc(100vh - 8.5rem));
+  border-radius: 0;
+  overflow: hidden;
+  background: #dde7ef;
+}
+
+.h3-simple__map {
+  width: 100%;
+  height: 100%;
+}
+
+.h3-simple__topbar {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  right: 1rem;
+  z-index: var(--z-map-overlay);
+  display: flex;
+  gap: 0.9rem;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.h3-simple__brand,
+.h3-simple__controls,
+.h3-simple__panel {
+  pointer-events: auto;
+}
+
+.h3-simple__brand {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--shadow-soft);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.9rem;
+  backdrop-filter: blur(12px);
+}
+
+.h3-simple__eyebrow {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--panel-text-muted);
+}
+
+.h3-simple__brand h2 {
+  margin: 0.22rem 0 0;
+  font-size: 1.28rem;
+  line-height: 1.1;
+  color: var(--panel-text);
+}
+
+.h3-simple__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--shadow-soft);
+  border-radius: var(--radius-md);
+  padding: 0.55rem 0.65rem;
+  backdrop-filter: blur(12px);
+}
+
+.h3-control-info,
+.h3-control-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.h3-control-link {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  min-height: 2rem;
+  padding: 0.24rem 0.62rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  background: var(--panel-bg);
+  color: var(--panel-text);
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.h3-control-link--action {
+  border-color: var(--color-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(240, 243, 248, 0.9));
+  font-weight: 600;
+}
+
+.h3-control-link:hover {
+  background: linear-gradient(180deg, rgba(237, 243, 248, 0.95), rgba(227, 237, 246, 0.95));
+  color: var(--panel-text);
+}
+
+.h3-level-chip {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 999px;
+  padding: 0.35rem 0.58rem;
+}
+
+.h3-level-chip--info {
+  border: 1px dashed var(--color-border);
+  background: var(--panel-bg);
+  color: var(--panel-text-muted);
+}
+
+// Zoom meter is a passive indicator, not interactive
+.h3-zoom-meter {
+  min-width: 122px;
+  pointer-events: none;
+}
+
+.h3-zoom-meter__label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--panel-text-muted);
+  margin-bottom: 0.2rem;
+}
+
+.h3-zoom-meter__track {
+  width: 126px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(49, 74, 98, 0.16);
+  overflow: hidden;
+}
+
+.h3-zoom-meter__fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #9eb8cf, #4f6d8b);
+  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 0 10px rgba(79, 109, 139, 0.35);
+}
+
+.h3-simple__panel {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  width: min(360px, calc(100vw - 2rem));
+  max-height: min(46vh, 400px);
+  overflow: hidden;
+  z-index: var(--z-map-overlay);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--shadow-strong);
+  border-radius: var(--radius-lg);
+  padding: 0.8rem 0.85rem;
+  backdrop-filter: blur(12px);
+}
+
+// Panel toggle button (visible on mobile, hidden on desktop)
+.h3-panel-toggle {
+  display: none; // hidden by default on desktop
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--panel-border);
+  padding: 0.45rem 0;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--panel-text-muted);
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.h3-panel-toggle__icon {
+  display: inline-block;
+  width: 28px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--color-border);
+}
+
+.h3-panel-toggle__label {
+  // sr-only on larger screens, visible on mobile via parent display
+}
+
+.h3-simple__status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.45rem 0 0.75rem;
+}
+
+.h3-simple__status span {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(237, 242, 247, 0.85);
+  border: 1px solid var(--color-border);
+  color: var(--panel-text);
+  border-radius: 999px;
+  padding: 0.22rem 0.5rem;
+}
+
+.h3-simple__panel h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+  color: var(--panel-text);
+}
+
+.alert-title {
+  margin: 0.4rem 0 0.25rem;
+  font-size: 0.96rem;
+  line-height: 1.4;
+  color: var(--panel-text);
+}
+
+.h3-simple__meta {
+  margin: 0.5rem 0 0;
+}
+
+.h3-simple__meta div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.22rem 0;
+  border-bottom: 1px dashed rgba(49, 68, 89, 0.18);
+}
+
+.h3-simple__meta dt,
+.h3-simple__meta dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.h3-simple__meta dt {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--panel-text-muted);
+}
+
+.h3-simple__meta dd {
+  text-align: right;
+  color: var(--panel-text);
+}
+
+.h3-meta__row--long {
+  align-items: flex-start;
+}
+
+.h3-meta__row--long dd {
+  text-align: left;
+  max-width: 62%;
+  line-height: 1.35;
+}
+
+.h3-simple__source {
+  margin: 0.65rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--panel-text-muted);
+}
+
+// Dark mode: override scoped panel variables
+html.dark .h3-simple {
+  --panel-bg: rgba(18, 23, 28, 0.82);
+  --panel-border: rgba(203, 182, 157, 0.2);
+  --panel-text: #ecf1f6;
+  --panel-text-muted: #b6c7d9;
+}
+
+html.dark .h3-control-link--action {
+  background: rgba(26, 32, 38, 0.95);
+}
+
+html.dark .h3-control-link {
+  background: rgba(26, 32, 38, 0.95);
+}
+
+html.dark .h3-zoom-meter__track {
+  background: rgba(182, 199, 217, 0.24);
+}
+
+html.dark .h3-zoom-meter__fill {
+  background: linear-gradient(90deg, #c89a6b, #e8ba8d);
+  box-shadow: 0 0 10px rgba(232, 186, 141, 0.35);
+}
+
+html.dark .h3-simple__status span {
+  background: rgba(43, 54, 66, 0.9);
+}
+
+html.dark .h3-simple__meta div {
+  border-bottom-color: rgba(182, 199, 217, 0.18);
+}
+
+// Mobile: collapsible panel
+@media screen and (max-width: 52em) {
+  .h3-simple__topbar {
+    flex-direction: column;
+    align-items: stretch;
+    right: 0.75rem;
+    left: 0.75rem;
+    top: 0.75rem;
+  }
+
+  .h3-simple__controls {
+    justify-content: space-between;
+  }
+
+  .h3-zoom-meter {
+    min-width: 100%;
+  }
+
+  .h3-zoom-meter__track {
+    width: 100%;
+  }
+
+  .h3-simple__panel {
+    left: 0.75rem;
+    right: 0.75rem;
+    width: auto;
+    bottom: 0.75rem;
+    max-height: none; // let toggle control visibility
+  }
+
+  .h3-panel-toggle {
+    display: flex;
+  }
+
+  .h3-panel-body {
+    display: none;
+  }
+
+  .h3-simple__panel.is-expanded .h3-panel-body {
+    display: block;
   }
 }

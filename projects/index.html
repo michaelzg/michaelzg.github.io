@@ -1,0 +1,28 @@
+---
+layout: page
+title: Projects
+permalink: /projects/
+---
+
+<div class="projects-shell">
+  <section class="project-grid" aria-label="Project previews">
+    {% for project in site.data.projects %}
+      <article class="project-card" style="--project-accent: {{ project.accent | default: '#D2691E' }};">
+        <a class="project-card__link project-card__link--textonly" href="{{ project.path | prepend: site.baseurl }}" aria-label="Open {{ project.title }}">
+          <div class="project-card__content">
+            <div class="project-card__header">
+              <h2 class="project-card__title">{{ project.title }}</h2>
+              <span class="project-card__status">{{ project.status }}</span>
+            </div>
+            <p class="project-card__summary">{{ project.summary }}</p>
+          </div>
+        </a>
+        {% if project.external_url %}
+          <div class="project-card__footer">
+            <a class="project-inline-link" href="{{ project.external_url }}" target="_blank" rel="noopener noreferrer">Learn More</a>
+          </div>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </section>
+</div>

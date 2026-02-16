@@ -1,0 +1,459 @@
+---
+layout: default
+title: H3 Atlas Lab
+permalink: /projects/h3-atlas/
+body_class: page-h3-simple
+uses_leaflet: true
+---
+
+<section class="h3-simple" data-initial-lat="39.5" data-initial-lng="-98.35" data-initial-zoom="5">
+  <div id="h3-simple-map" class="h3-simple__map" role="region" aria-label="Interactive satellite map with dynamic H3 grid overlay"></div>
+
+  <div class="h3-simple__topbar">
+    <div class="h3-simple__brand">
+      <p class="h3-simple__eyebrow">H3 Spatial Index</p>
+      <h2>Interactive Grid Atlas</h2>
+    </div>
+
+    <div class="h3-simple__controls">
+      <div class="h3-control-info" aria-live="polite">
+        <span id="h3-zoom-chip" class="h3-level-chip h3-level-chip--info">zoom -</span>
+        <span id="h3-level-chip" class="h3-level-chip h3-level-chip--info">h3 res -</span>
+      </div>
+      <div class="h3-zoom-meter" aria-label="Map zoom range indicator">
+        <span class="h3-zoom-meter__label">zoom range</span>
+        <div class="h3-zoom-meter__track">
+          <div id="h3-zoom-meter-fill" class="h3-zoom-meter__fill"></div>
+        </div>
+      </div>
+      <div class="h3-control-actions">
+        <a class="h3-control-link h3-control-link--action" href="https://h3geo.org/" target="_blank" rel="noopener noreferrer">H3 Website</a>
+        <button id="h3-recenter" class="h3-control-link h3-control-link--action" type="button">Use My Location</button>
+      </div>
+    </div>
+  </div>
+
+  <aside class="h3-simple__panel" aria-live="polite">
+    <button id="h3-panel-toggle" class="h3-panel-toggle" type="button" aria-label="Toggle inspector panel" aria-expanded="false" aria-controls="h3-panel-body">
+      <span class="h3-panel-toggle__icon"></span>
+      <span class="h3-panel-toggle__label">Inspector</span>
+    </button>
+
+    <div id="h3-panel-body" class="h3-panel-body">
+      <div class="h3-simple__status">
+        <span id="h3-status-cells">0 cells</span>
+        <span id="h3-status-area">area -</span>
+        <span id="h3-status-note">zoom - &#8594; h3 res -</span>
+      </div>
+
+      <h3>Selected Cell</h3>
+      <p id="h3-selected-title" class="alert-title">Click a hex cell to inspect its metadata.</p>
+
+      <dl class="h3-simple__meta">
+        <div><dt>Cell ID</dt><dd id="meta-cell">-</dd></div>
+        <div><dt>H3 Resolution</dt><dd id="meta-res">-</dd></div>
+        <div><dt>Avg Area</dt><dd id="meta-area">-</dd></div>
+        <div><dt>Use Case</dt><dd id="meta-usecase">-</dd></div>
+        <div class="h3-meta__row--long"><dt>Examples</dt><dd id="meta-examples">-</dd></div>
+        <div><dt>Parent</dt><dd id="meta-parent">-</dd></div>
+      </dl>
+
+      <p class="h3-simple__source">
+        Grid density updates automatically with zoom.
+      </p>
+    </div>
+  </aside>
+</section>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/h3-js@4.1.0/dist/h3-js.umd.js"></script>
+
+<script>
+(function() {
+  var root = document.querySelector('.h3-simple');
+  if (!root || !window.L || !window.h3) {
+    return;
+  }
+
+  var BOUNDARY_CACHE_MAX = 2000;
+
+  var levelChip = document.getElementById('h3-level-chip');
+  var zoomChip = document.getElementById('h3-zoom-chip');
+  var zoomMeterFill = document.getElementById('h3-zoom-meter-fill');
+  var recenterButton = document.getElementById('h3-recenter');
+  var statusCells = document.getElementById('h3-status-cells');
+  var statusArea = document.getElementById('h3-status-area');
+  var statusNote = document.getElementById('h3-status-note');
+
+  var selectedTitle = document.getElementById('h3-selected-title');
+  var metaCell = document.getElementById('meta-cell');
+  var metaRes = document.getElementById('meta-res');
+  var metaArea = document.getElementById('meta-area');
+  var metaUseCase = document.getElementById('meta-usecase');
+  var metaExamples = document.getElementById('meta-examples');
+  var metaParent = document.getElementById('meta-parent');
+
+  // Panel toggle for mobile
+  var panelToggle = document.getElementById('h3-panel-toggle');
+  var panelBody = document.getElementById('h3-panel-body');
+  var panelEl = document.querySelector('.h3-simple__panel');
+  if (panelToggle && panelBody) {
+    // Collapsed by default on small screens; CSS handles visibility
+    panelToggle.addEventListener('click', function() {
+      var expanded = panelEl.classList.toggle('is-expanded');
+      panelToggle.setAttribute('aria-expanded', String(expanded));
+    });
+  }
+
+  var map = L.map('h3-simple-map', {
+    preferCanvas: true,
+    zoomControl: false,
+    minZoom: 5,
+    maxZoom: 15,
+    zoomSnap: 1,
+    zoomDelta: 1,
+    worldCopyJump: true
+  }).setView([Number(root.dataset.initialLat), Number(root.dataset.initialLng)], Number(root.dataset.initialZoom));
+
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+  var canvasRenderer = L.canvas({ padding: 0.2 });
+
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '&copy; Esri'
+  }).addTo(map);
+
+  L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '&copy; Esri'
+  }).addTo(map);
+
+  var gridLayer = L.layerGroup().addTo(map);
+  var boundaryCache = new Map();
+  var selectedCell = null;
+  // Track polygon references by cellId for selective style updates
+  var polygonMap = {};
+  var currentRes = null;
+
+  function resizeLayout() {
+    var topOffset = root.getBoundingClientRect().top;
+    var h = Math.max(320, window.innerHeight - topOffset);
+    root.style.setProperty('--h3-app-height', h + 'px');
+    map.invalidateSize();
+  }
+
+  function resolutionForZoom(zoom) {
+    if (zoom <= 4) return 4;
+    if (zoom <= 6) return 5;
+    if (zoom <= 9) return 6;
+    if (zoom <= 13) return 7;
+    if (zoom <= 14) return 8;
+    return 9;
+  }
+
+  function formatNum(value, digits) {
+    return Number(value).toLocaleString(undefined, { maximumFractionDigits: digits });
+  }
+
+  function areaAtResolution(res) {
+    if (typeof h3.getHexagonAreaAvg === 'function') {
+      return h3.getHexagonAreaAvg(res, 'km2');
+    }
+    return NaN;
+  }
+
+  function edgeAtResolution(res) {
+    if (typeof h3.getHexagonEdgeLengthAvg === 'function') {
+      return h3.getHexagonEdgeLengthAvg(res, 'km');
+    }
+    return NaN;
+  }
+
+  var LEVEL_GUIDE = {
+    0: {
+      useCase: 'Planetary-scale partitioning',
+      examples: 'Global climate baselines, ocean basin summaries, Earth-scale model tiling.'
+    },
+    1: {
+      useCase: 'Continental-scale analytics',
+      examples: 'Continental weather regimes, transnational logistics corridors, hemispheric demand rollups.'
+    },
+    2: {
+      useCase: 'Subcontinental regions',
+      examples: 'Large forecast regions, drought pattern analysis, multi-country mobility comparisons.'
+    },
+    3: {
+      useCase: 'Multi-state operational regions',
+      examples: 'National weather service region rollups, large grid dispatch planning, coarse geospatial indexing.'
+    },
+    4: {
+      useCase: 'State and large metro planning',
+      examples: 'Statewide hazard zoning, wildfire outlook tiling, major river-basin monitoring.'
+    },
+    5: {
+      useCase: 'County-to-metro coordination',
+      examples: 'Metro resilience planning, regional traffic demand grids, utility territory analytics.'
+    },
+    6: {
+      useCase: 'Citywide operations',
+      examples: 'City sensor aggregation, fleet balancing, outage clustering, emergency staging zones.'
+    },
+    7: {
+      useCase: 'District and neighborhood coverage',
+      examples: 'Neighborhood weather nowcasting, street-network demand surfaces, local service coverage.'
+    },
+    8: {
+      useCase: 'Sub-neighborhood detail',
+      examples: 'Campus and industrial site telemetry, fine-grained risk mapping, micro-mobility rebalancing.'
+    },
+    9: {
+      useCase: 'Block-scale analysis',
+      examples: 'Block-level hotspot detection, urban digital-twin overlays, dense IoT mesh partitioning.'
+    },
+    10: {
+      useCase: 'Parcel-adjacent precision',
+      examples: 'High-resolution POI indexing and place matching (for example, Placekey uses H3 resolution 10).'
+    }
+  };
+
+  function levelInfo(res) {
+    return LEVEL_GUIDE[res] || LEVEL_GUIDE[10];
+  }
+
+  function isDarkTheme() {
+    return document.documentElement.classList.contains('dark');
+  }
+
+  function cellFillColor(cellId, res) {
+    var n = 0;
+    for (var i = 0; i < cellId.length; i += 1) {
+      n = (n * 31 + cellId.charCodeAt(i)) % 360;
+    }
+    var dark = isDarkTheme();
+    // Intentionally narrow hue range for monochromatic warm palette over satellite imagery
+    var hueBase = dark ? 26 : 30;
+    var hue = (hueBase + (n % 14)) % 360;
+    var sat = (dark ? 56 : 48) - Math.min(12, res);
+    var light = (dark ? 46 : 60) - Math.min(16, Math.floor(res * 1.4));
+    return 'hsl(' + hue + ', ' + sat + '%, ' + light + '%)';
+  }
+
+  function getSelectedStyle() {
+    var dark = isDarkTheme();
+    return {
+      color: dark ? '#f0b47d' : '#d2691e',
+      weight: 1.9,
+      fillColor: dark ? '#f0b47d' : '#d2691e',
+      fillOpacity: dark ? 0.82 : 0.78
+    };
+  }
+
+  function getDefaultStyle(cellId, res) {
+    var dark = isDarkTheme();
+    return {
+      color: dark ? 'rgba(255,232,209,0.30)' : 'rgba(255,255,255,0.34)',
+      weight: 0.65,
+      fillColor: cellFillColor(cellId, res),
+      fillOpacity: dark ? 0.50 : 0.56
+    };
+  }
+
+  function setMetadata(cellId, res) {
+    var area = areaAtResolution(res);
+    var info = levelInfo(res);
+
+    selectedTitle.textContent = info.useCase;
+    metaCell.textContent = cellId;
+    metaRes.textContent = String(res);
+    metaArea.textContent = isFinite(area) ? formatNum(area, 2) + ' km\u00B2' : 'n/a';
+    metaUseCase.textContent = info.useCase;
+    metaExamples.textContent = info.examples;
+    metaParent.textContent = (res > 0 && typeof h3.cellToParent === 'function') ? h3.cellToParent(cellId, res - 1) : 'none';
+  }
+
+  function haversineKm(lat1, lon1, lat2, lon2) {
+    var R = 6371;
+    var toRad = Math.PI / 180;
+    var dLat = (lat2 - lat1) * toRad;
+    var dLon = (lon2 - lon1) * toRad;
+    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  function cellsInView(res) {
+    var bounds = map.getBounds();
+    var center = map.getCenter();
+    var centerCell = h3.latLngToCell(center.lat, center.lng, res);
+    var edgeKm = edgeAtResolution(res);
+
+    if (!isFinite(edgeKm) || edgeKm <= 0) {
+      edgeKm = 8;
+    }
+
+    var corners = [
+      bounds.getNorthWest(),
+      bounds.getNorthEast(),
+      bounds.getSouthEast(),
+      bounds.getSouthWest()
+    ];
+
+    var maxDist = 0;
+    corners.forEach(function(corner) {
+      var d = haversineKm(center.lat, center.lng, corner.lat, corner.lng);
+      if (d > maxDist) {
+        maxDist = d;
+      }
+    });
+
+    var ring = Math.max(1, Math.ceil(maxDist / (edgeKm * 1.45)) + 2);
+    ring = Math.min(ring, 30);
+    var disk = h3.gridDisk(centerCell, ring);
+
+    var filtered = disk.filter(function(cellId) {
+      var c = h3.cellToLatLng(cellId);
+      return bounds.pad(0.08).contains([c[0], c[1]]);
+    });
+
+    return filtered.length ? filtered : disk;
+  }
+
+  function getBoundary(cellId) {
+    if (boundaryCache.has(cellId)) {
+      return boundaryCache.get(cellId);
+    }
+    // Cap cache size to prevent unbounded memory growth
+    if (boundaryCache.size > BOUNDARY_CACHE_MAX) {
+      boundaryCache.clear();
+    }
+    var boundary = h3.cellToBoundary(cellId).map(function(pair) {
+      return [pair[0], pair[1]];
+    });
+    boundaryCache.set(cellId, boundary);
+    return boundary;
+  }
+
+  function gridForZoom() {
+    var desired = resolutionForZoom(map.getZoom());
+    var cells = cellsInView(desired);
+    while (cells.length > 520 && desired > 0) {
+      desired -= 1;
+      cells = cellsInView(desired);
+    }
+    return { res: desired, cells: cells };
+  }
+
+  // Selects a cell without full redraw -- updates only the previous and new
+  // selected polygons via setStyle(), which is much cheaper than clearing
+  // and recreating every polygon on the layer.
+  function selectCell(cellId, res) {
+    var prevCell = selectedCell;
+    selectedCell = cellId;
+    setMetadata(cellId, res);
+
+    // Deselect previous
+    if (prevCell && prevCell !== cellId && polygonMap[prevCell]) {
+      polygonMap[prevCell].setStyle(getDefaultStyle(prevCell, res));
+    }
+    // Highlight new
+    if (polygonMap[cellId]) {
+      polygonMap[cellId].setStyle(getSelectedStyle());
+    }
+  }
+
+  function drawGrid() {
+    var grid = gridForZoom();
+    var res = grid.res;
+    var cells = grid.cells;
+    var area = areaAtResolution(res);
+
+    gridLayer.clearLayers();
+    polygonMap = {};
+    currentRes = res;
+    var zoomNow = map.getZoom();
+    var zoomDisplay = Math.round(zoomNow);
+    var zoomMin = map.getMinZoom();
+    var zoomMax = map.getMaxZoom();
+    var zoomPct = ((zoomNow - zoomMin) / (zoomMax - zoomMin)) * 100;
+
+    zoomChip.textContent = 'zoom ' + zoomDisplay;
+    levelChip.textContent = 'h3 res ' + res;
+    zoomMeterFill.style.width = Math.max(0, Math.min(100, zoomPct)).toFixed(1) + '%';
+    statusCells.textContent = cells.length + ' cells';
+    statusArea.textContent = isFinite(area) ? '~' + formatNum(area, 2) + ' km\u00B2/cell' : 'area n/a';
+    statusNote.textContent = 'zoom ' + zoomDisplay + ' \u2192 h3 res ' + res;
+
+    var hasSelected = false;
+
+    cells.forEach(function(cellId) {
+      var selected = selectedCell === cellId;
+      if (selected) hasSelected = true;
+
+      var style = selected ? getSelectedStyle() : getDefaultStyle(cellId, res);
+      style.renderer = canvasRenderer;
+
+      var polygon = L.polygon(getBoundary(cellId), style);
+
+      polygon.on('click', function() {
+        selectCell(cellId, res);
+      });
+
+      polygon.addTo(gridLayer);
+      polygonMap[cellId] = polygon;
+    });
+
+    if (!hasSelected && cells.length) {
+      selectedCell = h3.latLngToCell(map.getCenter().lat, map.getCenter().lng, res);
+      if (cells.indexOf(selectedCell) === -1) {
+        selectedCell = cells[0];
+      }
+      setMetadata(selectedCell, res);
+      if (polygonMap[selectedCell]) {
+        polygonMap[selectedCell].setStyle(getSelectedStyle());
+      }
+    } else if (hasSelected) {
+      setMetadata(selectedCell, res);
+    }
+  }
+
+  function locateUser() {
+    if (!navigator.geolocation) {
+      return;
+    }
+
+    recenterButton.disabled = true;
+    recenterButton.textContent = 'Locating\u2026';
+
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      map.setView([pos.coords.latitude, pos.coords.longitude], 14);
+      recenterButton.disabled = false;
+      recenterButton.textContent = 'Use My Location';
+      drawGrid();
+    }, function() {
+      recenterButton.disabled = false;
+      recenterButton.textContent = 'Use My Location';
+    }, {
+      enableHighAccuracy: true,
+      timeout: 8000,
+      maximumAge: 60000
+    });
+  }
+
+  var redrawTimer;
+  map.on('moveend zoomend', function() {
+    clearTimeout(redrawTimer);
+    redrawTimer = setTimeout(drawGrid, 180);
+  });
+
+  recenterButton.addEventListener('click', locateUser);
+  window.addEventListener('resize', resizeLayout);
+  var themeObserver = new MutationObserver(function() {
+    drawGrid();
+  });
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+  resizeLayout();
+  drawGrid();
+  // Do NOT auto-call locateUser() -- wait for explicit user click to avoid
+  // unprompted geolocation permission dialogs.
+})();
+</script>

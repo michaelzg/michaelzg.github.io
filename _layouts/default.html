@@ -3,7 +3,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.1.1/anchor.min.js"></script>
 
 {% include head.html %}
-<body class="{% if site.animated %}animated fade-in-down{% endif %}">
+<body class="{% if site.animated %}animated fade-in-down{% endif %}{% if page.body_class %} {{ page.body_class }}{% endif %}">
   <div class="site-wrap">
     {% include header.html %}
 

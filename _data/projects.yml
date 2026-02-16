@@ -1,0 +1,8 @@
+- slug: h3-atlas
+  title: H3 Atlas Lab
+  summary: Interactive atlas for understanding H3 cell scales in real geography.
+  status: In Progress
+  accent: "#D2691E"
+  path: /projects/h3-atlas/
+  preview: h3
+  external_url: https://h3geo.org/
