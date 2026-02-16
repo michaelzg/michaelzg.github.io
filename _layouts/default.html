@@ -18,6 +18,47 @@
 
 <script>
 (function() {
+  var article = document.querySelector('.post-content');
+  if (!article) {
+    return;
+  }
+
+  var progressTrack = document.createElement('div');
+  progressTrack.className = 'reading-progress';
+  progressTrack.setAttribute('aria-hidden', 'true');
+
+  var progressBar = document.createElement('div');
+  progressBar.className = 'reading-progress__bar';
+  progressTrack.appendChild(progressBar);
+  document.documentElement.appendChild(progressTrack);
+
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function updateReadingProgress() {
+    var articleTop = article.getBoundingClientRect().top + window.scrollY;
+    var articleBottom = articleTop + article.offsetHeight;
+    var maxScrollable = articleBottom - window.innerHeight;
+    var progress = 0;
+
+    if (maxScrollable <= articleTop) {
+      progress = window.scrollY >= articleTop ? 1 : 0;
+    } else {
+      progress = (window.scrollY - articleTop) / (maxScrollable - articleTop);
+    }
+
+    progressBar.style.transform = 'scaleX(' + clamp(progress, 0, 1) + ')';
+  }
+
+  window.addEventListener('scroll', updateReadingProgress, { passive: true });
+  window.addEventListener('resize', updateReadingProgress);
+  updateReadingProgress();
+})();
+</script>
+
+<script>
+(function() {
   var DARK_START = 21, DARK_END = 7;
 
   function isDarkHour() {
