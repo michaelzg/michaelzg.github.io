@@ -33,27 +33,34 @@ body_class: page-h3-simple
   </div>
 
   <aside class="h3-simple__panel" aria-live="polite">
-    <div class="h3-simple__status">
-      <span id="h3-status-cells">0 cells</span>
-      <span id="h3-status-area">area -</span>
-      <span id="h3-status-note">zoom - -> level -</span>
+    <button id="h3-panel-toggle" class="h3-panel-toggle" type="button" aria-label="Toggle inspector panel">
+      <span class="h3-panel-toggle__icon"></span>
+      <span class="h3-panel-toggle__label">Inspector</span>
+    </button>
+
+    <div id="h3-panel-body" class="h3-panel-body">
+      <div class="h3-simple__status">
+        <span id="h3-status-cells">0 cells</span>
+        <span id="h3-status-area">area -</span>
+        <span id="h3-status-note">zoom - -> level -</span>
+      </div>
+
+      <h3>Selected Cell</h3>
+      <p id="h3-selected-title" class="alert-title">Click a hex cell to inspect its metadata.</p>
+
+      <dl class="h3-simple__meta">
+        <div><dt>Cell ID</dt><dd id="meta-cell">-</dd></div>
+        <div><dt>Resolution</dt><dd id="meta-res">-</dd></div>
+        <div><dt>Avg Area</dt><dd id="meta-area">-</dd></div>
+        <div><dt>Use Case</dt><dd id="meta-usecase">-</dd></div>
+        <div class="h3-meta__row--long"><dt>Examples</dt><dd id="meta-examples">-</dd></div>
+        <div><dt>Parent</dt><dd id="meta-parent">-</dd></div>
+      </dl>
+
+      <p class="h3-simple__source">
+        Grid density updates automatically with zoom.
+      </p>
     </div>
-
-    <h3>Selected Cell</h3>
-    <p id="h3-selected-title" class="alert-title">Click a hex cell to inspect its metadata.</p>
-
-    <dl class="h3-simple__meta">
-      <div><dt>Cell ID</dt><dd id="meta-cell">-</dd></div>
-      <div><dt>Resolution</dt><dd id="meta-res">-</dd></div>
-      <div><dt>Avg Area</dt><dd id="meta-area">-</dd></div>
-      <div><dt>Use Case</dt><dd id="meta-usecase">-</dd></div>
-      <div class="h3-meta__row--long"><dt>Examples</dt><dd id="meta-examples">-</dd></div>
-      <div><dt>Parent</dt><dd id="meta-parent">-</dd></div>
-    </dl>
-
-    <p class="h3-simple__source">
-      Grid density updates automatically with zoom.
-    </p>
   </aside>
 </section>
 
@@ -67,6 +74,8 @@ body_class: page-h3-simple
   if (!root || !window.L || !window.h3) {
     return;
   }
+
+  var BOUNDARY_CACHE_MAX = 2000;
 
   var levelChip = document.getElementById('h3-level-chip');
   var zoomChip = document.getElementById('h3-zoom-chip');
@@ -83,6 +92,18 @@ body_class: page-h3-simple
   var metaUseCase = document.getElementById('meta-usecase');
   var metaExamples = document.getElementById('meta-examples');
   var metaParent = document.getElementById('meta-parent');
+
+  // Panel toggle for mobile
+  var panelToggle = document.getElementById('h3-panel-toggle');
+  var panelBody = document.getElementById('h3-panel-body');
+  var panelEl = document.querySelector('.h3-simple__panel');
+  if (panelToggle && panelBody) {
+    // Collapsed by default on small screens; CSS handles visibility
+    panelToggle.addEventListener('click', function() {
+      var expanded = panelEl.classList.toggle('is-expanded');
+      panelToggle.setAttribute('aria-expanded', String(expanded));
+    });
+  }
 
   var map = L.map('h3-simple-map', {
     preferCanvas: true,
@@ -108,6 +129,9 @@ body_class: page-h3-simple
   var gridLayer = L.layerGroup().addTo(map);
   var boundaryCache = new Map();
   var selectedCell = null;
+  // Track polygon references by cellId for selective style updates
+  var polygonMap = {};
+  var currentRes = null;
 
   function resizeLayout() {
     var topOffset = root.getBoundingClientRect().top;
@@ -204,11 +228,32 @@ body_class: page-h3-simple
       n = (n * 31 + cellId.charCodeAt(i)) % 360;
     }
     var dark = isDarkTheme();
+    // Intentionally narrow hue range for monochromatic warm palette over satellite imagery
     var hueBase = dark ? 26 : 30;
     var hue = (hueBase + (n % 14)) % 360;
     var sat = (dark ? 56 : 48) - Math.min(12, res);
     var light = (dark ? 46 : 60) - Math.min(16, Math.floor(res * 1.4));
     return 'hsl(' + hue + ', ' + sat + '%, ' + light + '%)';
+  }
+
+  function getSelectedStyle() {
+    var dark = isDarkTheme();
+    return {
+      color: dark ? '#f0b47d' : '#d2691e',
+      weight: 1.9,
+      fillColor: dark ? '#f0b47d' : '#d2691e',
+      fillOpacity: dark ? 0.82 : 0.78
+    };
+  }
+
+  function getDefaultStyle(cellId, res) {
+    var dark = isDarkTheme();
+    return {
+      color: dark ? 'rgba(255,232,209,0.30)' : 'rgba(255,255,255,0.34)',
+      weight: 0.65,
+      fillColor: cellFillColor(cellId, res),
+      fillOpacity: dark ? 0.50 : 0.56
+    };
   }
 
   function setMetadata(cellId, res) {
@@ -218,7 +263,7 @@ body_class: page-h3-simple
     selectedTitle.textContent = info.useCase;
     metaCell.textContent = cellId;
     metaRes.textContent = String(res);
-    metaArea.textContent = isFinite(area) ? formatNum(area, 2) + ' km2' : 'n/a';
+    metaArea.textContent = isFinite(area) ? formatNum(area, 2) + ' km\u00B2' : 'n/a';
     metaUseCase.textContent = info.useCase;
     metaExamples.textContent = info.examples;
     metaParent.textContent = (res > 0 && typeof h3.cellToParent === 'function') ? h3.cellToParent(cellId, res - 1) : 'none';
@@ -276,6 +321,10 @@ body_class: page-h3-simple
     if (boundaryCache.has(cellId)) {
       return boundaryCache.get(cellId);
     }
+    // Cap cache size to prevent unbounded memory growth
+    if (boundaryCache.size > BOUNDARY_CACHE_MAX) {
+      boundaryCache.clear();
+    }
     var boundary = h3.cellToBoundary(cellId).map(function(pair) {
       return [pair[0], pair[1]];
     });
@@ -293,6 +342,24 @@ body_class: page-h3-simple
     return { res: desired, cells: cells };
   }
 
+  // Selects a cell without full redraw -- updates only the previous and new
+  // selected polygons via setStyle(), which is much cheaper than clearing
+  // and recreating every polygon on the layer.
+  function selectCell(cellId, res) {
+    var prevCell = selectedCell;
+    selectedCell = cellId;
+    setMetadata(cellId, res);
+
+    // Deselect previous
+    if (prevCell && prevCell !== cellId && polygonMap[prevCell]) {
+      polygonMap[prevCell].setStyle(getDefaultStyle(prevCell, res));
+    }
+    // Highlight new
+    if (polygonMap[cellId]) {
+      polygonMap[cellId].setStyle(getSelectedStyle());
+    }
+  }
+
   function drawGrid() {
     var grid = gridForZoom();
     var res = grid.res;
@@ -300,6 +367,8 @@ body_class: page-h3-simple
     var area = areaAtResolution(res);
 
     gridLayer.clearLayers();
+    polygonMap = {};
+    currentRes = res;
     var zoomNow = map.getZoom();
     var zoomDisplay = Math.round(zoomNow);
     var zoomMin = map.getMinZoom();
@@ -310,8 +379,8 @@ body_class: page-h3-simple
     levelChip.textContent = 'level ' + res;
     zoomMeterFill.style.width = Math.max(0, Math.min(100, zoomPct)).toFixed(1) + '%';
     statusCells.textContent = cells.length + ' cells';
-    statusArea.textContent = isFinite(area) ? '~' + formatNum(area, 2) + ' km2/cell' : 'area n/a';
-    statusNote.textContent = 'zoom ' + zoomDisplay + ' -> level ' + res;
+    statusArea.textContent = isFinite(area) ? '~' + formatNum(area, 2) + ' km\u00B2/cell' : 'area n/a';
+    statusNote.textContent = 'zoom ' + zoomDisplay + ' \u2192 level ' + res;
 
     var hasSelected = false;
 
@@ -319,21 +388,17 @@ body_class: page-h3-simple
       var selected = selectedCell === cellId;
       if (selected) hasSelected = true;
 
-      var polygon = L.polygon(getBoundary(cellId), {
-        renderer: canvasRenderer,
-        color: selected ? (isDarkTheme() ? '#f0b47d' : '#d2691e') : (isDarkTheme() ? 'rgba(255,232,209,0.30)' : 'rgba(255,255,255,0.34)'),
-        weight: selected ? 1.9 : 0.65,
-        fillColor: selected ? (isDarkTheme() ? '#f0b47d' : '#d2691e') : cellFillColor(cellId, res),
-        fillOpacity: selected ? (isDarkTheme() ? 0.82 : 0.78) : (isDarkTheme() ? 0.50 : 0.56)
-      });
+      var style = selected ? getSelectedStyle() : getDefaultStyle(cellId, res);
+      style.renderer = canvasRenderer;
+
+      var polygon = L.polygon(getBoundary(cellId), style);
 
       polygon.on('click', function() {
-        selectedCell = cellId;
-        setMetadata(cellId, res);
-        drawGrid();
+        selectCell(cellId, res);
       });
 
       polygon.addTo(gridLayer);
+      polygonMap[cellId] = polygon;
     });
 
     if (!hasSelected && cells.length) {
@@ -342,6 +407,9 @@ body_class: page-h3-simple
         selectedCell = cells[0];
       }
       setMetadata(selectedCell, res);
+      if (polygonMap[selectedCell]) {
+        polygonMap[selectedCell].setStyle(getSelectedStyle());
+      }
     } else if (hasSelected) {
       setMetadata(selectedCell, res);
     }
@@ -353,7 +421,7 @@ body_class: page-h3-simple
     }
 
     recenterButton.disabled = true;
-    recenterButton.textContent = 'Locating...';
+    recenterButton.textContent = 'Locating\u2026';
 
     navigator.geolocation.getCurrentPosition(function(pos) {
       map.setView([pos.coords.latitude, pos.coords.longitude], 13);
@@ -385,6 +453,7 @@ body_class: page-h3-simple
 
   resizeLayout();
   drawGrid();
-  locateUser();
+  // Do NOT auto-call locateUser() -- wait for explicit user click to avoid
+  // unprompted geolocation permission dialogs.
 })();
 </script>

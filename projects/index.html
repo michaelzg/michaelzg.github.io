@@ -14,9 +14,14 @@ permalink: /projects/
               <h2 class="project-card__title">{{ project.title }}</h2>
               <span class="project-card__status">{{ project.status }}</span>
             </div>
-            <p class="project-card__summary">{{ project.summary }} <a class="project-inline-link" href="https://h3geo.org/" target="_blank" rel="noopener noreferrer">Learn More</a></p>
+            <p class="project-card__summary">{{ project.summary }}</p>
           </div>
         </a>
+        {% if project.external_url %}
+          <div class="project-card__footer">
+            <a class="project-inline-link" href="{{ project.external_url }}" target="_blank" rel="noopener noreferrer">Learn More</a>
+          </div>
+        {% endif %}
       </article>
     {% endfor %}
   </section>
