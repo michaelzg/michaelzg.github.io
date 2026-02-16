@@ -2,13 +2,20 @@
 
 [michaelzg.com](https://michaelzg.com/). Uses [Jekyll](https://jekyllrb.com/).
 
-#### Build & Run
+## Local development
 
-Ensure you have [Docker](https://www.docker.com/) installed. Then,
+Prereq: [Docker](https://www.docker.com/).
 
+```bash
+make serve
 ```
-make build-run
+
+Then open http://localhost:4000/.
+
+## Build static site
+
+```bash
+make build
 ```
 
-And then navigate to http://localhost:4000/.
-Local changes to the post content will be automatically updated.
+Generated files are written to `_site/`.
