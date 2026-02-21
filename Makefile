@@ -9,10 +9,10 @@ help:
 	@printf "  make build  - build static site into _site/\n"
 
 image:
-	docker build -t $(IMAGE) .
+	docker build --platform linux/amd64 -t $(IMAGE) .
 
 serve: image
-	docker run --rm -it -p $(PORT):4000 -v "$(PWD):/srv/jekyll" $(IMAGE)
+	docker run --rm --platform linux/amd64 -p $(PORT):4000 -v "$(PWD):/srv/jekyll" $(IMAGE)
 
 build: image
 	docker run --rm -v "$(PWD):/srv/jekyll" $(IMAGE) build
