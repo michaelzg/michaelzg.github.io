@@ -3,26 +3,10 @@ layout: default
 ---
 
 <div class="home">
-
-  <div class="posts">
-    {% for post in paginator.posts %}
-      <div class="post">
-        
-        <a href="{{ post.url | prepend: site.baseurl }}" class="post-link">
-            <span class="h4 post-title">{{ post.title }}</span> 
-        </a>
-        <span class="post-meta post-date">{{ post.date | date: "%b %-d, %Y" }} </span>
-        
-        <p class="post-summary">
-          {% if post.summary %}
-            {{ post.summary }}
-          {% else %}
-            {{ post.excerpt }}
-          {% endif %}
-        </p>
-      </div>
-    {% endfor %}
-  </div>
-
-  {% include pagination.html %}
+  <p>Hi, I'm Michael. To me, learning is an accumulation of little "ah hah" moments. This site is where I aggregate them.</p>
+  <ul>
+    <li><a href="{{ site.baseurl }}/blog/">Blog</a></li>
+    <li><a href="{{ site.baseurl }}/projects/">Projects</a></li>
+    <li><a href="{{ site.baseurl }}/life-in-weeks/">Life in Weeks</a></li>
+  </ul>
 </div>
