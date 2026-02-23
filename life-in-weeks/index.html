@@ -280,10 +280,6 @@ title: Life In Weeks
     }
   }
 
-  .liw-box.liw-future .liw-tip {
-    display: none !important;
-  }
-
   /* ========================================
      GO TO NOW BUTTON (Compact CTA)
      ======================================== */
@@ -908,52 +904,50 @@ title: Life In Weeks
     }
 
     // Tooltip
-    if (!isFuture) {
-      var tip = document.createElement('span');
-      tip.className = 'liw-tip';
+    var tip = document.createElement('span');
+    tip.className = 'liw-tip';
 
-      var dateDiv = document.createElement('div');
-      dateDiv.className = 'liw-tip-date';
-      dateDiv.textContent = fmtDate(weekStart);
-      tip.appendChild(dateDiv);
+    var dateDiv = document.createElement('div');
+    dateDiv.className = 'liw-tip-date';
+    dateDiv.textContent = fmtDate(weekStart);
+    tip.appendChild(dateDiv);
 
-      if (evtsThisWeek) {
-        var labels = evtsThisWeek.map(function (e) { return e.label; });
-        var labelDiv = document.createElement('div');
-        labelDiv.className = 'liw-tip-label';
-        labelDiv.textContent = labels.join(' \u00b7 ');
-        tip.appendChild(labelDiv);
+    if (evtsThisWeek) {
+      var labels = evtsThisWeek.map(function (e) { return e.label; });
+      var labelDiv = document.createElement('div');
+      labelDiv.className = 'liw-tip-label';
+      labelDiv.textContent = labels.join(' \u00b7 ');
+      tip.appendChild(labelDiv);
 
-        // Show descriptions if any event has one
-        var descs = evtsThisWeek.filter(function (e) { return e.description; });
-        if (descs.length > 0) {
-          var descDiv = document.createElement('div');
-          descDiv.className = 'liw-tip-desc';
-          descDiv.textContent = descs.map(function (e) { return e.description; }).join(' \u00b7 ');
-          tip.appendChild(descDiv);
-        }
-      } else {
-        var age = weekStart.getFullYear() - BIRTH.getFullYear();
-        if (weekStart.getMonth() < BIRTH.getMonth() ||
-            (weekStart.getMonth() === BIRTH.getMonth() && weekStart.getDate() < BIRTH.getDate())) {
-          age--;
-        }
-        var ageDiv = document.createElement('div');
-        ageDiv.className = 'liw-tip-label';
-        ageDiv.textContent = 'Age ' + age;
-        tip.appendChild(ageDiv);
+      // Show descriptions if any event has one
+      var descs = evtsThisWeek.filter(function (e) { return e.description; });
+      if (descs.length > 0) {
+        var descDiv = document.createElement('div');
+        descDiv.className = 'liw-tip-desc';
+        descDiv.textContent = descs.map(function (e) { return e.description; }).join(' \u00b7 ');
+        tip.appendChild(descDiv);
       }
-
-      if (isNow) {
-        var nowDiv = document.createElement('div');
-        nowDiv.className = 'liw-tip-label';
-        nowDiv.style.fontWeight = 'bold';
-        nowDiv.textContent = '\u2190 You are here';
-        tip.appendChild(nowDiv);
+    } else {
+      var age = weekStart.getFullYear() - BIRTH.getFullYear();
+      if (weekStart.getMonth() < BIRTH.getMonth() ||
+          (weekStart.getMonth() === BIRTH.getMonth() && weekStart.getDate() < BIRTH.getDate())) {
+        age--;
       }
-
-      box.appendChild(tip);
+      var ageDiv = document.createElement('div');
+      ageDiv.className = 'liw-tip-label';
+      ageDiv.textContent = 'Age ' + age;
+      tip.appendChild(ageDiv);
     }
+
+    if (isNow) {
+      var nowDiv = document.createElement('div');
+      nowDiv.className = 'liw-tip-label';
+      nowDiv.style.fontWeight = 'bold';
+      nowDiv.textContent = '\u2190 You are here';
+      tip.appendChild(nowDiv);
+    }
+
+    box.appendChild(tip);
 
     currentRow.appendChild(box);
     rowUnits += units;

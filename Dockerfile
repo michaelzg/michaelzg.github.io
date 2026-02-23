@@ -2,6 +2,11 @@ FROM jekyll/jekyll:pages
 
 RUN apk add --no-cache build-base
 
+WORKDIR /tmp/jekyll-deps
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
+
 WORKDIR /srv/jekyll
 
-CMD ["jekyll", "serve", "--host", "0.0.0.0", "--port", "4000", "--livereload"]
+ENTRYPOINT ["bundle", "exec", "jekyll"]
+CMD ["serve", "--host", "0.0.0.0", "--port", "4000", "--livereload"]
