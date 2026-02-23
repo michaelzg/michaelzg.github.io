@@ -9,6 +9,9 @@ published: true
 Imagine the implementation of a continually updating time-series graph or a newsfeed.
 It can be thought of as two data streams:
 a finite stream populating historical data and an infinite stream providing the new data.
+
+<!--more-->
+
 Traditionally, API clients (e.g. a UI) may be pulling this off by
 continually polling the backend API endpoint at some interval or
 juggling two separate endpoints for both streams. This post showcases moving that client logic into the backend API and

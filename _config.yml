@@ -33,4 +33,6 @@ sass:
   compressed: true
 highlighter: rouge
 
+excerpt_separator: "<!--more-->"
+
 gems: [jekyll-paginate]

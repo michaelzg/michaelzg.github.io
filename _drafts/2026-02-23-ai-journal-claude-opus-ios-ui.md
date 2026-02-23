@@ -4,14 +4,15 @@ title: "AI Build Journal: Claude Opus 4.6 on a Simple iOS Card UI"
 date: 2026-02-23 00:00:00
 categories: ai ios
 tags: [ai, ios, swiftui, react-native, ux]
-published: false
 publish_window_start: 2026-04-23
 publish_window_end: 2026-06-23
 ---
 
-## Entry Date: February 23, 2026
-
 Today I tested Claude Opus 4.6 on a simple iOS frontend task: a flippable card UI.
+
+<!--more-->
+
+*Entry Date: February 23, 2026*
 
 I built two versions:
 - a React Native version

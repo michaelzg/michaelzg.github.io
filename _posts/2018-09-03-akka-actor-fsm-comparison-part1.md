@@ -6,11 +6,15 @@ categories: akka
 published: true
 ---
 
-Using [Akka actors](https://doc.akka.io/docs/akka/current/general/actors.html) in Scala, 
-I'll be discussing three approaches to implement a finite state machine: 
-[Untyped](#untyped-actor), [Untyped FSM](#untyped-fsm-actor), and 
-[Typed](#typed-actor). I will provide code to portray their nuances and
-highlight some interesting aspects of each. 
+Using [Akka actors](https://doc.akka.io/docs/akka/current/general/actors.html) in Scala,
+I'll be discussing three approaches to implement a finite state machine:
+[Untyped](#untyped-actor), [Untyped FSM](#untyped-fsm-actor), and
+[Typed](#typed-actor).
+
+<!--more-->
+
+I will provide code to portray their nuances and
+highlight some interesting aspects of each.
 Testing is another important consideration that I've saved for Part 2.
 If one would rather run the full code and test suite,
 I've put [this project on my GitHub](https://github.com/michaelzg/blog-scala/tree/master/fsm).
