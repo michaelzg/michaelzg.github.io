@@ -4,7 +4,7 @@ RUN apk add --no-cache build-base
 
 WORKDIR /tmp/jekyll-deps
 COPY Gemfile Gemfile.lock ./
-RUN bundle install
+RUN chmod a+w Gemfile.lock && bundle install
 
 WORKDIR /srv/jekyll
 
