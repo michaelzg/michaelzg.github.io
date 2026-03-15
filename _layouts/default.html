@@ -60,22 +60,36 @@
 <script>
 (function() {
   var DARK_START = 18, DARK_END = 7;
+  var themeTransitionFrame = null;
 
   function isDarkHour() {
     var h = new Date().getHours();
     return h >= DARK_START || h < DARK_END;
   }
 
-  function applyTheme(dark) {
-    if (dark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+  function applyTheme(dark, animate) {
+    if (animate) {
+      if (themeTransitionFrame !== null) {
+        window.cancelAnimationFrame(themeTransitionFrame);
+      }
+      document.documentElement.classList.add('theme-switching');
     }
+
+    document.documentElement.classList.toggle('dark', dark);
+
     var icon  = document.getElementById('global-toggle-icon');
     var label = document.getElementById('global-toggle-label');
     if (icon)  icon.textContent  = dark ? '☀️' : '🌙';
     if (label) label.textContent = dark ? 'Day' : 'Night';
+
+    if (animate) {
+      themeTransitionFrame = window.requestAnimationFrame(function() {
+        themeTransitionFrame = window.requestAnimationFrame(function() {
+          document.documentElement.classList.remove('theme-switching');
+          themeTransitionFrame = null;
+        });
+      });
+    }
   }
 
   // Build button and append to <html> (not <body>) so that body's
@@ -96,7 +110,7 @@
     var nowDark = document.documentElement.classList.contains('dark');
     var newDark = !nowDark;
     sessionStorage.setItem('theme-override', newDark ? 'dark' : 'light');
-    applyTheme(newDark);
+    applyTheme(newDark, true);
   });
 })();
 </script>

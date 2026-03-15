@@ -65,7 +65,20 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text-primary);
   font-family: var(--font-body);
-  transition: background-color 0.5s ease, color 0.4s ease;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+// Disable descendant transitions during theme flips so large pages do not
+// spawn thousands of simultaneous animations.
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+html.theme-switching body {
+  transition: background-color 0.18s ease, color 0.18s ease !important;
 }
 
 // Dark mode overrides for components with hard-coded light colors
@@ -195,7 +208,9 @@ pre, code {
   letter-spacing: 0.05em;
   color: var(--color-text-primary);
   text-transform: lowercase;
-  transition: var(--transition-smooth);
+  transition:
+    color var(--transition-smooth),
+    transform var(--transition-smooth);
   line-height: 1; // Tighten line height for better alignment
 
   &::after {
@@ -220,7 +235,11 @@ pre, code {
   border-bottom: 2px solid transparent;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  transition: all var(--transition-snappy);
+  transition:
+    color var(--transition-snappy),
+    border-color var(--transition-snappy),
+    opacity var(--transition-snappy),
+    transform var(--transition-snappy);
   line-height: 1;
   padding-bottom: 2px;
   white-space: nowrap;
@@ -247,7 +266,7 @@ pre, code {
   padding: 2rem 0 2rem 1.5rem;
   border-bottom: 1px solid var(--color-border);
   border-left: 3px solid transparent;
-  transition: all var(--transition-smooth);
+  transition: border-left-color var(--transition-smooth);
 
   // Hover effects
   &:hover {
@@ -322,7 +341,12 @@ pre, code {
   font-style: normal;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  transition: all var(--transition-snappy);
+  transition:
+    background-color var(--transition-snappy),
+    border-color var(--transition-snappy),
+    color var(--transition-snappy),
+    transform var(--transition-snappy),
+    box-shadow var(--transition-snappy);
 }
 
 .post-date {
@@ -360,7 +384,12 @@ pre, code {
   border: 2px solid var(--color-border);
   color: var(--color-text-primary);
   font-weight: 600;
-  transition: all var(--transition-snappy);
+  transition:
+    background-color var(--transition-snappy),
+    border-color var(--transition-snappy),
+    color var(--transition-snappy),
+    transform var(--transition-snappy),
+    box-shadow var(--transition-snappy);
 
   &:hover:not(.disabled) {
     background: var(--color-accent);
@@ -517,7 +546,12 @@ form {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease,
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   -webkit-appearance: none;
   appearance: none;
