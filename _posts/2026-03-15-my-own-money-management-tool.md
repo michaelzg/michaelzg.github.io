@@ -1,8 +1,7 @@
 ---
 layout: post
 title: "Replacing a $108/yr Money Management Tool With My Own"
-date: 2026-03-15 00:00:00
-categories: personal-finance
+date: 2026-03-16
 published: true
 ---
 
