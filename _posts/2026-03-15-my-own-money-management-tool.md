@@ -69,7 +69,7 @@ proportion issues. When my usage quota for Claude reset, Opus 4.6 was able to
 one-shot it to something 90% of the way I wanted it to look.
 
 On architecture:
-- Transaction store: Dolt](https://www.dolthub.com/) (marketed as git for data) gives an auditable log without the overhead of one. Has a SQL interface.
+- Transaction store: [Dolt](https://www.dolthub.com/) (marketed as git for data) gives an auditable log without the overhead of one. Has a SQL interface.
 - API: Rust/Axum layer on top of the store for all reads/writes. Caching on categories, overview, and analytics.
 - UI: React frontend. [Recharts](https://recharts.github.io/) for graphs.
 - Syncing transactions with the banks: Python daily cron job via [SimpleFIN](https://www.simplefin.org/) for polling, deduplication, and batched categorization.
