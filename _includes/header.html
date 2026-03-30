@@ -1,7 +1,17 @@
 <header class="site-header px2 px-responsive">
   <div class="mt2 wrap">
     <div class="measure">
-      <a href="{{ site.url }}" class="site-title">{{ site.title }}</a>
+      <a
+        href="{{ site.url }}"
+        class="site-title site-title--terminal"
+        data-terminal-command="{{ site.title | downcase }}"
+      >
+        <span class="sr-only">{{ site.title }}</span>
+        <span class="site-title__terminal" aria-hidden="true">
+          <span class="site-title__command"></span>
+          <span class="site-title__cursor">_</span>
+        </span>
+      </a>
       <nav class="site-nav right">
         {% include navigation.html %}
       </nav>
@@ -9,4 +19,3 @@
     </div>
   </div>
 </header>
-
