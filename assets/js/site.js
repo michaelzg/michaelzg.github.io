@@ -141,10 +141,28 @@
     });
   }
 
+  function initThemeMedia() {
+    function syncThemeMedia() {
+      var dark = document.documentElement.classList.contains('dark');
+      var images = document.querySelectorAll('img[data-light-src][data-dark-src]');
+
+      images.forEach(function(image) {
+        var nextSrc = dark ? image.dataset.darkSrc : image.dataset.lightSrc;
+        if (image.getAttribute('src') !== nextSrc) {
+          image.setAttribute('src', nextSrc);
+        }
+      });
+    }
+
+    syncThemeMedia();
+    document.addEventListener('site:themechange', syncThemeMedia);
+  }
+
   function boot() {
     initReadingProgress();
     initThemeToggle();
     initHeadingAnchors();
+    initThemeMedia();
   }
 
   if (document.readyState === 'loading') {

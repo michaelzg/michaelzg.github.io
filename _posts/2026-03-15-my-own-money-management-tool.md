@@ -13,8 +13,7 @@ And I learned some things throughout the process.
 
 Here is what my expenses dashboard looks like (faked numbers).
 
-<img src="/assets/img/fin1-expenses-light.png" alt="Full expenses dashboard" class="only-light">
-<img src="/assets/img/fin1-expenses-dark.png" alt="Full expenses dashboard" class="only-dark">
+{% include theme_image.html light="/assets/img/fin1-expenses-light.png" dark="/assets/img/fin1-expenses-dark.png" alt="Full expenses dashboard" loading="eager" %}
 
 A big sell from my original money management tool was helping you budget.
 But I found that I didn't use the budgeting part much anyway. 
@@ -26,16 +25,14 @@ I'm sure I'll add back a budgeting tab for specific goals and projects soon.
 The overview gives me the quick read: spending, budget left, month-over-month trend, 
 and what still needs categorizing. The graphs are there to help me scan the timeline and category mix. 
 
-<img src="/assets/img/fin1-graphs-light.gif" alt="Overview and graphs" class="only-light">
-<img src="/assets/img/fin1-graphs-dark.gif" alt="Overview and graphs" class="only-dark">
+{% include theme_image.html light="/assets/img/fin1-graphs-light.gif" dark="/assets/img/fin1-graphs-dark.gif" alt="Overview and graphs" %}
 
 And then there is the ledger, which is probably the part I use most. 
 That is where I finally got all the filtering and tinkering I need: 
 by credit card, category, description, custom date range, last 6-months, 
 sort by amount, and inline re-categorizing when I notice something is off.
 
-<img src="/assets/img/fin1-filter-light.gif" alt="Expense ledger with filters" class="only-light">
-<img src="/assets/img/fin1-filter-dark.gif" alt="Expense ledger with filters" class="only-dark">
+{% include theme_image.html light="/assets/img/fin1-filter-light.gif" dark="/assets/img/fin1-filter-dark.gif" alt="Expense ledger with filters" %}
 
 Since then it has been a nice late-night project after the family is asleep.
 Add a feature. Fix a bug. Refine and tighten the UI. Repeat. It was fun!
