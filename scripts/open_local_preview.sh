@@ -35,14 +35,29 @@ fi
 
 URL="http://127.0.0.1:$PORT/"
 
+check_preview() {
+  python3 - "$1" <<'PY'
+import sys
+import urllib.request
+
+url = sys.argv[1]
+
+try:
+    with urllib.request.urlopen(url, timeout=1) as response:
+        sys.exit(0 if response.status < 400 else 1)
+except Exception:
+    sys.exit(1)
+PY
+}
+
 for _ in 1 2 3 4 5 6; do
-  if curl -fsS "$URL" >/dev/null 2>&1; then
+  if check_preview "$URL"; then
     break
   fi
   sleep 0.5
 done
 
-if ! curl -fsS "$URL" >/dev/null 2>&1; then
+if ! check_preview "$URL"; then
   rm -f "$PID_FILE"
   echo "Failed to start local preview server on port $PORT." >&2
   exit 1
