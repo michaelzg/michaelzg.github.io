@@ -1,7 +1,5 @@
 <!DOCTYPE html>
 <html>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.1.1/anchor.min.js"></script>
-
 {% include head.html %}
 <body class="{% if site.animated %}animated fade-in-down{% endif %}{% if page.body_class %} {{ page.body_class }}{% endif %}">
   <div class="site-wrap">
@@ -16,113 +14,13 @@
 
   {% include footer.html %}
 
-<script>
-(function() {
-  var article = document.querySelector('.post-content');
-  if (!article) {
-    return;
-  }
-
-  var progressTrack = document.createElement('div');
-  progressTrack.className = 'reading-progress';
-  progressTrack.setAttribute('aria-hidden', 'true');
-
-  var progressBar = document.createElement('div');
-  progressBar.className = 'reading-progress__bar';
-  progressTrack.appendChild(progressBar);
-  document.documentElement.appendChild(progressTrack);
-
-  function clamp(value, min, max) {
-    return Math.min(max, Math.max(min, value));
-  }
-
-  function updateReadingProgress() {
-    var articleTop = article.getBoundingClientRect().top + window.scrollY;
-    var articleBottom = articleTop + article.offsetHeight;
-    var maxScrollable = articleBottom - window.innerHeight;
-    var progress = 0;
-
-    if (maxScrollable <= articleTop) {
-      progress = window.scrollY >= articleTop ? 1 : 0;
-    } else {
-      progress = (window.scrollY - articleTop) / (maxScrollable - articleTop);
-    }
-
-    progressBar.style.transform = 'scaleX(' + clamp(progress, 0, 1) + ')';
-  }
-
-  window.addEventListener('scroll', updateReadingProgress, { passive: true });
-  window.addEventListener('resize', updateReadingProgress);
-  updateReadingProgress();
-})();
-</script>
-
-<script>
-(function() {
-  var DARK_START = 18, DARK_END = 7;
-  var themeTransitionFrame = null;
-
-  function isDarkHour() {
-    var h = new Date().getHours();
-    return h >= DARK_START || h < DARK_END;
-  }
-
-  function applyTheme(dark, animate) {
-    if (animate) {
-      if (themeTransitionFrame !== null) {
-        window.cancelAnimationFrame(themeTransitionFrame);
-      }
-      document.documentElement.classList.add('theme-switching');
-    }
-
-    document.documentElement.classList.toggle('dark', dark);
-
-    var icon  = document.getElementById('global-toggle-icon');
-    var label = document.getElementById('global-toggle-label');
-    if (icon)  icon.textContent  = dark ? '☀️' : '🌙';
-    if (label) label.textContent = dark ? 'Day' : 'Night';
-
-    if (animate) {
-      themeTransitionFrame = window.requestAnimationFrame(function() {
-        themeTransitionFrame = window.requestAnimationFrame(function() {
-          document.documentElement.classList.remove('theme-switching');
-          themeTransitionFrame = null;
-        });
-      });
-    }
-  }
-
-  // Build button and append to <html> (not <body>) so that body's
-  // transform animation (fadeInDown) never breaks position:fixed
-  var btn = document.createElement('button');
-  btn.className = 'global-theme-toggle';
-  btn.id = 'global-theme-toggle';
-  btn.type = 'button';
-  btn.setAttribute('aria-label', 'Toggle dark mode');
-  btn.innerHTML = '<span class="toggle-icon" id="global-toggle-icon"></span><span id="global-toggle-label"></span>';
-  document.documentElement.appendChild(btn);
-
-  var override = sessionStorage.getItem('theme-override');
-  var isDark = override === 'dark' || (!override && isDarkHour());
-  applyTheme(isDark);
-
-  btn.addEventListener('click', function() {
-    var nowDark = document.documentElement.classList.contains('dark');
-    var newDark = !nowDark;
-    sessionStorage.setItem('theme-override', newDark ? 'dark' : 'light');
-    applyTheme(newDark, true);
-  });
-})();
-</script>
-
-<script>
-  document.addEventListener("DOMContentLoaded", function(event) {
-  anchors.options.placement = 'left';
-  anchors.add();
-});
-</script>
-
-<script src="{{ "/assets/js/hi-logo.js" | prepend: site.baseurl }}"></script>
+<script src="{{ "/assets/js/site.js" | relative_url }}"></script>
+<script src="{{ "/assets/js/hi-logo.js" | relative_url }}"></script>
+{% if page.extra_scripts %}
+  {% for script in page.extra_scripts %}
+<script src="{{ script | relative_url }}"></script>
+  {% endfor %}
+{% endif %}
 
 </body>
 </html>

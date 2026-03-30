@@ -21,7 +21,12 @@
     <link rel="canonical" href="{{ canonical_url }}">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ "/css/pixyll.css" | prepend: site.baseurl }}" type="text/css">
+    <link rel="stylesheet" href="{{ "/css/pixyll.css" | relative_url }}" type="text/css">
+    {% if page.extra_styles %}
+      {% for style in page.extra_styles %}
+    <link rel="stylesheet" href="{{ style | relative_url }}" type="text/css">
+      {% endfor %}
+    {% endif %}
     {% if page.uses_leaflet %}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     {% endif %}
