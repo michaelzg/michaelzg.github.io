@@ -17,7 +17,7 @@ serve: image
 	docker run --rm --platform linux/amd64 -p $(PORT):4000 -v "$(PWD):/srv/jekyll" $(IMAGE)
 
 build: image
-	docker run --rm -v "$(PWD):/srv/jekyll" $(IMAGE) build
+	docker run --rm --platform linux/amd64 -v "$(PWD):/srv/jekyll" $(IMAGE) build
 	./scripts/open_local_preview.sh "$(PREVIEW_PORT)"
 
 build-run: serve

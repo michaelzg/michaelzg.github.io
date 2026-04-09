@@ -1,0 +1,616 @@
+---
+---
+
+/*
+  Life In Weeks - Enhanced with Technical-Editorial Aesthetic
+  Matches homepage design system
+*/
+
+/* ========================================
+   CONTAINER & LAYOUT
+   ======================================== */
+
+.liw-container {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  box-sizing: border-box;
+  animation: liw-page-fade-in 0.6s ease-out;
+}
+
+@keyframes liw-page-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   HEADER (Condensed)
+   ======================================== */
+
+.liw-header {
+  text-align: center;
+  margin-bottom: 1.25rem;
+  padding-top: 0.5rem;
+}
+
+.liw-header h1 {
+  font-family: "Merriweather", "PT Serif", Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.25rem;
+  color: var(--color-text-primary, #1a1a1a);
+  font-size: 2.5rem;
+}
+
+.liw-header p {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--color-text-secondary, #5a5a5a);
+  margin-top: 0;
+  font-size: 0.95rem;
+}
+
+/* ========================================
+   LEGEND (Compact Pill Badge Style)
+   ======================================== */
+
+.liw-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 1rem;
+}
+
+.liw-legend.liw-legend-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(250, 248, 243, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--color-border, #e5ded3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  animation: liw-fade-in 0.3s ease forwards;
+}
+
+@keyframes liw-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.liw-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  background: var(--color-bg, #faf8f3);
+  border: 1px solid var(--color-border, #e5ded3);
+  border-radius: 10px;
+  color: var(--color-text-primary, #1a1a1a);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.liw-legend-item:hover {
+  border-color: var(--color-accent, #d2691e);
+  background: rgba(210, 105, 30, 0.05);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(210, 105, 30, 0.15);
+}
+
+.liw-legend-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.liw-swatch-future {
+  border: 2px solid var(--color-border, #e5ded3);
+  background: var(--color-bg, #faf8f3);
+}
+
+/* ========================================
+   GRID
+   ======================================== */
+
+.liw-grid {
+  margin: 0 20%;
+  padding-bottom: 3rem;
+}
+
+.liw-decade {
+  padding: 6px 0;
+  border-radius: 6px;
+  margin-bottom: 4px;
+}
+
+.liw-flex-row {
+  display: flex;
+}
+
+/* ========================================
+   WEEK BOXES
+   ======================================== */
+
+.liw-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  height: 2em;
+  max-height: 2em;
+  padding: 2px 5px;
+  margin: 2px 1px;
+  border: 2px solid var(--color-border, #ccc);
+  border-radius: 4px;
+  background: rgba(245, 245, 245, 0.8);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.9rem;
+  color: var(--color-text-primary, #444);
+  cursor: default;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  line-height: 1.2;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.liw-box:not(.liw-future):hover {
+  transform: scale(1.05);
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.liw-box:not(.liw-has-label) {
+  width: 100%;
+}
+
+.liw-box.liw-has-label {
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.liw-box.liw-future {
+  background-color: rgba(238, 238, 238, 0.5) !important;
+  border-color: var(--color-border, #dee2e6) !important;
+  opacity: 0.6;
+}
+
+.liw-box.liw-now {
+  border-color: var(--color-accent, #d2691e) !important;
+  box-shadow: 0 0 0 2px var(--color-accent, #d2691e), 0 0 12px rgba(210, 105, 30, 0.4);
+  z-index: 5;
+  font-weight: 700;
+}
+
+/* ========================================
+   TOOLTIPS
+   ======================================== */
+
+.liw-box .liw-tip {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-accent, #d2691e);
+  color: white;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  padding: 8px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  max-width: 300px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.liw-tip-date {
+  font-weight: 700;
+  margin-bottom: 3px;
+  letter-spacing: 0.02em;
+}
+
+.liw-tip-label {
+  margin-bottom: 2px;
+  opacity: 0.95;
+}
+
+.liw-tip-desc {
+  white-space: normal;
+  opacity: 0.85;
+  font-style: italic;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  padding-top: 4px;
+  margin-top: 4px;
+  font-size: 0.65rem;
+}
+
+.liw-box .liw-tip::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom-color: var(--color-accent, #d2691e);
+}
+
+.liw-box:hover .liw-tip,
+.liw-box:focus .liw-tip {
+  display: block !important;
+  animation: liw-tooltip-appear 0.2s ease forwards;
+}
+
+@keyframes liw-tooltip-appear {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* ========================================
+   GO TO NOW BUTTON (Compact CTA)
+   ======================================== */
+
+.liw-cta-wrapper {
+  text-align: center;
+  margin: 0.75rem 0 1.5rem;
+}
+
+.liw-go-now {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.25rem;
+  border: none;
+  border-radius: 6px;
+  background: var(--color-accent, #d2691e);
+  color: white;
+  font-size: 0.75rem;
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition:
+    background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-appearance: none;
+  appearance: none;
+  box-shadow: 0 3px 8px rgba(210, 105, 30, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.liw-go-now::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.6s ease;
+}
+
+.liw-go-now:hover::before {
+  transform: translate(-50%, -50%) scale(1.5);
+  opacity: 0;
+}
+
+.liw-go-now:hover {
+  background: var(--color-accent-hover, #a0521a);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(210, 105, 30, 0.4);
+}
+
+.liw-go-now:active {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(210, 105, 30, 0.3);
+}
+
+.liw-go-now .arrow {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.liw-go-now:hover .arrow {
+  transform: translateY(3px);
+  animation: bounce-arrow 0.6s ease infinite;
+}
+
+@keyframes bounce-arrow {
+  0%,
+  100% {
+    transform: translateY(3px);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+/* ========================================
+   COLLAPSIBLE DECADE CARD
+   ======================================== */
+
+.liw-decade-collapsed {
+  display: block;
+  width: 100%;
+  background: rgba(250, 248, 243, 0.8);
+  border: 2px solid var(--color-border, #e5ded3);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition:
+    border-color var(--transition-smooth, 0.3s ease),
+    transform var(--transition-smooth, 0.3s ease),
+    box-shadow var(--transition-smooth, 0.3s ease);
+  animation: liw-fade-in 0.4s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.liw-decade-collapsed:hover {
+  border-color: var(--color-accent, #d2691e);
+  box-shadow: 0 4px 12px rgba(210, 105, 30, 0.15);
+  transform: translateY(-2px);
+}
+
+.liw-decade-collapsed:focus-visible {
+  outline: none;
+  border-color: var(--color-accent, #d2691e);
+  box-shadow: 0 0 0 3px rgba(210, 105, 30, 0.2);
+}
+
+.liw-collapsed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.liw-collapsed-title {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #1a1a1a);
+}
+
+.liw-collapsed-stats {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary, #5a5a5a);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.liw-collapsed-events {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.liw-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-accent, #d2691e);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition:
+    color var(--transition-snappy, 0.15s ease),
+    transform var(--transition-snappy, 0.15s ease);
+}
+
+.liw-decade-collapsed:hover .liw-expand-btn,
+.liw-decade-collapsed:focus-visible .liw-expand-btn {
+  color: var(--color-accent-hover, #a0521a);
+  transform: translateY(2px);
+}
+
+.liw-expand-arrow {
+  display: inline-block;
+  transition: transform var(--transition-snappy, 0.15s ease);
+}
+
+.liw-decade-collapsed:hover .liw-expand-arrow,
+.liw-decade-collapsed:focus-visible .liw-expand-arrow {
+  animation: bounce-arrow 0.6s ease infinite;
+}
+
+.liw-decade-wrapper[data-collapsed="true"] .liw-decade {
+  display: none;
+}
+
+.liw-decade-wrapper[data-collapsed="false"] .liw-decade-collapsed {
+  display: none;
+}
+
+.liw-decade-wrapper[data-collapsed="false"] .liw-decade {
+  animation: liw-expand-decade 0.4s ease;
+}
+
+@keyframes liw-expand-decade {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   DARK MODE — Life In Weeks overrides
+   ======================================== */
+
+html.dark .liw-legend.liw-legend-sticky {
+  background: rgba(26, 23, 20, 0.97) !important;
+  border-bottom-color: var(--color-border);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+html.dark .liw-legend-item {
+  background: #211e1a;
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+html.dark .liw-legend-item:hover {
+  background: rgba(232, 133, 58, 0.1);
+  border-color: var(--color-accent);
+}
+
+html.dark .liw-box {
+  color: #1a1a1a;
+  position: relative;
+}
+
+html.dark .liw-box::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+html.dark .liw-box.liw-now {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 2px var(--color-accent), 0 0 16px rgba(232, 133, 58, 0.45) !important;
+}
+
+html.dark .liw-box.liw-future {
+  background-color: rgba(44, 37, 32, 0.5) !important;
+  border-color: #3a332c !important;
+  opacity: 0.5;
+}
+
+html.dark .liw-box.liw-future::before {
+  display: none;
+}
+
+html.dark .liw-box.liw-future.liw-has-label {
+  opacity: 0.8;
+  color: var(--color-text-secondary, #b8a089);
+}
+
+html.dark .liw-box .liw-tip {
+  z-index: 1001;
+  background: #2c2520;
+  border: 1px solid var(--color-accent);
+  color: #f0eae0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+}
+
+html.dark .liw-box .liw-tip::before {
+  border-bottom-color: #2c2520;
+}
+
+html.dark .liw-decade-collapsed {
+  background: #211e1a !important;
+  border-color: #2c2520 !important;
+}
+
+html.dark .liw-decade-collapsed:hover,
+html.dark .liw-decade-collapsed:focus-visible {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 4px 12px rgba(232, 133, 58, 0.25);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media only screen and (max-width: 768px) {
+  .liw-grid {
+    margin: 0 2%;
+  }
+
+  .liw-box {
+    font-size: 0.75rem;
+  }
+
+  .liw-header {
+    margin-bottom: 0.75rem;
+    padding-top: 0;
+  }
+
+  .liw-header h1 {
+    font-size: 2rem;
+    margin-bottom: 0.15rem;
+  }
+
+  .liw-header p {
+    font-size: 0.85rem;
+  }
+
+  .liw-legend {
+    gap: 0.35rem;
+    padding: 0.35rem 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .liw-legend-item {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.45rem;
+  }
+
+  .liw-collapsed-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .liw-cta-wrapper {
+    margin: 0.5rem 0 1rem;
+  }
+
+  .liw-go-now {
+    font-size: 0.7rem;
+    padding: 0.45rem 1rem;
+  }
+}

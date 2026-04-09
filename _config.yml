@@ -1,8 +1,8 @@
 # Site settings
 title:       Hi
 email:       ""
-author:      Michael Gao
-description: "Michael G."
+author:      ""
+description: "Writing on software, projects, and experiments."
 baseurl:     ""
 url:         "https://michaelzg.com"
 github:      ""
@@ -33,4 +33,4 @@ sass:
   compressed: true
 highlighter: rouge
 
-gems: [jekyll-paginate]
+plugins: [jekyll-paginate]

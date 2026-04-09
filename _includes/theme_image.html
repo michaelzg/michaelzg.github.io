@@ -1,0 +1,2 @@
+<img class="theme-media{% if include.class %} {{ include.class }}{% endif %}" data-light-src="{{ include.light | relative_url }}" data-dark-src="{{ include.dark | relative_url }}" alt="{{ include.alt }}" loading="{{ include.loading | default: 'lazy' }}" decoding="async">
+<noscript><img {% if include.class %}class="{{ include.class }}"{% endif %} src="{{ include.light | relative_url }}" alt="{{ include.alt }}" loading="{{ include.loading | default: 'lazy' }}" decoding="async"></noscript>

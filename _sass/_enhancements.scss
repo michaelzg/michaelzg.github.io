@@ -661,14 +661,37 @@ form {
   transition: transform 0.1s linear;
 }
 
+.post-content :is(h2, h3, h4, h5, h6) {
+  scroll-margin-top: 1.5rem;
+}
+
+.heading-anchor {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.45rem;
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  font-weight: 600;
+  opacity: 0;
+  text-decoration: none;
+  transition: opacity var(--transition-snappy), color var(--transition-snappy);
+}
+
+.post-content :is(h2, h3, h4, h5, h6):hover .heading-anchor,
+.post-content :is(h2, h3, h4, h5, h6):focus-within .heading-anchor,
+.heading-anchor:focus {
+  opacity: 1;
+}
+
+.heading-anchor:hover,
+.heading-anchor:focus {
+  color: var(--color-accent);
+}
+
 html.dark .reading-progress {
   background: rgba(255, 255, 255, 0.12);
 }
-
-/* Theme-aware images: show/hide based on light/dark mode */
-.only-dark  { display: none; }
-html.dark .only-light { display: none; }
-html.dark .only-dark  { display: block; }
 
 html.dark .global-theme-toggle {
   background: #211E1A;
