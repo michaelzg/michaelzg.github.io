@@ -34,3 +34,11 @@ sass:
 highlighter: rouge
 
 plugins: [jekyll-paginate]
+
+# Frontend source and tooling are kept in the repository; Jekyll only publishes
+# the compiled demo under assets/demos/.
+exclude:
+  - node_modules
+  - package.json
+  - package-lock.json
+  - vite.config.js
