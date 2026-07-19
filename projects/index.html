@@ -8,19 +8,31 @@ description: Interactive projects and software experiments.
 <div class="projects-shell">
   <section class="project-grid" aria-label="Project previews">
     {% for project in site.data.projects %}
-      <article class="project-card" style="--project-accent: {{ project.accent | default: '#D2691E' }};">
-        <a class="project-card__link project-card__link--textonly" href="{{ project.path | prepend: site.baseurl }}" aria-label="Open {{ project.title }}">
+      <article
+        class="project-card"
+        style="--project-accent: {{ project.accent | default: '#D2691E' }}; --project-preview-position: {{ project.preview_position | default: '50% 50%' }};"
+      >
+        <a class="project-card__link" href="{{ project.path | prepend: site.baseurl }}" aria-label="Open {{ project.title }}">
+          <div class="project-card__media" aria-hidden="true">
+            <img
+              src="{{ project.preview_image | prepend: site.baseurl }}"
+              alt=""
+              width="960"
+              height="540"
+              loading="lazy"
+              decoding="async"
+            >
+          </div>
+
           <div class="project-card__content">
-            <div class="project-card__header">
-              <h2 class="project-card__title">{{ project.title }}</h2>
-              <span class="project-card__status">{{ project.status }}</span>
-            </div>
+            <h2 class="project-card__title">{{ project.title }}</h2>
             <p class="project-card__summary">{{ project.summary }}</p>
+            <span class="project-card__open" aria-hidden="true">Open project <i>&#8599;</i></span>
           </div>
         </a>
         {% if project.external_url %}
           <div class="project-card__footer">
-            <a class="project-inline-link" href="{{ project.external_url }}" target="_blank" rel="noopener noreferrer">Learn More</a>
+            <a class="project-inline-link" href="{{ project.external_url }}" target="_blank" rel="noopener noreferrer">Reference site</a>
           </div>
         {% endif %}
       </article>
