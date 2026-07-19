@@ -32,6 +32,10 @@
   // Transitions
   --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-snappy: 0.15s ease-out;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --duration-fast: 150ms;
+  --duration-ui: 220ms;
 
   // Border radii
   --radius-sm: 10px;
@@ -549,21 +553,43 @@ form {
 // ========================================
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
+  html {
     scroll-behavior: auto !important;
+  }
+
+  .site-title__cursor {
+    animation: none;
+  }
+
+  .animated.fade-in-down {
+    -webkit-animation: none;
+    animation: none;
   }
 
   .posts .post,
   .site-header .site-title,
   .site-header nav a,
   .global-theme-toggle,
+  .global-theme-toggle .toggle-icon,
+  .project-card,
+  .project-card__media img,
+  .project-card__open i,
   .liw-go-now {
     transform: none !important;
+  }
+
+  .project-card {
+    transition:
+      border-color var(--duration-fast) ease,
+      box-shadow var(--duration-fast) ease !important;
+  }
+
+  .project-card__media img {
+    transition: filter var(--duration-fast) ease !important;
+  }
+
+  .h3-zoom-meter__fill {
+    transition: none !important;
   }
 }
 
@@ -726,9 +752,9 @@ html.dark .global-theme-toggle {
   overflow: hidden;
   isolation: isolate;
   transition:
-    transform var(--transition-smooth),
-    border-color var(--transition-smooth),
-    box-shadow var(--transition-smooth);
+    transform var(--duration-ui) var(--ease-out),
+    border-color var(--duration-ui) var(--ease-out),
+    box-shadow var(--duration-ui) var(--ease-out);
 }
 
 .project-card__link {
@@ -737,6 +763,11 @@ html.dark .global-theme-toggle {
   min-height: 12rem;
   text-decoration: none;
   color: inherit;
+}
+
+.project-card__link:focus-visible {
+  outline: 2px solid var(--project-accent);
+  outline-offset: -3px;
 }
 
 .project-card__media {
@@ -754,7 +785,9 @@ html.dark .global-theme-toggle {
   object-position: var(--project-preview-position);
   filter: saturate(0.88) contrast(1.04);
   transform: scale(1.015);
-  transition: transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1), filter var(--transition-smooth);
+  transition:
+    transform 280ms var(--ease-out),
+    filter var(--duration-ui) ease;
 }
 
 .project-card__content {
@@ -808,19 +841,26 @@ html.dark .global-theme-toggle {
   opacity: 0.85;
 }
 
-.project-card:hover {
-  transform: translateY(-3px);
+.project-card:focus-within {
   border-color: color-mix(in srgb, var(--project-accent) 60%, var(--color-border));
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
 }
 
-.project-card:hover .project-card__media img {
-  filter: saturate(1) contrast(1.03);
-  transform: scale(1.055);
-}
+@media (hover: hover) and (pointer: fine) {
+  .project-card:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--project-accent) 60%, var(--color-border));
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
+  }
 
-.project-card:hover .project-card__open i {
-  transform: translate(2px, -2px);
+  .project-card:hover .project-card__media img {
+    filter: saturate(1) contrast(1.03);
+    transform: scale(1.055);
+  }
+
+  .project-card:hover .project-card__open i {
+    transform: translate(2px, -2px);
+  }
 }
 
 .project-card__footer {
@@ -1166,9 +1206,12 @@ body.page-h3-simple {
 
 .h3-zoom-meter__fill {
   height: 100%;
-  width: 0%;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
   background: linear-gradient(90deg, #9eb8cf, #4f6d8b);
-  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 200ms var(--ease-in-out);
+  will-change: transform;
   box-shadow: 0 0 10px rgba(79, 109, 139, 0.35);
 }
 

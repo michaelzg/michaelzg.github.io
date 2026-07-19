@@ -175,13 +175,14 @@
   appearance: none;
   line-height: 1.2;
   box-sizing: border-box;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: none;
 }
 
-.liw-box:not(.liw-future):hover {
-  transform: scale(1.05);
-  z-index: 100;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+@media (hover: hover) and (pointer: fine) {
+  .liw-box:not(.liw-future):hover {
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
 }
 
 .liw-box:not(.liw-has-label) {
@@ -212,11 +213,18 @@
    ======================================== */
 
 .liw-box .liw-tip {
-  display: none;
+  display: block;
   position: absolute;
   top: calc(100% + 8px);
   left: 50%;
-  transform: translateX(-50%);
+  visibility: hidden;
+  opacity: 0;
+  transform: translateX(-50%) translateY(-4px) scale(0.97);
+  transform-origin: top center;
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out),
+    visibility 0s linear var(--duration-fast);
   background: var(--color-accent, #d2691e);
   color: white;
   font-family: "JetBrains Mono", monospace;
@@ -261,20 +269,20 @@
   border-bottom-color: var(--color-accent, #d2691e);
 }
 
-.liw-box:hover .liw-tip,
-.liw-box:focus .liw-tip {
-  display: block !important;
-  animation: liw-tooltip-appear 0.2s ease forwards;
+.liw-box:focus .liw-tip,
+.liw-box:focus-visible .liw-tip {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+  transition-delay: 0s;
 }
 
-@keyframes liw-tooltip-appear {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-5px);
-  }
-  to {
+@media (hover: hover) and (pointer: fine) {
+  .liw-box:hover .liw-tip {
+    visibility: visible;
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(-50%) translateY(0) scale(1);
+    transition-delay: 0s;
   }
 }
 
@@ -612,5 +620,61 @@ html.dark .liw-decade-collapsed:focus-visible {
   .liw-go-now {
     font-size: 0.7rem;
     padding: 0.45rem 1rem;
+  }
+}
+
+/* ========================================
+   REDUCED MOTION
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .liw-container,
+  .liw-legend.liw-legend-sticky,
+  .liw-go-now .arrow,
+  .liw-decade-collapsed,
+  .liw-decade-wrapper[data-collapsed="false"] .liw-decade,
+  .liw-expand-arrow {
+    animation: none !important;
+  }
+
+  .liw-container,
+  .liw-legend.liw-legend-sticky,
+  .liw-legend-item:hover,
+  .liw-go-now:hover,
+  .liw-go-now:active,
+  .liw-go-now .arrow,
+  .liw-decade-collapsed:hover,
+  .liw-decade-collapsed:hover .liw-expand-btn,
+  .liw-decade-collapsed:focus-visible .liw-expand-btn,
+  .liw-expand-arrow,
+  .liw-decade-wrapper[data-collapsed="false"] .liw-decade {
+    transform: none !important;
+  }
+
+  .liw-go-now::before,
+  .liw-go-now:hover::before {
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    transition: none;
+  }
+
+  .liw-box .liw-tip {
+    transform: translateX(-50%);
+    transition:
+      opacity var(--duration-fast) var(--ease-out),
+      visibility 0s linear var(--duration-fast);
+  }
+
+  .liw-box:focus .liw-tip,
+  .liw-box:focus-visible .liw-tip {
+    transform: translateX(-50%);
+    transition-delay: 0s;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .liw-box:hover .liw-tip {
+      transform: translateX(-50%);
+      transition-delay: 0s;
+    }
   }
 }

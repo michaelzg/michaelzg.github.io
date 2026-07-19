@@ -19,6 +19,7 @@
   var MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
   var WEEKS_PER_YEAR = 52;
   var NOW = new Date();
+  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   var DECADES = CONFIG.decades;
   var EVENTS = CONFIG.events;
@@ -194,7 +195,7 @@
 
     if (isCollapsed) {
       setTimeout(function() {
-        wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        wrapper.scrollIntoView({ behavior: prefersReducedMotion.matches ? 'auto' : 'smooth', block: 'start' });
       }, 100);
     }
   }
@@ -371,7 +372,7 @@
       }
 
       setTimeout(function() {
-        nowBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        nowBox.scrollIntoView({ behavior: prefersReducedMotion.matches ? 'auto' : 'smooth', block: 'center' });
         nowBox.style.transition = 'box-shadow 0.3s ease';
 
         var accent = getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim() || '#D2691E';

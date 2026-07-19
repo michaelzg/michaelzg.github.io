@@ -378,7 +378,8 @@ description: An interactive map for exploring how H3 cell sizes change with zoom
 
     zoomChip.textContent = 'zoom ' + zoomDisplay;
     levelChip.textContent = 'h3 res ' + res;
-    zoomMeterFill.style.width = Math.max(0, Math.min(100, zoomPct)).toFixed(1) + '%';
+    var zoomProgress = Math.max(0, Math.min(1, zoomPct / 100));
+    zoomMeterFill.style.transform = 'scaleX(' + zoomProgress.toFixed(3) + ')';
     statusCells.textContent = cells.length + ' cells';
     statusArea.textContent = isFinite(area) ? '~' + formatNum(area, 2) + ' km\u00B2/cell' : 'area n/a';
     statusNote.textContent = 'zoom ' + zoomDisplay + ' \u2192 h3 res ' + res;
