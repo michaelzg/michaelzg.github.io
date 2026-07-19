@@ -1,16 +1,16 @@
 - slug: tiny-forest-shrine
   title: Tiny Forest Shrine
   summary: A cinematic scroll flight through a handcrafted floating shrine world.
-  status: Scroll Film
   accent: "#E6A66D"
   path: /projects/tiny-forest-shrine/
-  preview: shrine
+  preview_image: /assets/img/projects/tiny-forest-shrine.webp
+  preview_position: 62% 50%
 
 - slug: h3-atlas
   title: H3 Atlas Lab
   summary: Interactive atlas for understanding H3 cell scales in real geography.
-  status: In Progress
   accent: "#D2691E"
   path: /projects/h3-atlas/
-  preview: h3
+  preview_image: /assets/img/projects/h3-atlas.webp
+  preview_position: 54% 50%
   external_url: https://h3geo.org/
