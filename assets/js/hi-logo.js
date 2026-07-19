@@ -4,6 +4,7 @@ if (titleLink instanceof HTMLAnchorElement) {
   const commandNode = titleLink.querySelector('.site-title__command')
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
   const commandText = titleLink.dataset['terminalCommand'] ?? 'hi'
+  const animationPlayedKey = 'hi-logo-animation-played'
 
   let timers = []
 
@@ -32,8 +33,22 @@ if (titleLink instanceof HTMLAnchorElement) {
   }
 
   function finishTyping() {
+    clearTimers()
     titleLink.classList.remove('site-title--typing')
     setTypedCount(chars.length)
+  }
+
+  function hasPlayedInSession() {
+    try {
+      if (window.sessionStorage.getItem(animationPlayedKey)) {
+        return true
+      }
+
+      window.sessionStorage.setItem(animationPlayedKey, 'true')
+      return false
+    } catch (error) {
+      return false
+    }
   }
 
   function playTyping() {
@@ -61,14 +76,15 @@ if (titleLink instanceof HTMLAnchorElement) {
 
   function boot() {
     titleLink.classList.add('site-title--ready')
-    finishTyping()
-    playTyping()
-    titleLink.addEventListener('pointerenter', playTyping)
-    titleLink.addEventListener('focus', playTyping)
+
+    if (prefersReducedMotion.matches || hasPlayedInSession()) {
+      finishTyping()
+    } else {
+      playTyping()
+    }
 
     if (typeof prefersReducedMotion.addEventListener === 'function') {
       prefersReducedMotion.addEventListener('change', () => {
-        clearTimers()
         finishTyping()
       })
     }
