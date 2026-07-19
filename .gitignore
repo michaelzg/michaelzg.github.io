@@ -4,3 +4,5 @@ _site/
 .DS_Store
 TODO.md
 .preview-server.pid
+node_modules/
+npm-debug.log*

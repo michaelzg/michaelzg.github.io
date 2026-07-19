@@ -1,3 +1,11 @@
+- slug: tiny-forest-shrine
+  title: Tiny Forest Shrine
+  summary: A cinematic scroll flight through a handcrafted floating shrine world.
+  status: Scroll Film
+  accent: "#E6A66D"
+  path: /projects/tiny-forest-shrine/
+  preview: shrine
+
 - slug: h3-atlas
   title: H3 Atlas Lab
   summary: Interactive atlas for understanding H3 cell scales in real geography.

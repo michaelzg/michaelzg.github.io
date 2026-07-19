@@ -1,0 +1,12 @@
+{
+  "name": "michaelzg-github-io",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:demo": "vite build",
+    "dev:demo": "vite --host 127.0.0.1"
+  },
+  "devDependencies": {
+    "vite": "^7.3.6"
+  }
+}

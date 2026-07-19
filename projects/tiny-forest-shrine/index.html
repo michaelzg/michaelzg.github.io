@@ -1,0 +1,35 @@
+---
+layout: immersive
+title: Tiny Forest Shrine
+permalink: /projects/tiny-forest-shrine/
+body_class: page-tiny-forest-shrine
+description: A handcrafted scroll-scrubbed flight through an original painted fantasy world.
+extra_styles:
+  - /assets/demos/tiny-forest-shrine/tiny-forest-immersive-landing.css?v=6
+module_scripts:
+  - /assets/demos/tiny-forest-shrine/tiny-forest-immersive-landing.js?v=6
+---
+
+<main id="tiny-forest-shrine" class="shrine-demo-shell">
+  <h1 class="shrine-demo-title">Tiny Forest Shrine</h1>
+
+  <a class="shrine-demo-back" href="{{ "/projects/" | relative_url }}" aria-label="Back to projects">
+    <span aria-hidden="true">&#8592;</span>
+    <span>Projects</span>
+  </a>
+
+  <div id="tiny-forest-shrine-root">
+    <div class="shrine-demo-loading" role="status">
+      <span class="shrine-demo-loading__mark" aria-hidden="true"></span>
+      <span>Lighting the lantern path&hellip;</span>
+    </div>
+  </div>
+
+  <noscript>
+    <img
+      src="{{ "/assets/demos/tiny-forest-shrine/immersive-landing/stills/01-threshold.webp?v=5" | relative_url }}"
+      alt="A tiny floating island with a glowing torii gate above golden clouds"
+      style="position:fixed;inset:0;width:100%;height:100%;object-fit:cover"
+    >
+  </noscript>
+</main>

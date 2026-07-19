@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+{% include head.html %}
+<body class="{% if page.body_class %}{{ page.body_class }}{% endif %}">
+  {{ content }}
+
+  {% if page.module_scripts %}
+    {% for script in page.module_scripts %}
+  <script type="module" src="{{ script | relative_url }}"></script>
+    {% endfor %}
+  {% endif %}
+</body>
+</html>
