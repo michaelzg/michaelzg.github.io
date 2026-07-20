@@ -209,7 +209,7 @@ body.page-tiny-forest-shrine :focus-visible {
 .shrine-immersive-landing .sw-copy {
   left: clamp(1.5rem, 7.2vw, 8rem);
   top: 51%;
-  width: min(38vw, 34rem);
+  width: min(43vw, 40rem);
 }
 
 .shrine-immersive-landing .sw-copy__num {
@@ -244,12 +244,12 @@ body.page-tiny-forest-shrine :focus-visible {
 }
 
 .shrine-immersive-landing .sw-copy__body {
-  max-width: 39ch;
-  margin-top: 1.35rem;
-  color: rgba(233, 224, 215, 0.65);
-  font: 400 clamp(0.74rem, 0.96vw, 0.9rem)/1.75 "JetBrains Mono", ui-monospace, monospace;
-  letter-spacing: -0.015em;
-  text-wrap: pretty;
+  max-width: 28ch;
+  margin-top: 1.1rem;
+  color: rgba(248, 241, 232, 0.9);
+  font: 300 clamp(1.45rem, 2vw, 2rem)/1.55 "Merriweather", Georgia, serif;
+  letter-spacing: -0.025em;
+  white-space: pre-line;
   text-shadow: 0 2px 18px #050505;
 }
 
@@ -471,10 +471,10 @@ body.page-tiny-forest-shrine :focus-visible {
   }
 
   .shrine-immersive-landing .sw-copy__body {
-    max-width: 36ch;
-    margin-top: 0.8rem;
-    font-size: clamp(0.65rem, 2.75vw, 0.78rem);
-    line-height: 1.62;
+    max-width: 28ch;
+    margin-top: 0.65rem;
+    font-size: clamp(1.05rem, 4.7vw, 1.45rem);
+    line-height: 1.55;
   }
 
   .shrine-immersive-landing .sw-copy__tags {
@@ -561,7 +561,7 @@ body.page-tiny-forest-shrine :focus-visible {
   }
 
   .shrine-immersive-landing .sw-copy__body {
-    display: none;
+    font-size: clamp(0.95rem, 4.2vw, 1.2rem);
   }
 }
 
