@@ -1,3 +1,12 @@
+- slug: pandamonium
+  title: Pandamonium
+  summary: Hack through the skeletal wild.
+  accent: "#D6AD58"
+  launch_url: https://pandamonium.michaelzg.com/
+  action: Play game
+  preview_image: /assets/img/projects/pandamonium.webp
+  preview_position: 56% 43%
+
 - slug: tiny-forest-shrine
   title: Tiny Forest Shrine
   summary: A cinematic scroll flight through a handcrafted floating shrine world.

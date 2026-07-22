@@ -8,11 +8,21 @@ description: Interactive projects and software experiments.
 <div class="projects-shell">
   <section class="project-grid" aria-label="Project previews">
     {% for project in site.data.projects %}
+      {% assign project_url = project.path | prepend: site.baseurl %}
+      {% if project.launch_url %}
+        {% assign project_url = project.launch_url %}
+      {% endif %}
+      {% assign project_action = project.action | default: "Open project" %}
       <article
         class="project-card"
         style="--project-accent: {{ project.accent | default: '#D2691E' }}; --project-preview-position: {{ project.preview_position | default: '50% 50%' }};"
       >
-        <a class="project-card__link" href="{{ project.path | prepend: site.baseurl }}" aria-label="Open {{ project.title }}">
+        <a
+          class="project-card__link"
+          href="{{ project_url }}"
+          aria-label="{{ project_action }}: {{ project.title }}"
+          {% if project.launch_url %}target="_blank" rel="noopener noreferrer"{% endif %}
+        >
           <div class="project-card__media" aria-hidden="true">
             <img
               src="{{ project.preview_image | prepend: site.baseurl }}"
@@ -27,7 +37,7 @@ description: Interactive projects and software experiments.
           <div class="project-card__content">
             <h2 class="project-card__title">{{ project.title }}</h2>
             <p class="project-card__summary">{{ project.summary }}</p>
-            <span class="project-card__open" aria-hidden="true">Open project <i>&#8599;</i></span>
+            <span class="project-card__open" aria-hidden="true">{{ project_action }} <i>&#8599;</i></span>
           </div>
         </a>
         {% if project.external_url %}
