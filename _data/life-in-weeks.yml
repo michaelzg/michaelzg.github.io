@@ -296,5 +296,9 @@ events:
   - date: "2026-03-11"
     label: "💔"
 
+  - date: "2026-07-22"
+    label: "🎮 Made a game"
+    description: "Pandamonium"
+
   - date: "2073-03-15"
     label: "Life expectancy (age 80)"
