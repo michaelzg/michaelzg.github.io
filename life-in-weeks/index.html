@@ -18,7 +18,7 @@ extra_scripts:
 
   <div class="liw-legend">
     {% for decade in liw.decades %}
-    <span class="liw-legend-item">
+    <span class="liw-legend-item" data-decade="{{ forloop.index0 }}">
       <span class="liw-legend-swatch" style="border: 2px solid {{ decade.border }}; background: {{ decade.fill }};"></span>
       {{ decade.label }}
     </span>
@@ -27,6 +27,11 @@ extra_scripts:
       <span class="liw-legend-swatch liw-swatch-future"></span>
       Future
     </span>
+    <button class="liw-legend-context" id="liw-legend-context" type="button" aria-hidden="true" tabindex="-1">
+      <span class="liw-legend-context-mark" aria-hidden="true"></span>
+      <span class="liw-legend-context-label">Collapse decade</span>
+      <span class="liw-legend-context-arrow" aria-hidden="true">↑</span>
+    </button>
   </div>
 
   <div class="liw-cta-wrapper">
@@ -35,7 +40,9 @@ extra_scripts:
     </button>
   </div>
 
-  <div class="liw-grid" id="grid"></div>
+  <div class="liw-workspace">
+    <div class="liw-grid" id="grid"></div>
+  </div>
 </div>
 
 <script id="life-in-weeks-config" type="application/json">{{ liw | jsonify }}</script>
