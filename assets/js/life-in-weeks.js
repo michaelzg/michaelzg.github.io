@@ -26,6 +26,25 @@
   var MAX_BOXES_IN_ROW = 21;
   var BOX_END_MULT = 0.45;
   var BOX_CHAR_MULT = 0.319;
+  var WEEKS_PER_DECADE = WEEKS_PER_YEAR * 10;
+  var totalWeeks = LIFESPAN * WEEKS_PER_YEAR;
+  var totalDecades = Math.ceil(totalWeeks / WEEKS_PER_DECADE);
+  var graphemeSegmenter = typeof Intl !== 'undefined' && Intl.Segmenter
+    ? new Intl.Segmenter('en', { granularity: 'grapheme' })
+    : null;
+  var emojiPattern = /(?:\p{Regional_Indicator}{2}|\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*)/gu;
+  var currentWeekIdx = Math.floor((NOW - BIRTH) / MS_PER_WEEK);
+  var defaultExpandedDecade = Math.max(0, Math.min(
+    totalDecades - 1,
+    Math.floor(Math.floor(currentWeekIdx / WEEKS_PER_YEAR) / 10)
+  ));
+
+  var legend = document.querySelector('.liw-legend');
+  var legendContext = document.getElementById('liw-legend-context');
+  var activeContextDecade = -1;
+  var legendContextFrame = null;
+  var legendContextNeedsPosition = false;
+  var legendContextPositionFrame = null;
 
   function parseDate(value) {
     var parts = value.split('-');
@@ -68,9 +87,8 @@
       return 0;
     }
 
-    if (typeof Intl !== 'undefined' && Intl.Segmenter) {
-      var segmenter = new Intl.Segmenter('en', { granularity: 'grapheme' });
-      return Array.from(segmenter.segment(str)).reduce(function(length, segment) {
+    if (graphemeSegmenter) {
+      return Array.from(graphemeSegmenter.segment(str)).reduce(function(length, segment) {
         return length + (segment.segment.length > 1 ? 2 : 1);
       }, 0);
     }
@@ -85,27 +103,11 @@
     return 2 * BOX_END_MULT + visualLength(label) * BOX_CHAR_MULT;
   }
 
-  var currentDecade = -1;
-  var decadeDiv = null;
-  var currentRow = null;
-  var rowUnits = 0;
   var eventsByDecade = {};
-
-  function createRow() {
-    currentRow = document.createElement('div');
-    currentRow.className = 'liw-flex-row';
-    decadeDiv.appendChild(currentRow);
-    rowUnits = 0;
-  }
-
-  function ensureRowSpace(units) {
-    if (rowUnits > 0 && rowUnits + units >= MAX_BOXES_IN_ROW) {
-      createRow();
-    }
-  }
+  var nowBox = null;
 
   function collapsedCardText(isExpanded) {
-    return isExpanded ? 'Hide details <span class="liw-expand-arrow">\u2191</span>' : 'Show 520 weeks <span class="liw-expand-arrow">\u2193</span>';
+    return isExpanded ? 'Collapse <span class="liw-expand-arrow">\u2191</span>' : 'Expand <span class="liw-expand-arrow">\u2193</span>';
   }
 
   function createCollapsedCard(decade, events, decadeColors) {
@@ -115,9 +117,10 @@
     var decadeLabel = decadeInfo.label || ('Decade ' + (decade * 10));
     var decadeStartYear = BIRTH.getFullYear() + decade * 10;
     var decadeEndYear = decadeStartYear + 10;
+    var isDefaultExpanded = decade === defaultExpandedDecade;
 
     wrapper.className = 'liw-decade-wrapper';
-    wrapper.setAttribute('data-collapsed', 'true');
+    wrapper.setAttribute('data-collapsed', isDefaultExpanded ? 'false' : 'true');
     wrapper.setAttribute('data-decade', String(decade));
 
     var card = document.createElement('button');
@@ -125,7 +128,7 @@
     card.className = 'liw-decade-collapsed';
     card.style.background = decadeColors.fill;
     card.style.borderColor = decadeColors.border;
-    card.setAttribute('aria-expanded', 'false');
+    card.setAttribute('aria-expanded', isDefaultExpanded ? 'true' : 'false');
     card.setAttribute('aria-controls', decadeId);
 
     var header = document.createElement('span');
@@ -140,7 +143,7 @@
     var eventCount = events.filter(function(eventItem) {
       return !eventItem.isBirthday;
     }).length;
-    stats.textContent = eventCount + ' events \u00B7 10 years';
+    stats.textContent = eventCount + ' event' + (eventCount === 1 ? '' : 's') + ' \u00B7 10 years';
 
     header.appendChild(title);
     header.appendChild(stats);
@@ -148,7 +151,7 @@
     var eventPreview = document.createElement('span');
     eventPreview.className = 'liw-collapsed-events';
     events.slice(0, 4).forEach(function(eventItem) {
-      var emoji = eventItem.label.match(/[\p{Emoji}]/gu);
+      var emoji = eventItem.label.match(emojiPattern);
       if (emoji && emoji[0]) {
         var emojiSpan = document.createElement('span');
         emojiSpan.textContent = emoji[0];
@@ -159,7 +162,7 @@
 
     var expandLabel = document.createElement('span');
     expandLabel.className = 'liw-expand-btn';
-    expandLabel.innerHTML = collapsedCardText(false);
+    expandLabel.innerHTML = collapsedCardText(isDefaultExpanded);
 
     card.appendChild(header);
     if (eventPreview.childNodes.length > 0) {
@@ -176,9 +179,22 @@
     return wrapper;
   }
 
+  function ensureDecadeRendered(wrapper) {
+    var decadeElement = wrapper.querySelector('.liw-decade');
+    if (!decadeElement || decadeElement.getAttribute('data-rendered') === 'true') {
+      return;
+    }
+
+    renderDecade(parseInt(wrapper.getAttribute('data-decade'), 10), decadeElement);
+  }
+
   function toggleDecade(wrapper) {
     var isCollapsed = wrapper.getAttribute('data-collapsed') === 'true';
     var nextCollapsed = !isCollapsed;
+
+    if (isCollapsed) {
+      ensureDecadeRendered(wrapper);
+    }
 
     wrapper.setAttribute('data-collapsed', nextCollapsed ? 'true' : 'false');
 
@@ -193,6 +209,8 @@
       expandLabel.innerHTML = collapsedCardText(isCollapsed);
     }
 
+    scheduleLegendContextUpdate();
+
     if (isCollapsed) {
       setTimeout(function() {
         wrapper.scrollIntoView({ behavior: prefersReducedMotion.matches ? 'auto' : 'smooth', block: 'start' });
@@ -200,88 +218,145 @@
     }
   }
 
-  var totalWeeks = LIFESPAN * WEEKS_PER_YEAR;
-  var currentWeekIdx = Math.floor((NOW - BIRTH) / MS_PER_WEEK);
-  var nowBox = null;
-
-  for (var week = 0; week < totalWeeks; week += 1) {
-    var decadeIndex = Math.floor(Math.floor(week / WEEKS_PER_YEAR) / 10);
-    if (!eventsByDecade[decadeIndex]) {
-      eventsByDecade[decadeIndex] = [];
+  function hideLegendContext() {
+    if (!legend || !legendContext) {
+      return;
+    }
+    if (
+      activeContextDecade === -1 &&
+      !legendContext.classList.contains('is-visible') &&
+      legendContext.getAttribute('aria-hidden') === 'true'
+    ) {
+      return;
     }
 
-    var weekEvents = eventsByWeek[week];
-    if (weekEvents) {
-      weekEvents.forEach(function(eventItem) {
-        if (!eventItem.isBirthday || eventsByDecade[decadeIndex].length === 0) {
-          var alreadyPresent = eventsByDecade[decadeIndex].some(function(existingEvent) {
-            return existingEvent.label === eventItem.label;
-          });
-          if (!alreadyPresent) {
-            eventsByDecade[decadeIndex].push(eventItem);
-          }
-        }
-      });
+    legend.querySelectorAll('.liw-legend-item.is-context-source').forEach(function(item) {
+      item.classList.remove('is-context-source');
+    });
+    legendContext.classList.remove('is-visible');
+    legendContext.setAttribute('aria-hidden', 'true');
+    legendContext.removeAttribute('aria-controls');
+    legendContext.tabIndex = -1;
+    activeContextDecade = -1;
+    if (legendContextPositionFrame !== null) {
+      cancelAnimationFrame(legendContextPositionFrame);
+      legendContextPositionFrame = null;
     }
   }
 
-  for (var weekIdx = 0; weekIdx < totalWeeks; weekIdx += 1) {
-    var yearOfLife = Math.floor(weekIdx / WEEKS_PER_YEAR);
-    var decade = Math.floor(yearOfLife / 10);
-    var weekStart = new Date(BIRTH.getTime() + weekIdx * MS_PER_WEEK);
-    var isFuture = weekStart > NOW;
-    var isNow = weekIdx === currentWeekIdx;
+  function positionLegendContext(decade) {
+    if (!legend || !legendContext) {
+      return;
+    }
 
-    if (decade !== currentDecade) {
-      currentDecade = decade;
-      var decadeColors = DECADES[decade] || DECADES[DECADES.length - 1];
-      var currentDecadeWrapper = null;
+    var source = legend.querySelector('.liw-legend-item[data-decade="' + decade + '"]');
+    if (!source) {
+      hideLegendContext();
+      return;
+    }
 
-      if (decade === 0) {
-        currentDecadeWrapper = createCollapsedCard(decade, eventsByDecade[decade] || [], decadeColors);
-        gridEl.appendChild(currentDecadeWrapper);
-        decadeDiv = document.createElement('div');
-        decadeDiv.className = 'liw-decade';
-        decadeDiv.id = currentDecadeWrapper.dataset.controls;
-        currentDecadeWrapper.appendChild(decadeDiv);
-      } else {
-        decadeDiv = document.createElement('div');
-        decadeDiv.className = 'liw-decade';
-        gridEl.appendChild(decadeDiv);
+    var palette = DECADES[decade] || DECADES[DECADES.length - 1];
+    var label = (DECADES[decade] && DECADES[decade].label) || ('Decade ' + (decade * 10));
+    var labelElement = legendContext.querySelector('.liw-legend-context-label');
+    var contextChanged = activeContextDecade !== decade;
+
+    legend.querySelectorAll('.liw-legend-item.is-context-source').forEach(function(item) {
+      item.classList.remove('is-context-source');
+    });
+    if (contextChanged) {
+      legendContext.classList.remove('is-visible');
+    }
+    source.style.setProperty('--liw-context-fill', palette.fill);
+    source.style.setProperty('--liw-context-border', palette.border);
+    source.classList.add('is-context-source');
+    legendContext.style.setProperty('--liw-context-fill', palette.fill);
+    legendContext.style.setProperty('--liw-context-border', palette.border);
+    labelElement.textContent = 'Collapse ' + label;
+    legendContext.setAttribute('aria-label', 'Collapse ' + label);
+    legendContext.setAttribute('aria-controls', 'liw-decade-' + decade);
+    legendContext.setAttribute('aria-hidden', 'false');
+    legendContext.tabIndex = 0;
+
+    var legendRect = legend.getBoundingClientRect();
+    var sourceRect = source.getBoundingClientRect();
+    var contextWidth = legendContext.offsetWidth;
+    var desiredLeft = sourceRect.left - legendRect.left + (sourceRect.width - contextWidth) / 2;
+    var left = Math.max(8, Math.min(legendRect.width - contextWidth - 8, desiredLeft));
+    var anchor = sourceRect.left - legendRect.left + sourceRect.width / 2 - left;
+
+    legendContext.style.left = left + 'px';
+    legendContext.style.setProperty('--liw-context-anchor', Math.max(16, Math.min(contextWidth - 16, anchor)) + 'px');
+    activeContextDecade = decade;
+
+    if (legendContextPositionFrame !== null) {
+      cancelAnimationFrame(legendContextPositionFrame);
+    }
+    legendContextPositionFrame = requestAnimationFrame(function() {
+      legendContextPositionFrame = null;
+      if (activeContextDecade !== decade) {
+        return;
+      }
+      var contextRect = legendContext.getBoundingClientRect();
+      var liveSourceRect = source.getBoundingClientRect();
+      var sourceGap = contextRect.top - liveSourceRect.bottom + 1;
+      var stemHeight = sourceGap >= 0 && sourceGap <= 18 ? sourceGap : 0;
+      legendContext.style.setProperty('--liw-context-stem', stemHeight + 'px');
+      legendContext.classList.add('is-visible');
+    });
+  }
+
+  function syncLegendContext() {
+    legendContextFrame = null;
+    var needsPosition = legendContextNeedsPosition;
+    legendContextNeedsPosition = false;
+    if (!legend || !legendContext) {
+      return;
+    }
+
+    var readingTop = legend.classList.contains('liw-legend-sticky') ? legend.offsetHeight : 0;
+    var readingBottom = window.innerHeight;
+    var candidate = -1;
+    var nearestDistance = Number.POSITIVE_INFINITY;
+
+    gridEl.querySelectorAll('.liw-decade-wrapper[data-collapsed="false"]').forEach(function(wrapper) {
+      var rect = wrapper.getBoundingClientRect();
+      var intersects = rect.bottom > readingTop + 12 && rect.top < readingBottom - 32;
+      if (!intersects) {
+        return;
       }
 
-      createRow();
+      var distance = Math.abs(rect.top - readingTop);
+      if (distance < nearestDistance) {
+        candidate = parseInt(wrapper.getAttribute('data-decade'), 10);
+        nearestDistance = distance;
+      }
+    });
+
+    if (candidate === -1) {
+      hideLegendContext();
+      return;
     }
 
-    var eventsThisWeek = eventsByWeek[weekIdx];
-    var palette = DECADES[decade] || DECADES[DECADES.length - 1];
-    var boxLabel = '';
-
-    if (eventsThisWeek) {
-      boxLabel = eventsThisWeek.map(function(eventItem) {
-        return eventItem.label;
-      }).join(' \u00B7 ');
+    if (
+      candidate === activeContextDecade &&
+      legendContext.classList.contains('is-visible') &&
+      !needsPosition
+    ) {
+      return;
     }
 
-    var units = boxUnits(boxLabel);
-    ensureRowSpace(units);
+    positionLegendContext(candidate);
+  }
 
-    var box = document.createElement('button');
-    box.type = 'button';
-    box.className = 'liw-box' + (isFuture ? ' liw-future' : '') + (boxLabel ? ' liw-has-label' : '') + (isNow ? ' liw-now' : '');
-    box.style.borderColor = palette.border;
-    if (!isFuture) {
-      box.style.backgroundColor = palette.fill;
+  function scheduleLegendContextUpdate(forcePosition) {
+    legendContextNeedsPosition = legendContextNeedsPosition || Boolean(forcePosition);
+    if (legendContextFrame !== null) {
+      return;
     }
+    legendContextFrame = requestAnimationFrame(syncLegendContext);
+  }
 
-    if (isNow) {
-      nowBox = box;
-    }
-
-    if (boxLabel) {
-      box.textContent = boxLabel;
-    }
-
+  function createWeekTooltip(weekStart, eventsThisWeek, isNow) {
     var tip = document.createElement('span');
     tip.className = 'liw-tip';
 
@@ -291,12 +366,11 @@
     tip.appendChild(dateDiv);
 
     if (eventsThisWeek) {
-      var labels = eventsThisWeek.map(function(eventItem) {
-        return eventItem.label;
-      });
       var labelDiv = document.createElement('div');
       labelDiv.className = 'liw-tip-label';
-      labelDiv.textContent = labels.join(' \u00B7 ');
+      labelDiv.textContent = eventsThisWeek.map(function(eventItem) {
+        return eventItem.label;
+      }).join(' \u00B7 ');
       tip.appendChild(labelDiv);
 
       var descriptions = eventsThisWeek.filter(function(eventItem) {
@@ -333,42 +407,171 @@
       tip.appendChild(nowDiv);
     }
 
-    box.appendChild(tip);
-    currentRow.appendChild(box);
-    rowUnits += units;
-
-    if (rowUnits >= MAX_BOXES_IN_ROW) {
-      createRow();
-    }
+    return tip;
   }
 
-  var legend = document.querySelector('.liw-legend');
+  function createWeekBox(weekIdx, palette) {
+    var weekStart = new Date(BIRTH.getTime() + weekIdx * MS_PER_WEEK);
+    var isFuture = weekStart > NOW;
+    var isNow = weekIdx === currentWeekIdx;
+    var eventsThisWeek = eventsByWeek[weekIdx];
+    var boxLabel = '';
+
+    if (eventsThisWeek) {
+      boxLabel = eventsThisWeek.map(function(eventItem) {
+        return eventItem.label;
+      }).join(' \u00B7 ');
+    }
+
+    var units = boxUnits(boxLabel);
+    var box = document.createElement('button');
+    box.type = 'button';
+    box.className = 'liw-box' + (isFuture ? ' liw-future' : '') + (boxLabel ? ' liw-has-label' : '') + (isNow ? ' liw-now' : '');
+    box.style.borderColor = palette.border;
+    if (!isFuture) {
+      box.style.backgroundColor = palette.fill;
+    }
+
+    if (isNow) {
+      nowBox = box;
+    }
+
+    if (boxLabel) {
+      box.textContent = boxLabel;
+    }
+
+    box.appendChild(createWeekTooltip(weekStart, eventsThisWeek, isNow));
+    return { element: box, units: units };
+  }
+
+  function renderDecade(decade, decadeElement) {
+    if (decadeElement.getAttribute('data-rendered') === 'true') {
+      return;
+    }
+
+    var fragment = document.createDocumentFragment();
+    var palette = DECADES[decade] || DECADES[DECADES.length - 1];
+    var firstWeek = decade * WEEKS_PER_DECADE;
+    var lastWeek = Math.min(firstWeek + WEEKS_PER_DECADE, totalWeeks);
+    var currentRow = null;
+    var rowUnits = 0;
+
+    function createRow() {
+      currentRow = document.createElement('div');
+      currentRow.className = 'liw-flex-row';
+      fragment.appendChild(currentRow);
+      rowUnits = 0;
+    }
+
+    for (var weekIdx = firstWeek; weekIdx < lastWeek; weekIdx += 1) {
+      var weekBox = createWeekBox(weekIdx, palette);
+      if (!currentRow || (rowUnits > 0 && rowUnits + weekBox.units >= MAX_BOXES_IN_ROW)) {
+        createRow();
+      }
+
+      currentRow.appendChild(weekBox.element);
+      rowUnits += weekBox.units;
+    }
+
+    decadeElement.appendChild(fragment);
+    decadeElement.setAttribute('data-rendered', 'true');
+  }
+
+  for (var decadeIndex = 0; decadeIndex < totalDecades; decadeIndex += 1) {
+    eventsByDecade[decadeIndex] = [];
+  }
+
+  Object.keys(eventsByWeek).map(function(weekKey) {
+    return parseInt(weekKey, 10);
+  }).filter(function(weekIndex) {
+    return weekIndex >= 0 && weekIndex < totalWeeks;
+  }).sort(function(firstWeek, secondWeek) {
+    return firstWeek - secondWeek;
+  }).forEach(function(weekIndex) {
+    var decadeIndex = Math.floor(weekIndex / WEEKS_PER_DECADE);
+    eventsByWeek[weekIndex].forEach(function(eventItem) {
+      if (!eventItem.isBirthday || eventsByDecade[decadeIndex].length === 0) {
+        var alreadyPresent = eventsByDecade[decadeIndex].some(function(existingEvent) {
+          return existingEvent.label === eventItem.label;
+        });
+        if (!alreadyPresent) {
+          eventsByDecade[decadeIndex].push(eventItem);
+        }
+      }
+    });
+  });
+
+  var gridFragment = document.createDocumentFragment();
+  for (var decade = 0; decade < totalDecades; decade += 1) {
+    var decadeColors = DECADES[decade] || DECADES[DECADES.length - 1];
+    var decadeWrapper = createCollapsedCard(decade, eventsByDecade[decade], decadeColors);
+    var decadeElement = document.createElement('div');
+    decadeElement.className = 'liw-decade';
+    decadeElement.id = decadeWrapper.dataset.controls;
+    decadeElement.setAttribute('data-rendered', 'false');
+    decadeWrapper.appendChild(decadeElement);
+    gridFragment.appendChild(decadeWrapper);
+
+    if (decade === defaultExpandedDecade) {
+      renderDecade(decade, decadeElement);
+    }
+  }
+  gridEl.appendChild(gridFragment);
+
   if (legend) {
     var legendTop = legend.offsetTop;
-    window.addEventListener('scroll', function() {
-      if (window.scrollY > legendTop) {
-        legend.classList.add('liw-legend-sticky');
-      } else {
-        legend.classList.remove('liw-legend-sticky');
+    var legendResizeFrame = null;
+    var updateStickyOffset = function() {
+      legendResizeFrame = null;
+      document.documentElement.style.setProperty('--liw-sticky-offset', (legend.offsetHeight + 16) + 'px');
+      scheduleLegendContextUpdate(true);
+    };
+    var scheduleStickyOffsetUpdate = function() {
+      if (legendResizeFrame !== null) {
+        return;
       }
+      legendResizeFrame = requestAnimationFrame(updateStickyOffset);
+    };
+    updateStickyOffset();
+    window.addEventListener('resize', scheduleStickyOffsetUpdate, { passive: true });
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(scheduleStickyOffsetUpdate);
+    }
+    window.addEventListener('scroll', function() {
+      var shouldStick = window.scrollY > legendTop;
+      var stickyChanged = legend.classList.contains('liw-legend-sticky') !== shouldStick;
+      legend.classList.toggle('liw-legend-sticky', shouldStick);
+      scheduleLegendContextUpdate(stickyChanged);
     }, { passive: true });
   }
 
   var goNowButton = document.getElementById('go-now');
+  if (legendContext) {
+    legendContext.addEventListener('click', function() {
+      if (activeContextDecade === -1) {
+        return;
+      }
+      var wrapper = gridEl.querySelector('.liw-decade-wrapper[data-decade="' + activeContextDecade + '"]');
+      if (wrapper && wrapper.getAttribute('data-collapsed') === 'false') {
+        toggleDecade(wrapper);
+      }
+    });
+  }
+
+  scheduleLegendContextUpdate(true);
+
   if (goNowButton) {
     goNowButton.addEventListener('click', function() {
       if (!nowBox) {
         return;
       }
 
-      var currentAge = Math.floor((NOW - BIRTH) / (365.25 * 24 * 60 * 60 * 1000));
-      var currentDecadeIdx = Math.floor(currentAge / 10);
+      var currentDecadeWrapper = nowBox.closest('.liw-decade-wrapper');
+      var expandedCurrentDecade = false;
 
-      if (currentDecadeIdx === 0) {
-        var childhoodWrapper = document.querySelector('.liw-decade-wrapper[data-decade="0"]');
-        if (childhoodWrapper && childhoodWrapper.getAttribute('data-collapsed') === 'true') {
-          toggleDecade(childhoodWrapper);
-        }
+      if (currentDecadeWrapper && currentDecadeWrapper.getAttribute('data-collapsed') === 'true') {
+        toggleDecade(currentDecadeWrapper);
+        expandedCurrentDecade = true;
       }
 
       setTimeout(function() {
@@ -384,7 +587,7 @@
             nowBox.style.boxShadow = '0 0 0 2px ' + accent + ', 0 0 12px rgba(' + accentRgb + ', 0.4)';
           }, 600);
         }, 500);
-      }, currentDecadeIdx === 0 ? 500 : 0);
+      }, expandedCurrentDecade ? 500 : 0);
     });
   }
 })();
