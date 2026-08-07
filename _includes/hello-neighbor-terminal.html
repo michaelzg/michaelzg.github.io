@@ -1,0 +1,43 @@
+<figure class="hn-terminal-demo" data-hn-terminal-demo>
+  <div class="hn-terminal-demo__stage" data-hn-stage aria-hidden="true">
+    <section class="hn-terminal hn-terminal--listener">
+      <header class="hn-terminal__bar">
+        <span class="hn-terminal__lights" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="hn-terminal__device">MacBook <small>listener</small></span>
+        <span class="hn-terminal__status" data-hn-listener-status>ready</span>
+      </header>
+      <div class="hn-terminal__screen">
+        <div class="hn-terminal__line">
+          <span class="hn-terminal__prompt">$</span>
+          <span data-hn-listener-command></span><span class="hn-terminal__cursor" data-hn-listener-command-cursor></span>
+        </div>
+        <div class="hn-terminal__line hn-terminal__line--output">
+          <span class="hn-terminal__received"><mark data-hn-listener-output></mark><span class="hn-terminal__rays" aria-hidden="true"></span></span><span class="hn-terminal__cursor" data-hn-listener-output-cursor></span>
+          <span class="hn-terminal__tada" data-hn-tada>tada!</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="hn-terminal hn-terminal--client">
+      <header class="hn-terminal__bar">
+        <span class="hn-terminal__lights" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="hn-terminal__device">Mac mini <small>client</small></span>
+        <span class="hn-terminal__status" data-hn-client-status>ready</span>
+      </header>
+      <div class="hn-terminal__screen">
+        <div class="hn-terminal__line">
+          <span class="hn-terminal__prompt">$</span>
+          <span data-hn-client-command></span><span class="hn-terminal__cursor" data-hn-client-command-cursor></span>
+        </div>
+        <div class="hn-terminal__line hn-terminal__line--message">
+          <span data-hn-client-message></span><span class="hn-terminal__cursor" data-hn-client-message-cursor></span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <p class="hn-terminal-demo__transcript">
+    MacBook terminal: $ nc -l 5420. Mac mini terminal: $ nc mcbook.local 5420. Mac mini sends “hello.” MacBook receives “hello.”
+  </p>
+  <figcaption class="hn-terminal-demo__caption">A Mac mini connects to port 5420 on mcbook.local and sends “hello”; the listening MacBook receives it.</figcaption>
+</figure>
