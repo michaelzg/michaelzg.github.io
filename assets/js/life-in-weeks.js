@@ -24,6 +24,8 @@
   var DECADES = CONFIG.decades;
   var EVENTS = CONFIG.events;
   var MAX_BOXES_IN_ROW = 21;
+  var CALLOUT_MIN_SPAN = 2;
+  var CALLOUT_MAX_SPAN = 5;
   var WEEKS_PER_DECADE = WEEKS_PER_YEAR * 10;
   var totalWeeks = LIFESPAN * WEEKS_PER_YEAR;
   var totalDecades = Math.ceil(totalWeeks / WEEKS_PER_DECADE);
@@ -77,6 +79,147 @@
 
   function formatDate(date) {
     return MONTHS[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear();
+  }
+
+  function calloutText(eventsThisWeek) {
+    if (!eventsThisWeek) {
+      return '';
+    }
+
+    return eventsThisWeek.filter(function(eventItem) {
+      return !eventItem.isBirthday;
+    }).map(function(eventItem) {
+      return eventItem.label.replace(emojiPattern, '').replace(/\s+/g, ' ').trim();
+    }).filter(Boolean).join(' \u00B7 ');
+  }
+
+  function calloutSpan(text) {
+    var characterCount = Array.from(text).length;
+    return Math.max(CALLOUT_MIN_SPAN, Math.min(
+      CALLOUT_MAX_SPAN,
+      Math.ceil((characterCount + 4) / 7)
+    ));
+  }
+
+  function availableCalloutRoom(anchorIndex, direction, reserved, rowBoxes, anchorIsFuture) {
+    var step = direction === 'right' ? 1 : -1;
+    var room = 0;
+    var targetIndex = anchorIndex + step;
+
+    while (
+      targetIndex >= 0 &&
+      targetIndex < rowBoxes.length &&
+      !reserved[targetIndex] &&
+      rowBoxes[targetIndex].isFuture === anchorIsFuture
+    ) {
+      room += 1;
+      targetIndex += step;
+    }
+
+    return room;
+  }
+
+  function calloutDirections(candidate, reserved, rowBoxes) {
+    return ['left', 'right'].map(function(direction) {
+      return {
+        direction: direction,
+        room: availableCalloutRoom(
+          candidate.index,
+          direction,
+          reserved,
+          rowBoxes,
+          candidate.box.isFuture
+        )
+      };
+    }).filter(function(option) {
+      return option.room >= candidate.span;
+    });
+  }
+
+  function appendCallout(candidate, option, rowBoxes) {
+    var step = option.direction === 'right' ? 1 : -1;
+    var firstTarget = candidate.index + step;
+    var lastTarget = candidate.index + step * candidate.span;
+    var callout = document.createElement('span');
+    var label = document.createElement('span');
+
+    callout.className = 'liw-callout liw-callout-' + option.direction;
+    callout.setAttribute('aria-hidden', 'true');
+    callout.setAttribute('data-direction', option.direction);
+    callout.setAttribute('data-span', String(candidate.span));
+    callout.setAttribute('data-start-column', String(Math.min(firstTarget, lastTarget)));
+    callout.setAttribute('data-end-column', String(Math.max(firstTarget, lastTarget)));
+
+    label.className = 'liw-callout-label';
+    label.textContent = candidate.text;
+    callout.appendChild(label);
+
+    candidate.box.element.classList.add('liw-callout-anchor');
+    candidate.box.element.style.setProperty('--liw-callout-fill', candidate.palette.fill);
+    candidate.box.element.style.setProperty('--liw-callout-border', candidate.palette.border);
+    candidate.box.element.insertBefore(callout, candidate.box.element.querySelector('.liw-tip'));
+
+    for (var offset = 1; offset <= candidate.span; offset += 1) {
+      rowBoxes[candidate.index + step * offset].element.classList.add('liw-callout-underlay');
+    }
+  }
+
+  function placeRowCallouts(rowBoxes, palette) {
+    var reserved = rowBoxes.map(function(box) {
+      return box.hasEvents || box.isNow;
+    });
+    var candidates = [];
+
+    rowBoxes.forEach(function(box, index) {
+      var text = !box.isNow ? calloutText(box.eventsThisWeek) : '';
+      if (!text) {
+        return;
+      }
+
+      var candidate = {
+        box: box,
+        index: index,
+        palette: palette,
+        span: calloutSpan(text),
+        text: text
+      };
+      candidate.initialDirections = calloutDirections(candidate, reserved, rowBoxes);
+      if (candidate.initialDirections.length > 0) {
+        candidates.push(candidate);
+      }
+    });
+
+    candidates.sort(function(first, second) {
+      if (first.initialDirections.length !== second.initialDirections.length) {
+        return first.initialDirections.length - second.initialDirections.length;
+      }
+      if (first.span !== second.span) {
+        return second.span - first.span;
+      }
+      return first.index - second.index;
+    });
+
+    candidates.forEach(function(candidate) {
+      var directions = calloutDirections(candidate, reserved, rowBoxes);
+      if (directions.length === 0) {
+        return;
+      }
+
+      var preferredDirection = candidate.index < rowBoxes.length / 2 ? 'right' : 'left';
+      directions.sort(function(first, second) {
+        if (first.room !== second.room) {
+          return second.room - first.room;
+        }
+        return first.direction === preferredDirection ? -1 : 1;
+      });
+
+      var chosen = directions[0];
+      var step = chosen.direction === 'right' ? 1 : -1;
+      for (var offset = 1; offset <= candidate.span; offset += 1) {
+        reserved[candidate.index + step * offset] = true;
+      }
+      appendCallout(candidate, chosen, rowBoxes);
+    });
   }
 
   var eventsByDecade = {};
@@ -428,7 +571,18 @@
     }
 
     box.appendChild(createWeekTooltip(weekStart, eventsThisWeek, isNow));
-    return box;
+    box.setAttribute('data-week-index', String(weekIdx));
+    box.setAttribute('data-has-events', eventsThisWeek ? 'true' : 'false');
+    box.setAttribute('data-is-current', isNow ? 'true' : 'false');
+    box.setAttribute('data-is-future', isFuture ? 'true' : 'false');
+
+    return {
+      element: box,
+      eventsThisWeek: eventsThisWeek,
+      hasEvents: Boolean(eventsThisWeek),
+      isFuture: isFuture,
+      isNow: isNow
+    };
   }
 
   function renderDecade(decade, decadeElement) {
@@ -441,23 +595,34 @@
     var firstWeek = decade * WEEKS_PER_DECADE;
     var lastWeek = Math.min(firstWeek + WEEKS_PER_DECADE, totalWeeks);
     var currentRow = null;
+    var currentRowBoxes = [];
     var boxesInRow = 0;
 
     function createRow() {
       currentRow = document.createElement('div');
       currentRow.className = 'liw-flex-row';
       fragment.appendChild(currentRow);
+      currentRowBoxes = [];
       boxesInRow = 0;
     }
 
     for (var weekIdx = firstWeek; weekIdx < lastWeek; weekIdx += 1) {
       var weekBox = createWeekBox(weekIdx, palette);
       if (!currentRow || boxesInRow === MAX_BOXES_IN_ROW) {
+        if (currentRow) {
+          placeRowCallouts(currentRowBoxes, palette);
+        }
         createRow();
       }
 
-      currentRow.appendChild(weekBox);
+      weekBox.element.setAttribute('data-column', String(boxesInRow));
+      currentRow.appendChild(weekBox.element);
+      currentRowBoxes.push(weekBox);
       boxesInRow += 1;
+    }
+
+    if (currentRow) {
+      placeRowCallouts(currentRowBoxes, palette);
     }
 
     decadeElement.appendChild(fragment);
