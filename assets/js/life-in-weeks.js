@@ -24,14 +24,9 @@
   var DECADES = CONFIG.decades;
   var EVENTS = CONFIG.events;
   var MAX_BOXES_IN_ROW = 21;
-  var BOX_END_MULT = 0.45;
-  var BOX_CHAR_MULT = 0.319;
   var WEEKS_PER_DECADE = WEEKS_PER_YEAR * 10;
   var totalWeeks = LIFESPAN * WEEKS_PER_YEAR;
   var totalDecades = Math.ceil(totalWeeks / WEEKS_PER_DECADE);
-  var graphemeSegmenter = typeof Intl !== 'undefined' && Intl.Segmenter
-    ? new Intl.Segmenter('en', { granularity: 'grapheme' })
-    : null;
   var emojiPattern = /(?:\p{Regional_Indicator}{2}|\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*)/gu;
   var currentWeekIdx = Math.floor((NOW - BIRTH) / MS_PER_WEEK);
   var defaultExpandedDecade = Math.max(0, Math.min(
@@ -54,6 +49,7 @@
   var eventsByWeek = {};
   EVENTS.forEach(function(eventItem) {
     var eventDate = parseDate(eventItem.date);
+    eventItem.eventDate = eventDate;
     var weekIdx = Math.floor((eventDate - BIRTH) / MS_PER_WEEK);
     if (!eventsByWeek[weekIdx]) {
       eventsByWeek[weekIdx] = [];
@@ -67,7 +63,8 @@
     var birthdayEvent = {
       label: '\uD83C\uDF82 ' + age + ' in ' + (BIRTH.getFullYear() + age),
       description: 'Turned ' + age + ' year' + (age !== 1 ? 's' : '') + ' old',
-      isBirthday: true
+      isBirthday: true,
+      eventDate: birthdayDate
     };
 
     if (!eventsByWeek[birthdayWeekIdx]) {
@@ -80,27 +77,6 @@
 
   function formatDate(date) {
     return MONTHS[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear();
-  }
-
-  function visualLength(str) {
-    if (!str) {
-      return 0;
-    }
-
-    if (graphemeSegmenter) {
-      return Array.from(graphemeSegmenter.segment(str)).reduce(function(length, segment) {
-        return length + (segment.segment.length > 1 ? 2 : 1);
-      }, 0);
-    }
-
-    return str.length;
-  }
-
-  function boxUnits(label) {
-    if (!label) {
-      return 1;
-    }
-    return 2 * BOX_END_MULT + visualLength(label) * BOX_CHAR_MULT;
   }
 
   var eventsByDecade = {};
@@ -360,31 +336,31 @@
     var tip = document.createElement('span');
     tip.className = 'liw-tip';
 
-    var dateDiv = document.createElement('div');
-    dateDiv.className = 'liw-tip-date';
-    dateDiv.textContent = formatDate(weekStart);
-    tip.appendChild(dateDiv);
-
     if (eventsThisWeek) {
-      var labelDiv = document.createElement('div');
-      labelDiv.className = 'liw-tip-label';
-      labelDiv.textContent = eventsThisWeek.map(function(eventItem) {
-        return eventItem.label;
-      }).join(' \u00B7 ');
-      tip.appendChild(labelDiv);
+      eventsThisWeek.forEach(function(eventItem) {
+        var eventDateDiv = document.createElement('div');
+        eventDateDiv.className = 'liw-tip-date';
+        eventDateDiv.textContent = formatDate(eventItem.eventDate);
+        tip.appendChild(eventDateDiv);
 
-      var descriptions = eventsThisWeek.filter(function(eventItem) {
-        return eventItem.description;
+        var eventLabelDiv = document.createElement('div');
+        eventLabelDiv.className = 'liw-tip-label';
+        eventLabelDiv.textContent = eventItem.label;
+        tip.appendChild(eventLabelDiv);
+
+        if (eventItem.description) {
+          var eventDescriptionDiv = document.createElement('div');
+          eventDescriptionDiv.className = 'liw-tip-desc';
+          eventDescriptionDiv.textContent = eventItem.description;
+          tip.appendChild(eventDescriptionDiv);
+        }
       });
-      if (descriptions.length > 0) {
-        var descriptionDiv = document.createElement('div');
-        descriptionDiv.className = 'liw-tip-desc';
-        descriptionDiv.textContent = descriptions.map(function(eventItem) {
-          return eventItem.description;
-        }).join(' \u00B7 ');
-        tip.appendChild(descriptionDiv);
-      }
     } else {
+      var dateDiv = document.createElement('div');
+      dateDiv.className = 'liw-tip-date';
+      dateDiv.textContent = formatDate(weekStart);
+      tip.appendChild(dateDiv);
+
       var ageForWeek = weekStart.getFullYear() - BIRTH.getFullYear();
       if (
         weekStart.getMonth() < BIRTH.getMonth() ||
@@ -423,7 +399,6 @@
       }).join(' \u00B7 ');
     }
 
-    var units = boxUnits(boxLabel);
     var box = document.createElement('button');
     box.type = 'button';
     box.className = 'liw-box' + (isFuture ? ' liw-future' : '') + (boxLabel ? ' liw-has-label' : '') + (isNow ? ' liw-now' : '');
@@ -437,11 +412,23 @@
     }
 
     if (boxLabel) {
-      box.textContent = boxLabel;
+      var eventMark = document.createElement('span');
+      var eventEmoji = eventsThisWeek.map(function(eventItem) {
+        var matches = eventItem.label.match(emojiPattern);
+        return matches && matches[0] ? matches[0] : '\u25C6';
+      });
+
+      eventMark.className = 'liw-event-mark';
+      eventMark.setAttribute('aria-hidden', 'true');
+      eventMark.textContent = eventEmoji.slice(0, 2).join('');
+      box.appendChild(eventMark);
+      box.setAttribute('aria-label', eventsThisWeek.map(function(eventItem) {
+        return formatDate(eventItem.eventDate) + ': ' + eventItem.label;
+      }).join('. '));
     }
 
     box.appendChild(createWeekTooltip(weekStart, eventsThisWeek, isNow));
-    return { element: box, units: units };
+    return box;
   }
 
   function renderDecade(decade, decadeElement) {
@@ -454,23 +441,23 @@
     var firstWeek = decade * WEEKS_PER_DECADE;
     var lastWeek = Math.min(firstWeek + WEEKS_PER_DECADE, totalWeeks);
     var currentRow = null;
-    var rowUnits = 0;
+    var boxesInRow = 0;
 
     function createRow() {
       currentRow = document.createElement('div');
       currentRow.className = 'liw-flex-row';
       fragment.appendChild(currentRow);
-      rowUnits = 0;
+      boxesInRow = 0;
     }
 
     for (var weekIdx = firstWeek; weekIdx < lastWeek; weekIdx += 1) {
       var weekBox = createWeekBox(weekIdx, palette);
-      if (!currentRow || (rowUnits > 0 && rowUnits + weekBox.units >= MAX_BOXES_IN_ROW)) {
+      if (!currentRow || boxesInRow === MAX_BOXES_IN_ROW) {
         createRow();
       }
 
-      currentRow.appendChild(weekBox.element);
-      rowUnits += weekBox.units;
+      currentRow.appendChild(weekBox);
+      boxesInRow += 1;
     }
 
     decadeElement.appendChild(fragment);
