@@ -296,5 +296,20 @@ events:
   - date: "2026-03-11"
     label: "💔"
 
+  - date: "2026-03-22"
+    label: "🪄 Magic show"
+
+  - date: "2026-04-30"
+    label: "🏖️ Carmel"
+
+  - date: "2026-06-05"
+    label: "🏰 Magic Castle"
+
+  - date: "2026-07-22"
+    label: "🐼 Pandamonium game launch"
+
+  - date: "2026-07-28"
+    label: "🌱 New lawn"
+
   - date: "2073-03-15"
     label: "Life expectancy (age 80)"

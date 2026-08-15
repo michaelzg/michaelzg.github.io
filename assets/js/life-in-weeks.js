@@ -24,14 +24,12 @@
   var DECADES = CONFIG.decades;
   var EVENTS = CONFIG.events;
   var MAX_BOXES_IN_ROW = 21;
-  var BOX_END_MULT = 0.45;
-  var BOX_CHAR_MULT = 0.319;
+  var CALLOUT_MIN_SPAN = 2;
+  var CALLOUT_MAX_SPAN = 5;
+  var CALLOUT_LINE_CAPACITY = { 2: 11, 3: 18 };
   var WEEKS_PER_DECADE = WEEKS_PER_YEAR * 10;
   var totalWeeks = LIFESPAN * WEEKS_PER_YEAR;
   var totalDecades = Math.ceil(totalWeeks / WEEKS_PER_DECADE);
-  var graphemeSegmenter = typeof Intl !== 'undefined' && Intl.Segmenter
-    ? new Intl.Segmenter('en', { granularity: 'grapheme' })
-    : null;
   var emojiPattern = /(?:\p{Regional_Indicator}{2}|\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*)/gu;
   var currentWeekIdx = Math.floor((NOW - BIRTH) / MS_PER_WEEK);
   var defaultExpandedDecade = Math.max(0, Math.min(
@@ -54,6 +52,7 @@
   var eventsByWeek = {};
   EVENTS.forEach(function(eventItem) {
     var eventDate = parseDate(eventItem.date);
+    eventItem.eventDate = eventDate;
     var weekIdx = Math.floor((eventDate - BIRTH) / MS_PER_WEEK);
     if (!eventsByWeek[weekIdx]) {
       eventsByWeek[weekIdx] = [];
@@ -67,7 +66,8 @@
     var birthdayEvent = {
       label: '\uD83C\uDF82 ' + age + ' in ' + (BIRTH.getFullYear() + age),
       description: 'Turned ' + age + ' year' + (age !== 1 ? 's' : '') + ' old',
-      isBirthday: true
+      isBirthday: true,
+      eventDate: birthdayDate
     };
 
     if (!eventsByWeek[birthdayWeekIdx]) {
@@ -82,25 +82,293 @@
     return MONTHS[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear();
   }
 
-  function visualLength(str) {
-    if (!str) {
-      return 0;
+  function calloutText(eventsThisWeek) {
+    if (!eventsThisWeek) {
+      return '';
     }
 
-    if (graphemeSegmenter) {
-      return Array.from(graphemeSegmenter.segment(str)).reduce(function(length, segment) {
-        return length + (segment.segment.length > 1 ? 2 : 1);
-      }, 0);
-    }
-
-    return str.length;
+    return eventsThisWeek.filter(function(eventItem) {
+      return !eventItem.isBirthday;
+    }).map(function(eventItem) {
+      return eventItem.label.replace(emojiPattern, '').replace(/\s+/g, ' ').trim();
+    }).filter(Boolean).join(' \u00B7 ');
   }
 
-  function boxUnits(label) {
-    if (!label) {
-      return 1;
+  function calloutSpan(text) {
+    var characterCount = Array.from(text).length;
+    return Math.max(CALLOUT_MIN_SPAN, Math.min(
+      CALLOUT_MAX_SPAN,
+      Math.ceil((characterCount + 4) / 7)
+    ));
+  }
+
+  function estimatedCalloutLines(text, capacity) {
+    var lineLength = 0;
+    var lines = 1;
+
+    text.split(/\s+/).forEach(function(word) {
+      var wordLength = Array.from(word).length;
+      if (wordLength > capacity) {
+        if (lineLength > 0) {
+          lines += 1;
+        }
+        lines += Math.floor((wordLength - 1) / capacity);
+        lineLength = wordLength % capacity || capacity;
+        return;
+      }
+      if (lineLength === 0) {
+        lineLength = wordLength;
+      } else if (lineLength + wordLength + 1 <= capacity) {
+        lineLength += wordLength + 1;
+      } else {
+        lines += 1;
+        lineLength = wordLength;
+      }
+    });
+
+    return lines;
+  }
+
+  function stackedCalloutShape(text) {
+    if (estimatedCalloutLines(text, CALLOUT_LINE_CAPACITY[2]) <= 2) {
+      return { rows: 2, span: 2 };
     }
-    return 2 * BOX_END_MULT + visualLength(label) * BOX_CHAR_MULT;
+    if (estimatedCalloutLines(text, CALLOUT_LINE_CAPACITY[3]) <= 2) {
+      return { rows: 2, span: 3 };
+    }
+    if (estimatedCalloutLines(text, CALLOUT_LINE_CAPACITY[3]) <= 3) {
+      return { rows: 3, span: 3 };
+    }
+    return null;
+  }
+
+  function verticalCalloutShape(text) {
+    var rows = estimatedCalloutLines(text, CALLOUT_LINE_CAPACITY[3]);
+    return rows <= 3 ? { rows: rows, span: 3 } : null;
+  }
+
+  function calloutFootprint(candidate, option, rowBoxesByRow) {
+    var rowIndexes = [];
+    var columnIndexes = [];
+    var footprint = [];
+
+    if (option.orientation === 'vertical') {
+      var cardinalStep = option.direction === 'below' ? 1 : -1;
+      for (var cardinalOffset = 1; cardinalOffset <= option.rows; cardinalOffset += 1) {
+        rowIndexes.push(candidate.rowIndex + cardinalStep * cardinalOffset);
+      }
+      for (var centeredOffset = -1; centeredOffset <= 1; centeredOffset += 1) {
+        columnIndexes.push(candidate.column + centeredOffset);
+      }
+    } else {
+      var horizontalStep = option.direction === 'right' ? 1 : -1;
+      rowIndexes.push(candidate.rowIndex);
+      for (var columnOffset = 1; columnOffset <= option.span; columnOffset += 1) {
+        columnIndexes.push(candidate.column + horizontalStep * columnOffset);
+      }
+
+      if (option.rows > 1) {
+        if (option.vertical === 'center') {
+          rowIndexes.push(candidate.rowIndex - 1, candidate.rowIndex + 1);
+        } else {
+          var verticalStep = option.vertical === 'down' ? 1 : -1;
+          for (var verticalOffset = 1; verticalOffset < option.rows; verticalOffset += 1) {
+            rowIndexes.push(candidate.rowIndex + verticalStep * verticalOffset);
+          }
+        }
+      }
+    }
+
+    for (var rowOffset = 0; rowOffset < rowIndexes.length; rowOffset += 1) {
+      var rowIndex = rowIndexes[rowOffset];
+      var rowBoxes = rowBoxesByRow[rowIndex];
+      if (!rowBoxes) {
+        return [];
+      }
+
+      for (var columnIndex = 0; columnIndex < columnIndexes.length; columnIndex += 1) {
+        var column = columnIndexes[columnIndex];
+        if (!rowBoxes[column]) {
+          return [];
+        }
+        footprint.push({
+          box: rowBoxes[column],
+          column: column,
+          rowIndex: rowIndex
+        });
+      }
+    }
+
+    return footprint;
+  }
+
+  function calloutLayouts(candidate, reserved, rowBoxesByRow) {
+    var variants = [];
+    var layouts = [];
+
+    function addLayout(option) {
+      option.footprint = calloutFootprint(candidate, option, rowBoxesByRow);
+
+      var isAvailable = option.footprint.length === option.rows * option.span && option.footprint.every(function(cell) {
+        return (
+          !reserved[cell.rowIndex][cell.column] &&
+          cell.box.isFuture === candidate.box.isFuture
+        );
+      });
+
+      if (isAvailable) {
+        layouts.push(option);
+      }
+    }
+
+    if (candidate.wideFits) {
+      variants.push({ rows: 1, span: candidate.wideSpan, vertical: 'center' });
+    }
+
+    if (candidate.wideSpan >= 3 && candidate.stackedShape) {
+      variants.push({ rows: candidate.stackedShape.rows, span: candidate.stackedShape.span, vertical: 'up' });
+      variants.push({ rows: candidate.stackedShape.rows, span: candidate.stackedShape.span, vertical: 'down' });
+      if (candidate.stackedShape.rows === 3) {
+        variants.push({ rows: 3, span: candidate.stackedShape.span, vertical: 'center' });
+      }
+    }
+
+    variants.forEach(function(variant) {
+      ['left', 'right'].forEach(function(direction) {
+        addLayout({
+          orientation: 'side',
+          direction: direction,
+          rows: variant.rows,
+          span: variant.span,
+          vertical: variant.vertical
+        });
+      });
+    });
+
+    if (candidate.verticalShape) {
+      ['above', 'below'].forEach(function(direction) {
+        addLayout({
+          orientation: 'vertical',
+          direction: direction,
+          rows: candidate.verticalShape.rows,
+          span: candidate.verticalShape.span,
+          vertical: direction
+        });
+      });
+    }
+
+    return layouts;
+  }
+
+  function appendCallout(candidate, option) {
+    var callout = document.createElement('span');
+    var label = document.createElement('span');
+
+    callout.className = 'liw-callout liw-callout-' + option.direction;
+    callout.setAttribute('aria-hidden', 'true');
+    callout.setAttribute('data-rows', String(option.rows));
+    callout.setAttribute('data-span', String(option.span));
+    callout.setAttribute('data-vertical', option.vertical);
+
+    label.className = 'liw-callout-label';
+    label.textContent = candidate.text;
+    callout.appendChild(label);
+
+    candidate.box.element.classList.add('liw-callout-anchor');
+    candidate.box.element.style.setProperty('--liw-callout-fill', candidate.palette.fill);
+    candidate.box.element.style.setProperty('--liw-callout-border', candidate.palette.border);
+    candidate.box.element.insertBefore(callout, candidate.box.element.querySelector('.liw-tip'));
+  }
+
+  function placeDecadeCallouts(rowBoxesByRow, palette) {
+    var reserved = rowBoxesByRow.map(function(rowBoxes) {
+      return rowBoxes.map(function(box) {
+        return box.hasEvents || box.isNow;
+      });
+    });
+    var candidates = [];
+
+    rowBoxesByRow.forEach(function(rowBoxes, rowIndex) {
+      rowBoxes.forEach(function(box, column) {
+        var text = !box.isNow ? calloutText(box.eventsThisWeek) : '';
+        if (!text) {
+          return;
+        }
+
+        var candidate = {
+          box: box,
+          column: column,
+          palette: palette,
+          rowIndex: rowIndex,
+          stackedShape: stackedCalloutShape(text),
+          text: text,
+          verticalShape: verticalCalloutShape(text),
+          wideSpan: calloutSpan(text)
+        };
+        candidate.wideFits = Array.from(text).length <= candidate.wideSpan * 7 - 2;
+        candidate.prefersStacked = candidate.wideSpan >= 4;
+        candidate.initialLayouts = calloutLayouts(candidate, reserved, rowBoxesByRow);
+        if (candidate.initialLayouts.length > 0) {
+          candidates.push(candidate);
+        }
+      });
+    });
+
+    candidates.sort(function(first, second) {
+      if (first.prefersStacked !== second.prefersStacked) {
+        return first.prefersStacked ? -1 : 1;
+      }
+      if (first.initialLayouts.length !== second.initialLayouts.length) {
+        return first.initialLayouts.length - second.initialLayouts.length;
+      }
+      if (first.wideSpan !== second.wideSpan) {
+        return second.wideSpan - first.wideSpan;
+      }
+      if (first.rowIndex !== second.rowIndex) {
+        return first.rowIndex - second.rowIndex;
+      }
+      return first.column - second.column;
+    });
+
+    candidates.forEach(function(candidate) {
+      var layouts = calloutLayouts(candidate, reserved, rowBoxesByRow);
+      if (layouts.length === 0) {
+        return;
+      }
+
+      var preferredDirection = candidate.column < rowBoxesByRow[candidate.rowIndex].length / 2 ? 'right' : 'left';
+      var preferredVertical = candidate.rowIndex < rowBoxesByRow.length / 2 ? 'down' : 'up';
+      var preferredCardinal = candidate.rowIndex < rowBoxesByRow.length / 2 ? 'below' : 'above';
+      layouts.sort(function(first, second) {
+        var firstLayoutRank = (first.rows > 1) === candidate.prefersStacked ? 0 : 1;
+        var secondLayoutRank = (second.rows > 1) === candidate.prefersStacked ? 0 : 1;
+        if (firstLayoutRank !== secondLayoutRank) {
+          return firstLayoutRank - secondLayoutRank;
+        }
+        if (first.rows * first.span !== second.rows * second.span) {
+          return first.rows * first.span - second.rows * second.span;
+        }
+        if (first.orientation !== second.orientation) {
+          return first.orientation === 'side' ? -1 : 1;
+        }
+        if (first.direction !== second.direction) {
+          var preferred = first.orientation === 'side' ? preferredDirection : preferredCardinal;
+          return first.direction === preferred ? -1 : 1;
+        }
+        if (first.orientation === 'side' && first.vertical !== second.vertical) {
+          var firstVerticalRank = first.vertical === 'center' || first.vertical === preferredVertical ? 0 : 1;
+          var secondVerticalRank = second.vertical === 'center' || second.vertical === preferredVertical ? 0 : 1;
+          return firstVerticalRank - secondVerticalRank;
+        }
+        return 0;
+      });
+
+      var chosen = layouts[0];
+      chosen.footprint.forEach(function(cell) {
+        reserved[cell.rowIndex][cell.column] = true;
+      });
+      appendCallout(candidate, chosen);
+    });
   }
 
   var eventsByDecade = {};
@@ -360,31 +628,31 @@
     var tip = document.createElement('span');
     tip.className = 'liw-tip';
 
-    var dateDiv = document.createElement('div');
-    dateDiv.className = 'liw-tip-date';
-    dateDiv.textContent = formatDate(weekStart);
-    tip.appendChild(dateDiv);
-
     if (eventsThisWeek) {
-      var labelDiv = document.createElement('div');
-      labelDiv.className = 'liw-tip-label';
-      labelDiv.textContent = eventsThisWeek.map(function(eventItem) {
-        return eventItem.label;
-      }).join(' \u00B7 ');
-      tip.appendChild(labelDiv);
+      eventsThisWeek.forEach(function(eventItem) {
+        var eventDateDiv = document.createElement('div');
+        eventDateDiv.className = 'liw-tip-date';
+        eventDateDiv.textContent = formatDate(eventItem.eventDate);
+        tip.appendChild(eventDateDiv);
 
-      var descriptions = eventsThisWeek.filter(function(eventItem) {
-        return eventItem.description;
+        var eventLabelDiv = document.createElement('div');
+        eventLabelDiv.className = 'liw-tip-label';
+        eventLabelDiv.textContent = eventItem.label;
+        tip.appendChild(eventLabelDiv);
+
+        if (eventItem.description) {
+          var eventDescriptionDiv = document.createElement('div');
+          eventDescriptionDiv.className = 'liw-tip-desc';
+          eventDescriptionDiv.textContent = eventItem.description;
+          tip.appendChild(eventDescriptionDiv);
+        }
       });
-      if (descriptions.length > 0) {
-        var descriptionDiv = document.createElement('div');
-        descriptionDiv.className = 'liw-tip-desc';
-        descriptionDiv.textContent = descriptions.map(function(eventItem) {
-          return eventItem.description;
-        }).join(' \u00B7 ');
-        tip.appendChild(descriptionDiv);
-      }
     } else {
+      var dateDiv = document.createElement('div');
+      dateDiv.className = 'liw-tip-date';
+      dateDiv.textContent = formatDate(weekStart);
+      tip.appendChild(dateDiv);
+
       var ageForWeek = weekStart.getFullYear() - BIRTH.getFullYear();
       if (
         weekStart.getMonth() < BIRTH.getMonth() ||
@@ -423,7 +691,6 @@
       }).join(' \u00B7 ');
     }
 
-    var units = boxUnits(boxLabel);
     var box = document.createElement('button');
     box.type = 'button';
     box.className = 'liw-box' + (isFuture ? ' liw-future' : '') + (boxLabel ? ' liw-has-label' : '') + (isNow ? ' liw-now' : '');
@@ -437,11 +704,34 @@
     }
 
     if (boxLabel) {
-      box.textContent = boxLabel;
+      var eventMark = document.createElement('span');
+      var eventEmoji = eventsThisWeek.map(function(eventItem) {
+        var matches = eventItem.label.match(emojiPattern);
+        return matches && matches[0] ? matches[0] : '\u25C6';
+      });
+
+      eventMark.className = 'liw-event-mark';
+      eventMark.setAttribute('aria-hidden', 'true');
+      eventMark.textContent = eventEmoji.slice(0, 2).join('');
+      box.appendChild(eventMark);
+      box.setAttribute('aria-label', eventsThisWeek.map(function(eventItem) {
+        return formatDate(eventItem.eventDate) + ': ' + eventItem.label;
+      }).join('. '));
     }
 
     box.appendChild(createWeekTooltip(weekStart, eventsThisWeek, isNow));
-    return { element: box, units: units };
+    box.setAttribute('data-week-index', String(weekIdx));
+    box.setAttribute('data-has-events', eventsThisWeek ? 'true' : 'false');
+    box.setAttribute('data-is-current', isNow ? 'true' : 'false');
+    box.setAttribute('data-is-future', isFuture ? 'true' : 'false');
+
+    return {
+      element: box,
+      eventsThisWeek: eventsThisWeek,
+      hasEvents: Boolean(eventsThisWeek),
+      isFuture: isFuture,
+      isNow: isNow
+    };
   }
 
   function renderDecade(decade, decadeElement) {
@@ -454,24 +744,31 @@
     var firstWeek = decade * WEEKS_PER_DECADE;
     var lastWeek = Math.min(firstWeek + WEEKS_PER_DECADE, totalWeeks);
     var currentRow = null;
-    var rowUnits = 0;
+    var currentRowBoxes = [];
+    var decadeRows = [];
+    var boxesInRow = 0;
 
     function createRow() {
       currentRow = document.createElement('div');
       currentRow.className = 'liw-flex-row';
       fragment.appendChild(currentRow);
-      rowUnits = 0;
+      currentRowBoxes = [];
+      decadeRows.push(currentRowBoxes);
+      boxesInRow = 0;
     }
 
     for (var weekIdx = firstWeek; weekIdx < lastWeek; weekIdx += 1) {
       var weekBox = createWeekBox(weekIdx, palette);
-      if (!currentRow || (rowUnits > 0 && rowUnits + weekBox.units >= MAX_BOXES_IN_ROW)) {
+      if (!currentRow || boxesInRow === MAX_BOXES_IN_ROW) {
         createRow();
       }
 
       currentRow.appendChild(weekBox.element);
-      rowUnits += weekBox.units;
+      currentRowBoxes.push(weekBox);
+      boxesInRow += 1;
     }
+
+    placeDecadeCallouts(decadeRows, palette);
 
     decadeElement.appendChild(fragment);
     decadeElement.setAttribute('data-rendered', 'true');
