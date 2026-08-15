@@ -26,6 +26,7 @@
   var MAX_BOXES_IN_ROW = 21;
   var CALLOUT_MIN_SPAN = 2;
   var CALLOUT_MAX_SPAN = 5;
+  var CALLOUT_LINE_CAPACITY = { 2: 11, 3: 18 };
   var WEEKS_PER_DECADE = WEEKS_PER_YEAR * 10;
   var totalWeeks = LIFESPAN * WEEKS_PER_YEAR;
   var totalDecades = Math.ceil(totalWeeks / WEEKS_PER_DECADE);
@@ -101,54 +102,173 @@
     ));
   }
 
-  function availableCalloutRoom(anchorIndex, direction, reserved, rowBoxes, anchorIsFuture) {
-    var step = direction === 'right' ? 1 : -1;
-    var room = 0;
-    var targetIndex = anchorIndex + step;
+  function estimatedCalloutLines(text, capacity) {
+    var lineLength = 0;
+    var lines = 1;
 
-    while (
-      targetIndex >= 0 &&
-      targetIndex < rowBoxes.length &&
-      !reserved[targetIndex] &&
-      rowBoxes[targetIndex].isFuture === anchorIsFuture
-    ) {
-      room += 1;
-      targetIndex += step;
+    text.split(/\s+/).forEach(function(word) {
+      var wordLength = Array.from(word).length;
+      if (wordLength > capacity) {
+        if (lineLength > 0) {
+          lines += 1;
+        }
+        lines += Math.floor((wordLength - 1) / capacity);
+        lineLength = wordLength % capacity || capacity;
+        return;
+      }
+      if (lineLength === 0) {
+        lineLength = wordLength;
+      } else if (lineLength + wordLength + 1 <= capacity) {
+        lineLength += wordLength + 1;
+      } else {
+        lines += 1;
+        lineLength = wordLength;
+      }
+    });
+
+    return lines;
+  }
+
+  function stackedCalloutShape(text) {
+    if (estimatedCalloutLines(text, CALLOUT_LINE_CAPACITY[2]) <= 2) {
+      return { rows: 2, span: 2 };
+    }
+    if (estimatedCalloutLines(text, CALLOUT_LINE_CAPACITY[3]) <= 2) {
+      return { rows: 2, span: 3 };
+    }
+    if (estimatedCalloutLines(text, CALLOUT_LINE_CAPACITY[3]) <= 3) {
+      return { rows: 3, span: 3 };
+    }
+    return null;
+  }
+
+  function verticalCalloutShape(text) {
+    var rows = estimatedCalloutLines(text, CALLOUT_LINE_CAPACITY[3]);
+    return rows <= 3 ? { rows: rows, span: 3 } : null;
+  }
+
+  function calloutFootprint(candidate, option, rowBoxesByRow) {
+    var rowIndexes = [];
+    var columnIndexes = [];
+    var footprint = [];
+
+    if (option.orientation === 'vertical') {
+      var cardinalStep = option.direction === 'below' ? 1 : -1;
+      for (var cardinalOffset = 1; cardinalOffset <= option.rows; cardinalOffset += 1) {
+        rowIndexes.push(candidate.rowIndex + cardinalStep * cardinalOffset);
+      }
+      for (var centeredOffset = -1; centeredOffset <= 1; centeredOffset += 1) {
+        columnIndexes.push(candidate.column + centeredOffset);
+      }
+    } else {
+      var horizontalStep = option.direction === 'right' ? 1 : -1;
+      rowIndexes.push(candidate.rowIndex);
+      for (var columnOffset = 1; columnOffset <= option.span; columnOffset += 1) {
+        columnIndexes.push(candidate.column + horizontalStep * columnOffset);
+      }
+
+      if (option.rows > 1) {
+        if (option.vertical === 'center') {
+          rowIndexes.push(candidate.rowIndex - 1, candidate.rowIndex + 1);
+        } else {
+          var verticalStep = option.vertical === 'down' ? 1 : -1;
+          for (var verticalOffset = 1; verticalOffset < option.rows; verticalOffset += 1) {
+            rowIndexes.push(candidate.rowIndex + verticalStep * verticalOffset);
+          }
+        }
+      }
     }
 
-    return room;
+    for (var rowOffset = 0; rowOffset < rowIndexes.length; rowOffset += 1) {
+      var rowIndex = rowIndexes[rowOffset];
+      var rowBoxes = rowBoxesByRow[rowIndex];
+      if (!rowBoxes) {
+        return [];
+      }
+
+      for (var columnIndex = 0; columnIndex < columnIndexes.length; columnIndex += 1) {
+        var column = columnIndexes[columnIndex];
+        if (!rowBoxes[column]) {
+          return [];
+        }
+        footprint.push({
+          box: rowBoxes[column],
+          column: column,
+          rowIndex: rowIndex
+        });
+      }
+    }
+
+    return footprint;
   }
 
-  function calloutDirections(candidate, reserved, rowBoxes) {
-    return ['left', 'right'].map(function(direction) {
-      return {
-        direction: direction,
-        room: availableCalloutRoom(
-          candidate.index,
-          direction,
-          reserved,
-          rowBoxes,
-          candidate.box.isFuture
-        )
-      };
-    }).filter(function(option) {
-      return option.room >= candidate.span;
+  function calloutLayouts(candidate, reserved, rowBoxesByRow) {
+    var variants = [];
+    var layouts = [];
+
+    function addLayout(option) {
+      option.footprint = calloutFootprint(candidate, option, rowBoxesByRow);
+
+      var isAvailable = option.footprint.length === option.rows * option.span && option.footprint.every(function(cell) {
+        return (
+          !reserved[cell.rowIndex][cell.column] &&
+          cell.box.isFuture === candidate.box.isFuture
+        );
+      });
+
+      if (isAvailable) {
+        layouts.push(option);
+      }
+    }
+
+    if (candidate.wideFits) {
+      variants.push({ rows: 1, span: candidate.wideSpan, vertical: 'center' });
+    }
+
+    if (candidate.wideSpan >= 3 && candidate.stackedShape) {
+      variants.push({ rows: candidate.stackedShape.rows, span: candidate.stackedShape.span, vertical: 'up' });
+      variants.push({ rows: candidate.stackedShape.rows, span: candidate.stackedShape.span, vertical: 'down' });
+      if (candidate.stackedShape.rows === 3) {
+        variants.push({ rows: 3, span: candidate.stackedShape.span, vertical: 'center' });
+      }
+    }
+
+    variants.forEach(function(variant) {
+      ['left', 'right'].forEach(function(direction) {
+        addLayout({
+          orientation: 'side',
+          direction: direction,
+          rows: variant.rows,
+          span: variant.span,
+          vertical: variant.vertical
+        });
+      });
     });
+
+    if (candidate.verticalShape) {
+      ['above', 'below'].forEach(function(direction) {
+        addLayout({
+          orientation: 'vertical',
+          direction: direction,
+          rows: candidate.verticalShape.rows,
+          span: candidate.verticalShape.span,
+          vertical: direction
+        });
+      });
+    }
+
+    return layouts;
   }
 
-  function appendCallout(candidate, option, rowBoxes) {
-    var step = option.direction === 'right' ? 1 : -1;
-    var firstTarget = candidate.index + step;
-    var lastTarget = candidate.index + step * candidate.span;
+  function appendCallout(candidate, option) {
     var callout = document.createElement('span');
     var label = document.createElement('span');
 
     callout.className = 'liw-callout liw-callout-' + option.direction;
     callout.setAttribute('aria-hidden', 'true');
-    callout.setAttribute('data-direction', option.direction);
-    callout.setAttribute('data-span', String(candidate.span));
-    callout.setAttribute('data-start-column', String(Math.min(firstTarget, lastTarget)));
-    callout.setAttribute('data-end-column', String(Math.max(firstTarget, lastTarget)));
+    callout.setAttribute('data-rows', String(option.rows));
+    callout.setAttribute('data-span', String(option.span));
+    callout.setAttribute('data-vertical', option.vertical);
 
     label.className = 'liw-callout-label';
     label.textContent = candidate.text;
@@ -158,67 +278,96 @@
     candidate.box.element.style.setProperty('--liw-callout-fill', candidate.palette.fill);
     candidate.box.element.style.setProperty('--liw-callout-border', candidate.palette.border);
     candidate.box.element.insertBefore(callout, candidate.box.element.querySelector('.liw-tip'));
-
-    for (var offset = 1; offset <= candidate.span; offset += 1) {
-      rowBoxes[candidate.index + step * offset].element.classList.add('liw-callout-underlay');
-    }
   }
 
-  function placeRowCallouts(rowBoxes, palette) {
-    var reserved = rowBoxes.map(function(box) {
-      return box.hasEvents || box.isNow;
+  function placeDecadeCallouts(rowBoxesByRow, palette) {
+    var reserved = rowBoxesByRow.map(function(rowBoxes) {
+      return rowBoxes.map(function(box) {
+        return box.hasEvents || box.isNow;
+      });
     });
     var candidates = [];
 
-    rowBoxes.forEach(function(box, index) {
-      var text = !box.isNow ? calloutText(box.eventsThisWeek) : '';
-      if (!text) {
-        return;
-      }
+    rowBoxesByRow.forEach(function(rowBoxes, rowIndex) {
+      rowBoxes.forEach(function(box, column) {
+        var text = !box.isNow ? calloutText(box.eventsThisWeek) : '';
+        if (!text) {
+          return;
+        }
 
-      var candidate = {
-        box: box,
-        index: index,
-        palette: palette,
-        span: calloutSpan(text),
-        text: text
-      };
-      candidate.initialDirections = calloutDirections(candidate, reserved, rowBoxes);
-      if (candidate.initialDirections.length > 0) {
-        candidates.push(candidate);
-      }
+        var candidate = {
+          box: box,
+          column: column,
+          palette: palette,
+          rowIndex: rowIndex,
+          stackedShape: stackedCalloutShape(text),
+          text: text,
+          verticalShape: verticalCalloutShape(text),
+          wideSpan: calloutSpan(text)
+        };
+        candidate.wideFits = Array.from(text).length <= candidate.wideSpan * 7 - 2;
+        candidate.prefersStacked = candidate.wideSpan >= 4;
+        candidate.initialLayouts = calloutLayouts(candidate, reserved, rowBoxesByRow);
+        if (candidate.initialLayouts.length > 0) {
+          candidates.push(candidate);
+        }
+      });
     });
 
     candidates.sort(function(first, second) {
-      if (first.initialDirections.length !== second.initialDirections.length) {
-        return first.initialDirections.length - second.initialDirections.length;
+      if (first.prefersStacked !== second.prefersStacked) {
+        return first.prefersStacked ? -1 : 1;
       }
-      if (first.span !== second.span) {
-        return second.span - first.span;
+      if (first.initialLayouts.length !== second.initialLayouts.length) {
+        return first.initialLayouts.length - second.initialLayouts.length;
       }
-      return first.index - second.index;
+      if (first.wideSpan !== second.wideSpan) {
+        return second.wideSpan - first.wideSpan;
+      }
+      if (first.rowIndex !== second.rowIndex) {
+        return first.rowIndex - second.rowIndex;
+      }
+      return first.column - second.column;
     });
 
     candidates.forEach(function(candidate) {
-      var directions = calloutDirections(candidate, reserved, rowBoxes);
-      if (directions.length === 0) {
+      var layouts = calloutLayouts(candidate, reserved, rowBoxesByRow);
+      if (layouts.length === 0) {
         return;
       }
 
-      var preferredDirection = candidate.index < rowBoxes.length / 2 ? 'right' : 'left';
-      directions.sort(function(first, second) {
-        if (first.room !== second.room) {
-          return second.room - first.room;
+      var preferredDirection = candidate.column < rowBoxesByRow[candidate.rowIndex].length / 2 ? 'right' : 'left';
+      var preferredVertical = candidate.rowIndex < rowBoxesByRow.length / 2 ? 'down' : 'up';
+      var preferredCardinal = candidate.rowIndex < rowBoxesByRow.length / 2 ? 'below' : 'above';
+      layouts.sort(function(first, second) {
+        var firstLayoutRank = (first.rows > 1) === candidate.prefersStacked ? 0 : 1;
+        var secondLayoutRank = (second.rows > 1) === candidate.prefersStacked ? 0 : 1;
+        if (firstLayoutRank !== secondLayoutRank) {
+          return firstLayoutRank - secondLayoutRank;
         }
-        return first.direction === preferredDirection ? -1 : 1;
+        if (first.rows * first.span !== second.rows * second.span) {
+          return first.rows * first.span - second.rows * second.span;
+        }
+        if (first.orientation !== second.orientation) {
+          return first.orientation === 'side' ? -1 : 1;
+        }
+        if (first.direction !== second.direction) {
+          var preferred = first.orientation === 'side' ? preferredDirection : preferredCardinal;
+          return first.direction === preferred ? -1 : 1;
+        }
+        if (first.orientation === 'side' && first.vertical !== second.vertical) {
+          var firstVerticalRank = first.vertical === 'center' || first.vertical === preferredVertical ? 0 : 1;
+          var secondVerticalRank = second.vertical === 'center' || second.vertical === preferredVertical ? 0 : 1;
+          return firstVerticalRank - secondVerticalRank;
+        }
+        return 0;
       });
 
-      var chosen = directions[0];
-      var step = chosen.direction === 'right' ? 1 : -1;
-      for (var offset = 1; offset <= candidate.span; offset += 1) {
-        reserved[candidate.index + step * offset] = true;
-      }
-      appendCallout(candidate, chosen, rowBoxes);
+      var chosen = layouts[0];
+      chosen.footprint.forEach(function(cell) {
+        reserved[cell.rowIndex][cell.column] = true;
+      });
+      appendCallout(candidate, chosen);
     });
   }
 
@@ -596,6 +745,7 @@
     var lastWeek = Math.min(firstWeek + WEEKS_PER_DECADE, totalWeeks);
     var currentRow = null;
     var currentRowBoxes = [];
+    var decadeRows = [];
     var boxesInRow = 0;
 
     function createRow() {
@@ -603,27 +753,22 @@
       currentRow.className = 'liw-flex-row';
       fragment.appendChild(currentRow);
       currentRowBoxes = [];
+      decadeRows.push(currentRowBoxes);
       boxesInRow = 0;
     }
 
     for (var weekIdx = firstWeek; weekIdx < lastWeek; weekIdx += 1) {
       var weekBox = createWeekBox(weekIdx, palette);
       if (!currentRow || boxesInRow === MAX_BOXES_IN_ROW) {
-        if (currentRow) {
-          placeRowCallouts(currentRowBoxes, palette);
-        }
         createRow();
       }
 
-      weekBox.element.setAttribute('data-column', String(boxesInRow));
       currentRow.appendChild(weekBox.element);
       currentRowBoxes.push(weekBox);
       boxesInRow += 1;
     }
 
-    if (currentRow) {
-      placeRowCallouts(currentRowBoxes, palette);
-    }
+    placeDecadeCallouts(decadeRows, palette);
 
     decadeElement.appendChild(fragment);
     decadeElement.setAttribute('data-rendered', 'true');
