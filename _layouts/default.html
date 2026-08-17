@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 {% include head.html %}
-<body class="{% if site.animated %}animated fade-in-down{% endif %}{% if page.body_class %} {{ page.body_class }}{% endif %}">
+<body class="{{ page.body_class }}">
   <div class="site-wrap">
     {% include header.html %}
 
