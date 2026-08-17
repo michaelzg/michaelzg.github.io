@@ -26,10 +26,17 @@ highlighter: rouge
 
 plugins: [jekyll-paginate]
 
-# Frontend source and tooling are kept in the repository; Jekyll only publishes
-# the compiled demo under assets/demos/.
+# Build tooling lives in the repository but is not site content, so keep it out
+# of _site. Of the frontend sources, Jekyll only publishes the compiled demo
+# under assets/demos/.
 exclude:
   - node_modules
   - package.json
   - package-lock.json
   - vite.config.js
+  - Dockerfile
+  - Gemfile
+  - Gemfile.lock
+  - Makefile
+  - README.md
+  - scripts
