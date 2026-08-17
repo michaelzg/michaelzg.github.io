@@ -1,4 +1,5 @@
 (function() {
+  var root = document.documentElement;
   var configEl = document.getElementById('life-in-weeks-config');
   var gridEl = document.getElementById('grid');
 
@@ -13,8 +14,24 @@
     return;
   }
 
-  var birthParts = CONFIG.birthday.split('-');
-  var BIRTH = new Date(parseInt(birthParts[0], 10), parseInt(birthParts[1], 10) - 1, parseInt(birthParts[2], 10));
+  function parseDate(value) {
+    var parts = value.split('-');
+    return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  }
+
+  // <span class="x">text</span>, the shape almost every node here takes.
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) {
+      node.className = className;
+    }
+    if (text !== undefined) {
+      node.textContent = text;
+    }
+    return node;
+  }
+
+  var BIRTH = parseDate(CONFIG.birthday);
   var LIFESPAN = CONFIG.lifespan_years;
   var MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
   var WEEKS_PER_YEAR = 52;
@@ -37,6 +54,18 @@
     Math.floor(Math.floor(currentWeekIdx / WEEKS_PER_YEAR) / 10)
   ));
 
+  function scrollIntoView(element, block) {
+    element.scrollIntoView({ behavior: prefersReducedMotion.matches ? 'auto' : 'smooth', block: block });
+  }
+
+  function decadePalette(decade) {
+    return DECADES[decade] || DECADES[DECADES.length - 1];
+  }
+
+  function decadeLabel(decade) {
+    return (DECADES[decade] || {}).label || ('Decade ' + (decade * 10));
+  }
+
   var legend = document.querySelector('.liw-legend');
   var legendContext = document.getElementById('liw-legend-context');
   var activeContextDecade = -1;
@@ -44,36 +73,26 @@
   var legendContextNeedsPosition = false;
   var legendContextPositionFrame = null;
 
-  function parseDate(value) {
-    var parts = value.split('-');
-    return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  var eventsByWeek = {};
+
+  function weekBucket(date) {
+    var weekIdx = Math.floor((date - BIRTH) / MS_PER_WEEK);
+    return eventsByWeek[weekIdx] || (eventsByWeek[weekIdx] = []);
   }
 
-  var eventsByWeek = {};
   EVENTS.forEach(function(eventItem) {
-    var eventDate = parseDate(eventItem.date);
-    eventItem.eventDate = eventDate;
-    var weekIdx = Math.floor((eventDate - BIRTH) / MS_PER_WEEK);
-    if (!eventsByWeek[weekIdx]) {
-      eventsByWeek[weekIdx] = [];
-    }
-    eventsByWeek[weekIdx].push(eventItem);
+    eventItem.eventDate = parseDate(eventItem.date);
+    weekBucket(eventItem.eventDate).push(eventItem);
   });
 
   for (var age = 1; age < LIFESPAN; age += 1) {
     var birthdayDate = new Date(BIRTH.getFullYear() + age, BIRTH.getMonth(), BIRTH.getDate());
-    var birthdayWeekIdx = Math.floor((birthdayDate - BIRTH) / MS_PER_WEEK);
-    var birthdayEvent = {
+    weekBucket(birthdayDate).unshift({
       label: '\uD83C\uDF82 ' + age + ' in ' + (BIRTH.getFullYear() + age),
       description: 'Turned ' + age + ' year' + (age !== 1 ? 's' : '') + ' old',
       isBirthday: true,
       eventDate: birthdayDate
-    };
-
-    if (!eventsByWeek[birthdayWeekIdx]) {
-      eventsByWeek[birthdayWeekIdx] = [];
-    }
-    eventsByWeek[birthdayWeekIdx].unshift(birthdayEvent);
+    });
   }
 
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -129,22 +148,25 @@
     return lines;
   }
 
-  function stackedCalloutShape(text) {
-    if (estimatedCalloutLines(text, CALLOUT_LINE_CAPACITY[2]) <= 2) {
-      return { rows: 2, span: 2 };
-    }
-    if (estimatedCalloutLines(text, CALLOUT_LINE_CAPACITY[3]) <= 2) {
-      return { rows: 2, span: 3 };
-    }
-    if (estimatedCalloutLines(text, CALLOUT_LINE_CAPACITY[3]) <= 3) {
-      return { rows: 3, span: 3 };
-    }
-    return null;
-  }
+  // Both shape choices depend only on how the text wraps at span 2 and span 3,
+  // so measure each width once and derive both from the pair.
+  function calloutShapes(text) {
+    var atTwo = estimatedCalloutLines(text, CALLOUT_LINE_CAPACITY[2]);
+    var atThree = estimatedCalloutLines(text, CALLOUT_LINE_CAPACITY[3]);
+    var stacked = null;
 
-  function verticalCalloutShape(text) {
-    var rows = estimatedCalloutLines(text, CALLOUT_LINE_CAPACITY[3]);
-    return rows <= 3 ? { rows: rows, span: 3 } : null;
+    if (atTwo <= 2) {
+      stacked = { rows: 2, span: 2 };
+    } else if (atThree <= 2) {
+      stacked = { rows: 2, span: 3 };
+    } else if (atThree <= 3) {
+      stacked = { rows: 3, span: 3 };
+    }
+
+    return {
+      stacked: stacked,
+      vertical: atThree <= 3 ? { rows: atThree, span: 3 } : null
+    };
   }
 
   function calloutFootprint(candidate, option, rowBoxesByRow) {
@@ -261,23 +283,19 @@
   }
 
   function appendCallout(candidate, option) {
-    var callout = document.createElement('span');
-    var label = document.createElement('span');
+    var callout = el('span', 'liw-callout liw-callout-' + option.direction);
+    var anchor = candidate.box.element;
 
-    callout.className = 'liw-callout liw-callout-' + option.direction;
     callout.setAttribute('aria-hidden', 'true');
     callout.setAttribute('data-rows', String(option.rows));
     callout.setAttribute('data-span', String(option.span));
     callout.setAttribute('data-vertical', option.vertical);
+    callout.appendChild(el('span', 'liw-callout-label', candidate.text));
 
-    label.className = 'liw-callout-label';
-    label.textContent = candidate.text;
-    callout.appendChild(label);
-
-    candidate.box.element.classList.add('liw-callout-anchor');
-    candidate.box.element.style.setProperty('--liw-callout-fill', candidate.palette.fill);
-    candidate.box.element.style.setProperty('--liw-callout-border', candidate.palette.border);
-    candidate.box.element.insertBefore(callout, candidate.box.element.querySelector('.liw-tip'));
+    anchor.classList.add('liw-callout-anchor');
+    anchor.style.setProperty('--liw-callout-fill', candidate.palette.fill);
+    anchor.style.setProperty('--liw-callout-border', candidate.palette.border);
+    anchor.insertBefore(callout, anchor.querySelector('.liw-tip'));
   }
 
   function placeDecadeCallouts(rowBoxesByRow, palette) {
@@ -295,14 +313,15 @@
           return;
         }
 
+        var shapes = calloutShapes(text);
         var candidate = {
           box: box,
           column: column,
           palette: palette,
           rowIndex: rowIndex,
-          stackedShape: stackedCalloutShape(text),
+          stackedShape: shapes.stacked,
           text: text,
-          verticalShape: verticalCalloutShape(text),
+          verticalShape: shapes.vertical,
           wideSpan: calloutSpan(text)
         };
         candidate.wideFits = Array.from(text).length <= candidate.wideSpan * 7 - 2;
@@ -379,57 +398,41 @@
   }
 
   function createCollapsedCard(decade, events, decadeColors) {
-    var wrapper = document.createElement('div');
     var decadeId = 'liw-decade-' + decade;
-    var decadeInfo = DECADES[decade] || {};
-    var decadeLabel = decadeInfo.label || ('Decade ' + (decade * 10));
     var decadeStartYear = BIRTH.getFullYear() + decade * 10;
-    var decadeEndYear = decadeStartYear + 10;
     var isDefaultExpanded = decade === defaultExpandedDecade;
+    var eventCount = events.filter(function(eventItem) {
+      return !eventItem.isBirthday;
+    }).length;
 
-    wrapper.className = 'liw-decade-wrapper';
+    var wrapper = el('div', 'liw-decade-wrapper');
     wrapper.setAttribute('data-collapsed', isDefaultExpanded ? 'false' : 'true');
     wrapper.setAttribute('data-decade', String(decade));
 
-    var card = document.createElement('button');
+    var card = el('button', 'liw-decade-collapsed');
     card.type = 'button';
-    card.className = 'liw-decade-collapsed';
     card.style.background = decadeColors.fill;
     card.style.borderColor = decadeColors.border;
     card.setAttribute('aria-expanded', isDefaultExpanded ? 'true' : 'false');
     card.setAttribute('aria-controls', decadeId);
 
-    var header = document.createElement('span');
-    header.className = 'liw-collapsed-header';
+    var header = el('span', 'liw-collapsed-header');
+    header.appendChild(el('span', 'liw-collapsed-title',
+      decadeLabel(decade) + ' (' + decadeStartYear + '-' + (decadeStartYear + 10) + ')'));
+    header.appendChild(el('span', 'liw-collapsed-stats',
+      eventCount + ' event' + (eventCount === 1 ? '' : 's') + ' \u00B7 10 years'));
 
-    var title = document.createElement('span');
-    title.className = 'liw-collapsed-title';
-    title.textContent = decadeLabel + ' (' + decadeStartYear + '-' + decadeEndYear + ')';
-
-    var stats = document.createElement('span');
-    stats.className = 'liw-collapsed-stats';
-    var eventCount = events.filter(function(eventItem) {
-      return !eventItem.isBirthday;
-    }).length;
-    stats.textContent = eventCount + ' event' + (eventCount === 1 ? '' : 's') + ' \u00B7 10 years';
-
-    header.appendChild(title);
-    header.appendChild(stats);
-
-    var eventPreview = document.createElement('span');
-    eventPreview.className = 'liw-collapsed-events';
+    var eventPreview = el('span', 'liw-collapsed-events');
     events.slice(0, 4).forEach(function(eventItem) {
       var emoji = eventItem.label.match(emojiPattern);
       if (emoji && emoji[0]) {
-        var emojiSpan = document.createElement('span');
-        emojiSpan.textContent = emoji[0];
+        var emojiSpan = el('span', '', emoji[0]);
         emojiSpan.title = eventItem.label;
         eventPreview.appendChild(emojiSpan);
       }
     });
 
-    var expandLabel = document.createElement('span');
-    expandLabel.className = 'liw-expand-btn';
+    var expandLabel = el('span', 'liw-expand-btn');
     expandLabel.innerHTML = collapsedCardText(isDefaultExpanded);
 
     card.appendChild(header);
@@ -481,9 +484,15 @@
 
     if (isCollapsed) {
       setTimeout(function() {
-        wrapper.scrollIntoView({ behavior: prefersReducedMotion.matches ? 'auto' : 'smooth', block: 'start' });
+        scrollIntoView(wrapper, 'start');
       }, 100);
     }
+  }
+
+  function clearContextSource() {
+    legend.querySelectorAll('.liw-legend-item.is-context-source').forEach(function(item) {
+      item.classList.remove('is-context-source');
+    });
   }
 
   function hideLegendContext() {
@@ -498,9 +507,7 @@
       return;
     }
 
-    legend.querySelectorAll('.liw-legend-item.is-context-source').forEach(function(item) {
-      item.classList.remove('is-context-source');
-    });
+    clearContextSource();
     legendContext.classList.remove('is-visible');
     legendContext.setAttribute('aria-hidden', 'true');
     legendContext.removeAttribute('aria-controls');
@@ -523,15 +530,11 @@
       return;
     }
 
-    var palette = DECADES[decade] || DECADES[DECADES.length - 1];
-    var label = (DECADES[decade] && DECADES[decade].label) || ('Decade ' + (decade * 10));
-    var labelElement = legendContext.querySelector('.liw-legend-context-label');
-    var contextChanged = activeContextDecade !== decade;
+    var palette = decadePalette(decade);
+    var action = 'Collapse ' + decadeLabel(decade);
 
-    legend.querySelectorAll('.liw-legend-item.is-context-source').forEach(function(item) {
-      item.classList.remove('is-context-source');
-    });
-    if (contextChanged) {
+    clearContextSource();
+    if (activeContextDecade !== decade) {
       legendContext.classList.remove('is-visible');
     }
     source.style.setProperty('--liw-context-fill', palette.fill);
@@ -539,8 +542,8 @@
     source.classList.add('is-context-source');
     legendContext.style.setProperty('--liw-context-fill', palette.fill);
     legendContext.style.setProperty('--liw-context-border', palette.border);
-    labelElement.textContent = 'Collapse ' + label;
-    legendContext.setAttribute('aria-label', 'Collapse ' + label);
+    legendContext.querySelector('.liw-legend-context-label').textContent = action;
+    legendContext.setAttribute('aria-label', action);
     legendContext.setAttribute('aria-controls', 'liw-decade-' + decade);
     legendContext.setAttribute('aria-hidden', 'false');
     legendContext.tabIndex = 0;
@@ -625,34 +628,17 @@
   }
 
   function createWeekTooltip(weekStart, eventsThisWeek, isNow) {
-    var tip = document.createElement('span');
-    tip.className = 'liw-tip';
+    var tip = el('span', 'liw-tip');
 
     if (eventsThisWeek) {
       eventsThisWeek.forEach(function(eventItem) {
-        var eventDateDiv = document.createElement('div');
-        eventDateDiv.className = 'liw-tip-date';
-        eventDateDiv.textContent = formatDate(eventItem.eventDate);
-        tip.appendChild(eventDateDiv);
-
-        var eventLabelDiv = document.createElement('div');
-        eventLabelDiv.className = 'liw-tip-label';
-        eventLabelDiv.textContent = eventItem.label;
-        tip.appendChild(eventLabelDiv);
-
+        tip.appendChild(el('div', 'liw-tip-date', formatDate(eventItem.eventDate)));
+        tip.appendChild(el('div', 'liw-tip-label', eventItem.label));
         if (eventItem.description) {
-          var eventDescriptionDiv = document.createElement('div');
-          eventDescriptionDiv.className = 'liw-tip-desc';
-          eventDescriptionDiv.textContent = eventItem.description;
-          tip.appendChild(eventDescriptionDiv);
+          tip.appendChild(el('div', 'liw-tip-desc', eventItem.description));
         }
       });
     } else {
-      var dateDiv = document.createElement('div');
-      dateDiv.className = 'liw-tip-date';
-      dateDiv.textContent = formatDate(weekStart);
-      tip.appendChild(dateDiv);
-
       var ageForWeek = weekStart.getFullYear() - BIRTH.getFullYear();
       if (
         weekStart.getMonth() < BIRTH.getMonth() ||
@@ -661,17 +647,13 @@
         ageForWeek -= 1;
       }
 
-      var ageDiv = document.createElement('div');
-      ageDiv.className = 'liw-tip-label';
-      ageDiv.textContent = 'Age ' + ageForWeek;
-      tip.appendChild(ageDiv);
+      tip.appendChild(el('div', 'liw-tip-date', formatDate(weekStart)));
+      tip.appendChild(el('div', 'liw-tip-label', 'Age ' + ageForWeek));
     }
 
     if (isNow) {
-      var nowDiv = document.createElement('div');
-      nowDiv.className = 'liw-tip-label';
+      var nowDiv = el('div', 'liw-tip-label', '\u2190 You are here');
       nowDiv.style.fontWeight = 'bold';
-      nowDiv.textContent = '\u2190 You are here';
       tip.appendChild(nowDiv);
     }
 
@@ -683,17 +665,10 @@
     var isFuture = weekStart > NOW;
     var isNow = weekIdx === currentWeekIdx;
     var eventsThisWeek = eventsByWeek[weekIdx];
-    var boxLabel = '';
+    var hasEvents = Boolean(eventsThisWeek);
 
-    if (eventsThisWeek) {
-      boxLabel = eventsThisWeek.map(function(eventItem) {
-        return eventItem.label;
-      }).join(' \u00B7 ');
-    }
-
-    var box = document.createElement('button');
+    var box = el('button', 'liw-box' + (isFuture ? ' liw-future' : '') + (hasEvents ? ' liw-has-label' : '') + (isNow ? ' liw-now' : ''));
     box.type = 'button';
-    box.className = 'liw-box' + (isFuture ? ' liw-future' : '') + (boxLabel ? ' liw-has-label' : '') + (isNow ? ' liw-now' : '');
     box.style.borderColor = palette.border;
     if (!isFuture) {
       box.style.backgroundColor = palette.fill;
@@ -703,16 +678,13 @@
       nowBox = box;
     }
 
-    if (boxLabel) {
-      var eventMark = document.createElement('span');
-      var eventEmoji = eventsThisWeek.map(function(eventItem) {
+    if (hasEvents) {
+      var eventMark = el('span', 'liw-event-mark', eventsThisWeek.slice(0, 2).map(function(eventItem) {
         var matches = eventItem.label.match(emojiPattern);
         return matches && matches[0] ? matches[0] : '\u25C6';
-      });
+      }).join(''));
 
-      eventMark.className = 'liw-event-mark';
       eventMark.setAttribute('aria-hidden', 'true');
-      eventMark.textContent = eventEmoji.slice(0, 2).join('');
       box.appendChild(eventMark);
       box.setAttribute('aria-label', eventsThisWeek.map(function(eventItem) {
         return formatDate(eventItem.eventDate) + ': ' + eventItem.label;
@@ -721,14 +693,14 @@
 
     box.appendChild(createWeekTooltip(weekStart, eventsThisWeek, isNow));
     box.setAttribute('data-week-index', String(weekIdx));
-    box.setAttribute('data-has-events', eventsThisWeek ? 'true' : 'false');
-    box.setAttribute('data-is-current', isNow ? 'true' : 'false');
-    box.setAttribute('data-is-future', isFuture ? 'true' : 'false');
+    box.setAttribute('data-has-events', String(hasEvents));
+    box.setAttribute('data-is-current', String(isNow));
+    box.setAttribute('data-is-future', String(isFuture));
 
     return {
       element: box,
       eventsThisWeek: eventsThisWeek,
-      hasEvents: Boolean(eventsThisWeek),
+      hasEvents: hasEvents,
       isFuture: isFuture,
       isNow: isNow
     };
@@ -740,32 +712,24 @@
     }
 
     var fragment = document.createDocumentFragment();
-    var palette = DECADES[decade] || DECADES[DECADES.length - 1];
+    var palette = decadePalette(decade);
     var firstWeek = decade * WEEKS_PER_DECADE;
     var lastWeek = Math.min(firstWeek + WEEKS_PER_DECADE, totalWeeks);
     var currentRow = null;
-    var currentRowBoxes = [];
+    var currentRowBoxes = null;
     var decadeRows = [];
-    var boxesInRow = 0;
-
-    function createRow() {
-      currentRow = document.createElement('div');
-      currentRow.className = 'liw-flex-row';
-      fragment.appendChild(currentRow);
-      currentRowBoxes = [];
-      decadeRows.push(currentRowBoxes);
-      boxesInRow = 0;
-    }
 
     for (var weekIdx = firstWeek; weekIdx < lastWeek; weekIdx += 1) {
-      var weekBox = createWeekBox(weekIdx, palette);
-      if (!currentRow || boxesInRow === MAX_BOXES_IN_ROW) {
-        createRow();
+      if (!currentRow || currentRowBoxes.length === MAX_BOXES_IN_ROW) {
+        currentRow = el('div', 'liw-flex-row');
+        currentRowBoxes = [];
+        fragment.appendChild(currentRow);
+        decadeRows.push(currentRowBoxes);
       }
 
+      var weekBox = createWeekBox(weekIdx, palette);
       currentRow.appendChild(weekBox.element);
       currentRowBoxes.push(weekBox);
-      boxesInRow += 1;
     }
 
     placeDecadeCallouts(decadeRows, palette);
@@ -774,36 +738,38 @@
     decadeElement.setAttribute('data-rendered', 'true');
   }
 
+  var labelsSeenByDecade = [];
   for (var decadeIndex = 0; decadeIndex < totalDecades; decadeIndex += 1) {
     eventsByDecade[decadeIndex] = [];
+    labelsSeenByDecade[decadeIndex] = new Set();
   }
 
-  Object.keys(eventsByWeek).map(function(weekKey) {
-    return parseInt(weekKey, 10);
-  }).filter(function(weekIndex) {
+  // Summary list behind each collapsed card: chronological, deduplicated by
+  // label, and carrying at most the decade's opening birthday.
+  Object.keys(eventsByWeek).map(Number).filter(function(weekIndex) {
     return weekIndex >= 0 && weekIndex < totalWeeks;
   }).sort(function(firstWeek, secondWeek) {
     return firstWeek - secondWeek;
   }).forEach(function(weekIndex) {
     var decadeIndex = Math.floor(weekIndex / WEEKS_PER_DECADE);
+    var decadeEvents = eventsByDecade[decadeIndex];
+    var labelsSeen = labelsSeenByDecade[decadeIndex];
+
     eventsByWeek[weekIndex].forEach(function(eventItem) {
-      if (!eventItem.isBirthday || eventsByDecade[decadeIndex].length === 0) {
-        var alreadyPresent = eventsByDecade[decadeIndex].some(function(existingEvent) {
-          return existingEvent.label === eventItem.label;
-        });
-        if (!alreadyPresent) {
-          eventsByDecade[decadeIndex].push(eventItem);
-        }
+      if (eventItem.isBirthday && decadeEvents.length > 0) {
+        return;
+      }
+      if (!labelsSeen.has(eventItem.label)) {
+        labelsSeen.add(eventItem.label);
+        decadeEvents.push(eventItem);
       }
     });
   });
 
   var gridFragment = document.createDocumentFragment();
   for (var decade = 0; decade < totalDecades; decade += 1) {
-    var decadeColors = DECADES[decade] || DECADES[DECADES.length - 1];
-    var decadeWrapper = createCollapsedCard(decade, eventsByDecade[decade], decadeColors);
-    var decadeElement = document.createElement('div');
-    decadeElement.className = 'liw-decade';
+    var decadeWrapper = createCollapsedCard(decade, eventsByDecade[decade], decadePalette(decade));
+    var decadeElement = el('div', 'liw-decade');
     decadeElement.id = decadeWrapper.dataset.controls;
     decadeElement.setAttribute('data-rendered', 'false');
     decadeWrapper.appendChild(decadeElement);
@@ -820,7 +786,7 @@
     var legendResizeFrame = null;
     var updateStickyOffset = function() {
       legendResizeFrame = null;
-      document.documentElement.style.setProperty('--liw-sticky-offset', (legend.offsetHeight + 16) + 'px');
+      root.style.setProperty('--liw-sticky-offset', (legend.offsetHeight + 16) + 'px');
       scheduleLegendContextUpdate(true);
     };
     var scheduleStickyOffsetUpdate = function() {
@@ -864,27 +830,25 @@
       }
 
       var currentDecadeWrapper = nowBox.closest('.liw-decade-wrapper');
-      var expandedCurrentDecade = false;
+      var accent = getComputedStyle(root).getPropertyValue('--color-accent').trim() || '#D2691E';
+      var accentRgb = root.classList.contains('dark') ? '232, 133, 58' : '210, 105, 30';
+      var start = 0;
 
       if (currentDecadeWrapper && currentDecadeWrapper.getAttribute('data-collapsed') === 'true') {
         toggleDecade(currentDecadeWrapper);
-        expandedCurrentDecade = true;
+        start = 500; // let the decade finish opening before chasing the box
+      }
+
+      function glow(spread, blur, alpha) {
+        nowBox.style.boxShadow = '0 0 0 ' + spread + 'px ' + accent + ', 0 0 ' + blur + 'px rgba(' + accentRgb + ', ' + alpha + ')';
       }
 
       setTimeout(function() {
-        nowBox.scrollIntoView({ behavior: prefersReducedMotion.matches ? 'auto' : 'smooth', block: 'center' });
+        scrollIntoView(nowBox, 'center');
         nowBox.style.transition = 'box-shadow 0.3s ease';
-
-        var accent = getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim() || '#D2691E';
-        var accentRgb = document.documentElement.classList.contains('dark') ? '232, 133, 58' : '210, 105, 30';
-
-        setTimeout(function() {
-          nowBox.style.boxShadow = '0 0 0 4px ' + accent + ', 0 0 20px rgba(' + accentRgb + ', 0.6)';
-          setTimeout(function() {
-            nowBox.style.boxShadow = '0 0 0 2px ' + accent + ', 0 0 12px rgba(' + accentRgb + ', 0.4)';
-          }, 600);
-        }, 500);
-      }, expandedCurrentDecade ? 500 : 0);
+      }, start);
+      setTimeout(function() { glow(4, 20, 0.6); }, start + 500);
+      setTimeout(function() { glow(2, 12, 0.4); }, start + 1100);
     });
   }
 })();
