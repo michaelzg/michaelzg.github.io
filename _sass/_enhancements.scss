@@ -543,11 +543,6 @@ form {
   color: white;
 }
 
-::-moz-selection {
-  background-color: var(--color-accent);
-  color: white;
-}
-
 // ========================================
 // 10. ANIMATIONS
 // ========================================
@@ -1252,10 +1247,6 @@ body.page-h3-simple {
   height: 3px;
   border-radius: 999px;
   background: var(--color-border);
-}
-
-.h3-panel-toggle__label {
-  // sr-only on larger screens, visible on mobile via parent display
 }
 
 .h3-simple__status {
