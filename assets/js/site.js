@@ -1,15 +1,6 @@
 (function() {
-  var DARK_START = 18;
-  var DARK_END = 7;
+  var root = document.documentElement;
   var themeTransitionFrame = null;
-
-  function getThemeOverride() {
-    try {
-      return window.sessionStorage.getItem('theme-override');
-    } catch (error) {
-      return null;
-    }
-  }
 
   function setThemeOverride(value) {
     try {
@@ -19,31 +10,15 @@
     }
   }
 
-  function isDarkHour() {
-    var hour = new Date().getHours();
-    return hour >= DARK_START || hour < DARK_END;
-  }
-
-  function shouldUseDarkTheme() {
-    var override = getThemeOverride();
-    return override === 'dark' || (!override && isDarkHour());
-  }
-
-  function dispatchThemeChange() {
-    document.dispatchEvent(new CustomEvent('site:themechange', {
-      detail: { dark: document.documentElement.classList.contains('dark') }
-    }));
-  }
-
   function applyTheme(dark, animate) {
     if (animate) {
       if (themeTransitionFrame !== null) {
         window.cancelAnimationFrame(themeTransitionFrame);
       }
-      document.documentElement.classList.add('theme-switching');
+      root.classList.add('theme-switching');
     }
 
-    document.documentElement.classList.toggle('dark', dark);
+    root.classList.toggle('dark', dark);
 
     var icon = document.getElementById('global-toggle-icon');
     var label = document.getElementById('global-toggle-label');
@@ -57,13 +32,13 @@
     if (animate) {
       themeTransitionFrame = window.requestAnimationFrame(function() {
         themeTransitionFrame = window.requestAnimationFrame(function() {
-          document.documentElement.classList.remove('theme-switching');
+          root.classList.remove('theme-switching');
           themeTransitionFrame = null;
         });
       });
     }
 
-    dispatchThemeChange();
+    document.dispatchEvent(new CustomEvent('site:themechange', { detail: { dark: dark } }));
   }
 
   function initReadingProgress() {
@@ -79,29 +54,20 @@
     var progressBar = document.createElement('div');
     progressBar.className = 'reading-progress__bar';
     progressTrack.appendChild(progressBar);
-    document.documentElement.appendChild(progressTrack);
-
-    function clamp(value, min, max) {
-      return Math.min(max, Math.max(min, value));
-    }
+    root.appendChild(progressTrack);
 
     function updateReadingProgress() {
-      var articleTop = article.getBoundingClientRect().top + window.scrollY;
-      var articleBottom = articleTop + article.offsetHeight;
-      var maxScrollable = articleBottom - window.innerHeight;
-      var progress = 0;
+      // Distance the article's top has travelled above the viewport, over how
+      // far it can travel. Articles shorter than the viewport snap to 0 or 1.
+      var top = article.getBoundingClientRect().top;
+      var scrollable = article.offsetHeight - window.innerHeight;
+      var progress = scrollable > 0 ? -top / scrollable : (top <= 0 ? 1 : 0);
 
-      if (maxScrollable <= articleTop) {
-        progress = window.scrollY >= articleTop ? 1 : 0;
-      } else {
-        progress = (window.scrollY - articleTop) / (maxScrollable - articleTop);
-      }
-
-      progressBar.style.transform = 'scaleX(' + clamp(progress, 0, 1) + ')';
+      progressBar.style.transform = 'scaleX(' + Math.min(1, Math.max(0, progress)) + ')';
     }
 
     window.addEventListener('scroll', updateReadingProgress, { passive: true });
-    window.addEventListener('resize', updateReadingProgress);
+    window.addEventListener('resize', updateReadingProgress, { passive: true });
     updateReadingProgress();
   }
 
@@ -112,21 +78,21 @@
     btn.type = 'button';
     btn.setAttribute('aria-label', 'Toggle dark mode');
     btn.innerHTML = '<span class="toggle-icon" id="global-toggle-icon"></span><span id="global-toggle-label"></span>';
-    document.documentElement.appendChild(btn);
+    root.appendChild(btn);
 
-    applyTheme(shouldUseDarkTheme(), false);
+    // head.html already resolved override-vs-time-of-day before first paint;
+    // read that decision back instead of duplicating the rule here.
+    applyTheme(root.classList.contains('dark'), false);
 
     btn.addEventListener('click', function() {
-      var newDark = !document.documentElement.classList.contains('dark');
+      var newDark = !root.classList.contains('dark');
       setThemeOverride(newDark ? 'dark' : 'light');
       applyTheme(newDark, true);
     });
   }
 
   function initHeadingAnchors() {
-    var headings = document.querySelectorAll('.post-content h2[id], .post-content h3[id], .post-content h4[id], .post-content h5[id], .post-content h6[id]');
-
-    headings.forEach(function(heading) {
+    document.querySelectorAll('.post-content :is(h2, h3, h4, h5, h6)[id]').forEach(function(heading) {
       if (heading.querySelector('.heading-anchor')) {
         return;
       }
@@ -143,10 +109,9 @@
 
   function initThemeMedia() {
     function syncThemeMedia() {
-      var dark = document.documentElement.classList.contains('dark');
-      var images = document.querySelectorAll('img[data-light-src][data-dark-src]');
+      var dark = root.classList.contains('dark');
 
-      images.forEach(function(image) {
+      document.querySelectorAll('img[data-light-src][data-dark-src]').forEach(function(image) {
         var nextSrc = dark ? image.dataset.darkSrc : image.dataset.lightSrc;
         if (image.getAttribute('src') !== nextSrc) {
           image.setAttribute('src', nextSrc);
