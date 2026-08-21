@@ -43,7 +43,8 @@
   var MAX_BOXES_IN_ROW = 21;
   var CALLOUT_MIN_SPAN = 2;
   var CALLOUT_MAX_SPAN = 5;
-  var CALLOUT_LINE_CAPACITY = { 2: 11, 3: 18 };
+  var CALLOUT_RULER = 'MMMMMMMMMMxxxxxxxxxx';
+  var GRID_GAP = 2;
   var WEEKS_PER_DECADE = WEEKS_PER_YEAR * 10;
   var totalWeeks = LIFESPAN * WEEKS_PER_YEAR;
   var totalDecades = Math.ceil(totalWeeks / WEEKS_PER_DECADE);
@@ -113,12 +114,51 @@
     }).filter(Boolean).join(' \u00B7 ');
   }
 
+  // Both the week column and the callout font scale with the viewport, so a
+  // fixed characters-per-week number is only ever right at one window size.
+  // Measure the pair the label geometry actually depends on.
+  var calloutMetrics = { advance: 6.34, column: 46 };
+
+  function measureCalloutMetrics() {
+    var gridWidth = gridEl.clientWidth;
+    if (!gridWidth) {
+      return;
+    }
+
+    calloutMetrics.column = (gridWidth - (MAX_BOXES_IN_ROW - 1) * GRID_GAP) / MAX_BOXES_IN_ROW;
+
+    var probe = el('span', 'liw-callout');
+    probe.style.visibility = 'hidden';
+    gridEl.appendChild(probe);
+    var probeStyle = window.getComputedStyle(probe);
+    var ruler = document.createElement('canvas').getContext('2d');
+    ruler.font = probeStyle.fontWeight + ' ' + probeStyle.fontSize + ' ' + probeStyle.fontFamily;
+    gridEl.removeChild(probe);
+
+    var advance = ruler.measureText(CALLOUT_RULER).width / CALLOUT_RULER.length;
+    if (advance > 0) {
+      calloutMetrics.advance = advance;
+    }
+  }
+
+  // Characters that fit on one line of a callout spanning `span` weeks. Mirrors
+  // .liw-callout[data-span] in the stylesheet: each week contributes a box
+  // padding box (4px of border in from the column), plus the rule's 6px-per-
+  // extra-week bonus, less the callout's own 20px of padding and border.
+  function calloutCapacity(span) {
+    var width = span * (calloutMetrics.column - 4) + 6 * span - 22;
+    return Math.max(1, Math.floor(width / calloutMetrics.advance));
+  }
+
   function calloutSpan(text) {
     var characterCount = Array.from(text).length;
-    return Math.max(CALLOUT_MIN_SPAN, Math.min(
-      CALLOUT_MAX_SPAN,
-      Math.ceil((characterCount + 4) / 7)
-    ));
+    var span = CALLOUT_MIN_SPAN;
+
+    while (span < CALLOUT_MAX_SPAN && calloutCapacity(span) < characterCount) {
+      span += 1;
+    }
+
+    return span;
   }
 
   function estimatedCalloutLines(text, capacity) {
@@ -151,8 +191,8 @@
   // Both shape choices depend only on how the text wraps at span 2 and span 3,
   // so measure each width once and derive both from the pair.
   function calloutShapes(text) {
-    var atTwo = estimatedCalloutLines(text, CALLOUT_LINE_CAPACITY[2]);
-    var atThree = estimatedCalloutLines(text, CALLOUT_LINE_CAPACITY[3]);
+    var atTwo = estimatedCalloutLines(text, calloutCapacity(2));
+    var atThree = estimatedCalloutLines(text, calloutCapacity(3));
     var stacked = null;
 
     if (atTwo <= 2) {
@@ -324,7 +364,7 @@
           verticalShape: shapes.vertical,
           wideSpan: calloutSpan(text)
         };
-        candidate.wideFits = Array.from(text).length <= candidate.wideSpan * 7 - 2;
+        candidate.wideFits = Array.from(text).length <= calloutCapacity(candidate.wideSpan);
         candidate.prefersStacked = candidate.wideSpan >= 4;
         candidate.initialLayouts = calloutLayouts(candidate, reserved, rowBoxesByRow);
         if (candidate.initialLayouts.length > 0) {
@@ -456,6 +496,8 @@
       return;
     }
 
+    // The window may have resized since the last render.
+    measureCalloutMetrics();
     renderDecade(parseInt(wrapper.getAttribute('data-decade'), 10), decadeElement);
   }
 
@@ -765,6 +807,8 @@
       }
     });
   });
+
+  measureCalloutMetrics();
 
   var gridFragment = document.createDocumentFragment();
   for (var decade = 0; decade < totalDecades; decade += 1) {

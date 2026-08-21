@@ -10,7 +10,21 @@
    CONTAINER & LAYOUT
    ======================================== */
 
+/*
+  One type scale for the whole page: three steps, two roles. Uppercase mono at
+  --liw-fs-meta is chrome (legend, stats, buttons); sentence-case mono at
+  --liw-fs-body is content you read (callouts, tooltips). --liw-fs-grid tracks
+  the week-box width so a callout holds the same number of characters per week
+  it spans at every viewport.
+*/
 .liw-container {
+  --liw-fs-meta: 0.6875rem;
+  --liw-fs-body: 0.8125rem;
+  --liw-fs-title: 1rem;
+  --liw-fs-grid: clamp(0.66rem, 0.95vw, 0.8125rem);
+  --liw-box-h: clamp(1.85rem, 2.6vw, 2.55rem);
+  --liw-fs-mark: calc(var(--liw-box-h) * 0.45);
+
   width: 100vw;
   margin-left: calc(-50vw + 50%);
   box-sizing: border-box;
@@ -41,19 +55,20 @@
 }
 
 .liw-header h1 {
-  font-family: "Merriweather", "PT Serif", Georgia, "Times New Roman", serif;
+  font-family: var(--font-body, "Merriweather", Georgia, serif);
   font-weight: 700;
   letter-spacing: 0.02em;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.35rem;
   color: var(--color-text-primary, #1a1a1a);
   font-size: 2.5rem;
 }
 
 .liw-header p {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
   color: var(--color-text-secondary, #5a5a5a);
   margin-top: 0;
-  font-size: 0.95rem;
+  font-size: var(--liw-fs-body);
+  letter-spacing: 0.02em;
 }
 
 /* ========================================
@@ -78,32 +93,20 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(250, 248, 243, 0.95);
-  backdrop-filter: blur(10px);
+  /* Opaque: at 95% the decade cards ghosted through as the grid scrolled under. */
+  background: var(--color-bg, #faf8f3);
   border-bottom: 1px solid var(--color-border, #e5ded3);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  animation: liw-fade-in 0.3s ease forwards;
-}
-
-@keyframes liw-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .liw-legend-item {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.65rem;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-size: var(--liw-fs-meta);
   font-weight: 600;
-  padding: 0.25rem 0.5rem;
+  padding: 0.3rem 0.55rem;
   background: var(--color-bg, #faf8f3);
   border: 1px solid var(--color-border, #e5ded3);
   border-radius: 10px;
@@ -165,9 +168,9 @@
   background: color-mix(in srgb, var(--liw-context-fill) 88%, white);
   color: var(--color-text-primary, #1a1a1a);
   box-shadow: 0 4px 12px rgba(67, 52, 31, 0.1);
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.65rem;
-  font-weight: 700;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-size: var(--liw-fs-meta);
+  font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   cursor: pointer;
@@ -226,7 +229,7 @@
 
 .liw-legend-context-arrow {
   color: var(--color-accent, #d2691e);
-  font-size: 0.8rem;
+  font-size: 1.15em;
   line-height: 1;
 }
 
@@ -235,23 +238,20 @@
    ======================================== */
 
 .liw-grid {
-  margin: 0 20%;
-  padding-bottom: 3rem;
-}
-
-.liw-workspace {
-  width: 100%;
-  max-width: 1064px;
-  margin: 0 auto;
-  padding: 0 2rem;
-  box-sizing: border-box;
-  min-width: 0;
-}
-
-.liw-workspace .liw-grid {
   width: 100%;
   max-width: 100%;
   margin: 0;
+  min-width: 0;
+  padding-bottom: 3rem;
+}
+
+/* The grid is the page, so give it the window rather than a reading measure. */
+.liw-workspace {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 clamp(1rem, 2.5vw, 2.75rem);
+  box-sizing: border-box;
   min-width: 0;
 }
 
@@ -260,17 +260,6 @@
   max-width: 100%;
   min-width: 0;
   scroll-margin-top: var(--liw-sticky-offset, 5rem);
-}
-
-@media (max-width: 767px) {
-  .liw-workspace {
-    display: block;
-    padding: 0 1rem;
-  }
-
-  .liw-workspace .liw-grid {
-    margin: 0;
-  }
 }
 
 .liw-decade {
@@ -300,17 +289,17 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  height: 2em;
-  max-height: 2em;
+  height: var(--liw-box-h);
+  max-height: var(--liw-box-h);
   min-width: 0;
   width: 100%;
   padding: 2px;
   margin: 1px 0;
   border: 2px solid var(--color-border, #ccc);
-  border-radius: 4px;
+  border-radius: 5px;
   background: rgba(245, 245, 245, 0.8);
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.9rem;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-size: var(--liw-fs-mark);
   color: var(--color-text-primary, #444);
   cursor: default;
   outline: none;
@@ -339,7 +328,7 @@
   max-width: 100%;
   overflow: hidden;
   font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
-  font-size: 0.88rem;
+  font-size: 1em;
   line-height: 1;
   text-overflow: clip;
   white-space: nowrap;
@@ -351,24 +340,26 @@
 }
 
 .liw-callout {
-  --liw-callout-surface: color-mix(in srgb, color-mix(in srgb, var(--liw-callout-fill) 30%, white) 68%, transparent);
+  /* Opaque, not a tint over the grid: week boxes reading through the label was
+     what made these hard to read. */
+  --liw-callout-surface: color-mix(in srgb, var(--liw-callout-fill) 55%, #fff);
   position: absolute;
   top: -2px;
   display: flex;
   align-items: center;
   min-width: 0;
   height: calc(100% + 4px);
-  padding: 3px 8px;
-  border: 1px solid color-mix(in srgb, var(--liw-callout-border) 82%, transparent);
+  padding: 3px 9px;
+  border: 1px solid var(--liw-callout-border);
   border-radius: 7px;
   background: var(--liw-callout-surface);
-  box-shadow: 0 2px 8px rgba(75, 60, 43, 0.11);
-  color: #332d27;
+  box-shadow: 0 2px 8px rgba(75, 60, 43, 0.14);
+  color: #2a231c;
   cursor: default;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.66rem;
-  font-weight: 700;
-  line-height: 1.2;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-size: var(--liw-fs-grid);
+  font-weight: 600;
+  line-height: 1.25;
   pointer-events: auto;
   text-align: left;
   transition:
@@ -442,7 +433,7 @@
   top: 50%;
   width: 7px;
   height: 7px;
-  border: 1px solid color-mix(in srgb, var(--liw-callout-border) 82%, transparent);
+  border: 1px solid var(--liw-callout-border);
   background: var(--liw-callout-surface);
   transform: translateY(-50%) rotate(45deg);
 }
@@ -522,9 +513,8 @@
 
 .liw-box.liw-callout-anchor:hover .liw-callout,
 .liw-box.liw-callout-anchor:focus-visible .liw-callout {
-  --liw-callout-surface: color-mix(in srgb, color-mix(in srgb, var(--liw-callout-fill) 30%, white) 84%, transparent);
-  border-color: var(--liw-callout-border);
-  box-shadow: 0 5px 14px rgba(75, 60, 43, 0.2);
+  --liw-callout-surface: color-mix(in srgb, var(--liw-callout-fill) 82%, #fff);
+  box-shadow: 0 5px 14px rgba(75, 60, 43, 0.22);
   transform: translateY(-1px);
 }
 
@@ -565,9 +555,9 @@
     visibility 0s linear var(--duration-fast);
   background: var(--color-accent, #d2691e);
   color: white;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.7rem;
-  padding: 8px 12px;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-size: var(--liw-fs-body);
+  padding: 9px 12px;
   border-radius: 6px;
   white-space: nowrap;
   z-index: 1000;
@@ -590,11 +580,10 @@
 .liw-tip-desc {
   white-space: normal;
   opacity: 0.85;
-  font-style: italic;
   border-top: 1px solid rgba(255, 255, 255, 0.3);
   padding-top: 4px;
   margin-top: 4px;
-  font-size: 0.65rem;
+  font-size: var(--liw-fs-meta);
 }
 
 .liw-box .liw-tip::before {
@@ -643,8 +632,8 @@
   border-radius: 6px;
   background: var(--color-accent, #d2691e);
   color: white;
-  font-size: 0.75rem;
-  font-family: "JetBrains Mono", monospace;
+  font-size: var(--liw-fs-meta);
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -787,16 +776,16 @@
 }
 
 .liw-collapsed-title {
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.9rem;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-size: var(--liw-fs-title);
   font-weight: 700;
   color: var(--color-text-primary, #1a1a1a);
   white-space: nowrap;
 }
 
 .liw-collapsed-stats {
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.64rem;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-size: var(--liw-fs-meta);
   color: var(--color-text-secondary, #5a5a5a);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -817,8 +806,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.65rem;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-size: var(--liw-fs-meta);
   font-weight: 600;
   color: var(--color-accent, #d2691e);
   text-transform: uppercase;
@@ -872,7 +861,6 @@
    ======================================== */
 
 html.dark .liw-legend.liw-legend-sticky {
-  background: rgba(26, 23, 20, 0.97) !important;
   border-bottom-color: var(--color-border);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
 }
@@ -930,21 +918,23 @@ html.dark .liw-box.liw-future.liw-has-label {
 }
 
 html.dark .liw-callout {
-  --liw-callout-surface: color-mix(in srgb, #211e1a 68%, transparent);
-  border-color: color-mix(in srgb, var(--liw-callout-border) 72%, transparent);
-  color: #f0eae0;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+  /* Near-black keeps the label off the mid-tone week boxes; the decade border
+     colour tints it just enough to stay attached to its decade. */
+  --liw-callout-surface: color-mix(in srgb, var(--liw-callout-border) 14%, #16130f);
+  border-color: color-mix(in srgb, var(--liw-callout-border) 60%, transparent);
+  color: #f4eee4;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.45);
 }
 
 html.dark .liw-callout::before {
-  border-color: color-mix(in srgb, var(--liw-callout-border) 72%, transparent);
+  border-color: color-mix(in srgb, var(--liw-callout-border) 60%, transparent);
 }
 
 html.dark .liw-box.liw-callout-anchor:hover .liw-callout,
 html.dark .liw-box.liw-callout-anchor:focus-visible .liw-callout {
-  --liw-callout-surface: color-mix(in srgb, #211e1a 84%, transparent);
+  --liw-callout-surface: color-mix(in srgb, var(--liw-callout-border) 26%, #16130f);
   border-color: var(--liw-callout-border);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.48);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
 }
 
 html.dark .liw-box .liw-tip {
@@ -975,12 +965,12 @@ html.dark .liw-decade-collapsed:focus-visible {
    ======================================== */
 
 @media only screen and (max-width: 768px) {
-  .liw-grid {
-    margin: 0 2%;
-  }
-
-  .liw-box {
-    font-size: 0.75rem;
+  /* The scale steps down as a unit; every rule below still reads the tokens. */
+  .liw-container {
+    --liw-fs-meta: 0.62rem;
+    --liw-fs-body: 0.75rem;
+    --liw-fs-title: 0.82rem;
+    --liw-box-h: 1.5rem;
   }
 
   .liw-callout {
@@ -1006,10 +996,6 @@ html.dark .liw-decade-collapsed:focus-visible {
     margin-bottom: 0.15rem;
   }
 
-  .liw-header p {
-    font-size: 0.85rem;
-  }
-
   .liw-legend {
     gap: 0.35rem;
     padding: 0.35rem 0.5rem 3rem;
@@ -1017,8 +1003,7 @@ html.dark .liw-decade-collapsed:focus-visible {
   }
 
   .liw-legend-item {
-    font-size: 0.6rem;
-    padding: 0.2rem 0.45rem;
+    padding: 0.22rem 0.45rem;
   }
 
   .liw-legend-context {
@@ -1026,7 +1011,6 @@ html.dark .liw-decade-collapsed:focus-visible {
     min-height: 1.9rem;
     max-width: calc(100% - 0.75rem);
     padding: 0.38rem 0.58rem;
-    font-size: 0.6rem;
   }
 
   .liw-collapsed-header {
@@ -1044,7 +1028,6 @@ html.dark .liw-decade-collapsed:focus-visible {
 
   .liw-collapsed-title {
     overflow: hidden;
-    font-size: 0.78rem;
     text-overflow: ellipsis;
   }
 
@@ -1057,16 +1040,11 @@ html.dark .liw-decade-collapsed:focus-visible {
     font-size: 0.9rem;
   }
 
-  .liw-expand-btn {
-    font-size: 0.58rem;
-  }
-
   .liw-cta-wrapper {
     margin: 0.5rem 0 1rem;
   }
 
   .liw-go-now {
-    font-size: 0.7rem;
     padding: 0.45rem 1rem;
   }
 }
@@ -1088,7 +1066,6 @@ html.dark .liw-decade-collapsed:focus-visible {
   }
 
   .liw-container,
-  .liw-legend.liw-legend-sticky,
   .liw-go-now .arrow,
   .liw-decade-collapsed,
   .liw-decade-collapsed::after,
@@ -1098,7 +1075,6 @@ html.dark .liw-decade-collapsed:focus-visible {
   }
 
   .liw-container,
-  .liw-legend.liw-legend-sticky,
   .liw-legend-item:hover,
   .liw-go-now:hover,
   .liw-go-now:active,
