@@ -43,7 +43,9 @@
   var MAX_BOXES_IN_ROW = 21;
   var CALLOUT_MIN_SPAN = 2;
   var CALLOUT_MAX_SPAN = 5;
-  var CALLOUT_LINE_CAPACITY = { 2: 11, 3: 18 };
+  var CALLOUT_RULER = 'MMMMMMMMMMxxxxxxxxxx';
+  var GRID_GAP = 2;
+  var textRuler = null;
   var WEEKS_PER_DECADE = WEEKS_PER_YEAR * 10;
   var totalWeeks = LIFESPAN * WEEKS_PER_YEAR;
   var totalDecades = Math.ceil(totalWeeks / WEEKS_PER_DECADE);
@@ -67,11 +69,6 @@
   }
 
   var legend = document.querySelector('.liw-legend');
-  var legendContext = document.getElementById('liw-legend-context');
-  var activeContextDecade = -1;
-  var legendContextFrame = null;
-  var legendContextNeedsPosition = false;
-  var legendContextPositionFrame = null;
 
   var eventsByWeek = {};
 
@@ -113,12 +110,56 @@
     }).filter(Boolean).join(' \u00B7 ');
   }
 
-  function calloutSpan(text) {
+  // Both the week column and the callout font scale with the viewport, so a
+  // fixed characters-per-week number is only ever right at one window size.
+  // Measure the pair the label geometry actually depends on.
+  var calloutMetrics = { advance: 6.34, column: 46, measuredAt: 0 };
+
+  function measureCalloutMetrics() {
+    var gridWidth = gridEl.clientWidth;
+    if (!gridWidth || gridWidth === calloutMetrics.measuredAt) {
+      return;
+    }
+
+    calloutMetrics.measuredAt = gridWidth;
+    calloutMetrics.column = (gridWidth - (MAX_BOXES_IN_ROW - 1) * GRID_GAP) / MAX_BOXES_IN_ROW;
+
+    var probe = el('span', 'liw-callout');
+    probe.style.visibility = 'hidden';
+    gridEl.appendChild(probe);
+    var probeStyle = window.getComputedStyle(probe);
+    var font = probeStyle.fontWeight + ' ' + probeStyle.fontSize + ' ' + probeStyle.fontFamily;
+    gridEl.removeChild(probe);
+
+    textRuler = textRuler || document.createElement('canvas').getContext('2d');
+    textRuler.font = font;
+
+    var advance = textRuler.measureText(CALLOUT_RULER).width / CALLOUT_RULER.length;
+    if (advance > 0) {
+      calloutMetrics.advance = advance;
+    }
+  }
+
+  // Characters that fit on one line of a callout spanning `span` weeks. Mirrors
+  // .liw-callout[data-span] in the stylesheet: each week contributes a box
+  // padding box (4px of border in from the column), plus the rule's 6px-per-
+  // extra-week bonus, less the callout's own 20px of padding and border.
+  function calloutCapacity(span) {
+    var width = span * (calloutMetrics.column - 4) + 6 * span - 22;
+    return Math.max(1, Math.floor(width / calloutMetrics.advance));
+  }
+
+  // Narrowest span holding the text on one line, and whether it got there --
+  // the loop can also stop at CALLOUT_MAX_SPAN, meaning it never fits.
+  function calloutOneLine(text) {
     var characterCount = Array.from(text).length;
-    return Math.max(CALLOUT_MIN_SPAN, Math.min(
-      CALLOUT_MAX_SPAN,
-      Math.ceil((characterCount + 4) / 7)
-    ));
+    var span = CALLOUT_MIN_SPAN;
+
+    while (span < CALLOUT_MAX_SPAN && calloutCapacity(span) < characterCount) {
+      span += 1;
+    }
+
+    return { span: span, fits: characterCount <= calloutCapacity(span) };
   }
 
   function estimatedCalloutLines(text, capacity) {
@@ -151,8 +192,8 @@
   // Both shape choices depend only on how the text wraps at span 2 and span 3,
   // so measure each width once and derive both from the pair.
   function calloutShapes(text) {
-    var atTwo = estimatedCalloutLines(text, CALLOUT_LINE_CAPACITY[2]);
-    var atThree = estimatedCalloutLines(text, CALLOUT_LINE_CAPACITY[3]);
+    var atTwo = estimatedCalloutLines(text, calloutCapacity(2));
+    var atThree = estimatedCalloutLines(text, calloutCapacity(3));
     var stacked = null;
 
     if (atTwo <= 2) {
@@ -288,7 +329,7 @@
 
     callout.setAttribute('aria-hidden', 'true');
     callout.setAttribute('data-rows', String(option.rows));
-    callout.setAttribute('data-span', String(option.span));
+    callout.style.setProperty('--liw-span', String(option.span));
     callout.setAttribute('data-vertical', option.vertical);
     callout.appendChild(el('span', 'liw-callout-label', candidate.text));
 
@@ -314,6 +355,7 @@
         }
 
         var shapes = calloutShapes(text);
+        var oneLine = calloutOneLine(text);
         var candidate = {
           box: box,
           column: column,
@@ -322,9 +364,9 @@
           stackedShape: shapes.stacked,
           text: text,
           verticalShape: shapes.vertical,
-          wideSpan: calloutSpan(text)
+          wideSpan: oneLine.span
         };
-        candidate.wideFits = Array.from(text).length <= candidate.wideSpan * 7 - 2;
+        candidate.wideFits = oneLine.fits;
         candidate.prefersStacked = candidate.wideSpan >= 4;
         candidate.initialLayouts = calloutLayouts(candidate, reserved, rowBoxesByRow);
         if (candidate.initialLayouts.length > 0) {
@@ -411,8 +453,8 @@
 
     var card = el('button', 'liw-decade-collapsed');
     card.type = 'button';
-    card.style.background = decadeColors.fill;
-    card.style.borderColor = decadeColors.border;
+    card.style.setProperty('--liw-card-fill', decadeColors.fill);
+    card.style.setProperty('--liw-card-border', decadeColors.border);
     card.setAttribute('aria-expanded', isDefaultExpanded ? 'true' : 'false');
     card.setAttribute('aria-controls', decadeId);
 
@@ -456,176 +498,89 @@
       return;
     }
 
+    // The window may have resized since the last render.
+    measureCalloutMetrics();
     renderDecade(parseInt(wrapper.getAttribute('data-decade'), 10), decadeElement);
   }
 
-  function toggleDecade(wrapper) {
-    var isCollapsed = wrapper.getAttribute('data-collapsed') === 'true';
-    var nextCollapsed = !isCollapsed;
-
-    if (isCollapsed) {
+  function setDecadeOpen(wrapper, shouldOpen) {
+    if (shouldOpen) {
       ensureDecadeRendered(wrapper);
     }
 
-    wrapper.setAttribute('data-collapsed', nextCollapsed ? 'true' : 'false');
+    wrapper.setAttribute('data-collapsed', shouldOpen ? 'false' : 'true');
 
     var toggleButton = wrapper.querySelector('.liw-decade-collapsed');
     var expandLabel = wrapper.querySelector('.liw-expand-btn');
 
     if (toggleButton) {
-      toggleButton.setAttribute('aria-expanded', isCollapsed ? 'true' : 'false');
+      toggleButton.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
     }
 
     if (expandLabel) {
-      expandLabel.innerHTML = collapsedCardText(isCollapsed);
-    }
-
-    scheduleLegendContextUpdate();
-
-    if (isCollapsed) {
-      setTimeout(function() {
-        scrollIntoView(wrapper, 'start');
-      }, 100);
+      expandLabel.innerHTML = collapsedCardText(shouldOpen);
     }
   }
 
-  function clearContextSource() {
-    legend.querySelectorAll('.liw-legend-item.is-context-source').forEach(function(item) {
-      item.classList.remove('is-context-source');
-    });
-  }
-
-  function hideLegendContext() {
-    if (!legend || !legendContext) {
-      return;
-    }
-    if (
-      activeContextDecade === -1 &&
-      !legendContext.classList.contains('is-visible') &&
-      legendContext.getAttribute('aria-hidden') === 'true'
-    ) {
-      return;
-    }
-
-    clearContextSource();
-    legendContext.classList.remove('is-visible');
-    legendContext.setAttribute('aria-hidden', 'true');
-    legendContext.removeAttribute('aria-controls');
-    legendContext.tabIndex = -1;
-    activeContextDecade = -1;
-    if (legendContextPositionFrame !== null) {
-      cancelAnimationFrame(legendContextPositionFrame);
-      legendContextPositionFrame = null;
-    }
-  }
-
-  function positionLegendContext(decade) {
-    if (!legend || !legendContext) {
-      return;
-    }
-
-    var source = legend.querySelector('.liw-legend-item[data-decade="' + decade + '"]');
-    if (!source) {
-      hideLegendContext();
-      return;
-    }
-
-    var palette = decadePalette(decade);
-    var action = 'Collapse ' + decadeLabel(decade);
-
-    clearContextSource();
-    if (activeContextDecade !== decade) {
-      legendContext.classList.remove('is-visible');
-    }
-    source.style.setProperty('--liw-context-fill', palette.fill);
-    source.style.setProperty('--liw-context-border', palette.border);
-    source.classList.add('is-context-source');
-    legendContext.style.setProperty('--liw-context-fill', palette.fill);
-    legendContext.style.setProperty('--liw-context-border', palette.border);
-    legendContext.querySelector('.liw-legend-context-label').textContent = action;
-    legendContext.setAttribute('aria-label', action);
-    legendContext.setAttribute('aria-controls', 'liw-decade-' + decade);
-    legendContext.setAttribute('aria-hidden', 'false');
-    legendContext.tabIndex = 0;
-
-    var legendRect = legend.getBoundingClientRect();
-    var sourceRect = source.getBoundingClientRect();
-    var contextWidth = legendContext.offsetWidth;
-    var desiredLeft = sourceRect.left - legendRect.left + (sourceRect.width - contextWidth) / 2;
-    var left = Math.max(8, Math.min(legendRect.width - contextWidth - 8, desiredLeft));
-    var anchor = sourceRect.left - legendRect.left + sourceRect.width / 2 - left;
-
-    legendContext.style.left = left + 'px';
-    legendContext.style.setProperty('--liw-context-anchor', Math.max(16, Math.min(contextWidth - 16, anchor)) + 'px');
-    activeContextDecade = decade;
-
-    if (legendContextPositionFrame !== null) {
-      cancelAnimationFrame(legendContextPositionFrame);
-    }
-    legendContextPositionFrame = requestAnimationFrame(function() {
-      legendContextPositionFrame = null;
-      if (activeContextDecade !== decade) {
-        return;
-      }
-      var contextRect = legendContext.getBoundingClientRect();
-      var liveSourceRect = source.getBoundingClientRect();
-      var sourceGap = contextRect.top - liveSourceRect.bottom + 1;
-      var stemHeight = sourceGap >= 0 && sourceGap <= 18 ? sourceGap : 0;
-      legendContext.style.setProperty('--liw-context-stem', stemHeight + 'px');
-      legendContext.classList.add('is-visible');
-    });
-  }
-
-  function syncLegendContext() {
-    legendContextFrame = null;
-    var needsPosition = legendContextNeedsPosition;
-    legendContextNeedsPosition = false;
-    if (!legend || !legendContext) {
-      return;
-    }
-
-    var readingTop = legend.classList.contains('liw-legend-sticky') ? legend.offsetHeight : 0;
-    var readingBottom = window.innerHeight;
-    var candidate = -1;
-    var nearestDistance = Number.POSITIVE_INFINITY;
-
-    gridEl.querySelectorAll('.liw-decade-wrapper[data-collapsed="false"]').forEach(function(wrapper) {
-      var rect = wrapper.getBoundingClientRect();
-      var intersects = rect.bottom > readingTop + 12 && rect.top < readingBottom - 32;
-      if (!intersects) {
-        return;
-      }
-
-      var distance = Math.abs(rect.top - readingTop);
-      if (distance < nearestDistance) {
-        candidate = parseInt(wrapper.getAttribute('data-decade'), 10);
-        nearestDistance = distance;
+  // One decade at a time. Opening one closes the rest, which holds the page at
+  // roughly two screens instead of letting it grow past fourteen.
+  function openDecade(wrapper) {
+    gridEl.querySelectorAll('.liw-decade-wrapper[data-collapsed="false"]').forEach(function(openWrapper) {
+      if (openWrapper !== wrapper) {
+        setDecadeOpen(openWrapper, false);
       }
     });
 
-    if (candidate === -1) {
-      hideLegendContext();
-      return;
-    }
-
-    if (
-      candidate === activeContextDecade &&
-      legendContext.classList.contains('is-visible') &&
-      !needsPosition
-    ) {
-      return;
-    }
-
-    positionLegendContext(candidate);
+    setDecadeOpen(wrapper, true);
+    markActiveDecade();
   }
 
-  function scheduleLegendContextUpdate(forcePosition) {
-    legendContextNeedsPosition = legendContextNeedsPosition || Boolean(forcePosition);
-    if (legendContextFrame !== null) {
+  function scrollToDecade(wrapper) {
+    // Let the reflow from closing the previous decade settle before chasing it.
+    setTimeout(function() {
+      scrollIntoView(wrapper, 'start');
+    }, 100);
+  }
+
+  function toggleDecade(wrapper) {
+    if (wrapper.getAttribute('data-collapsed') === 'false') {
+      setDecadeOpen(wrapper, false);
+      markActiveDecade();
       return;
     }
-    legendContextFrame = requestAnimationFrame(syncLegendContext);
+
+    openDecade(wrapper);
+    scrollToDecade(wrapper);
   }
+
+  // A legend chip navigates; closing a decade stays the decade bar's job.
+  function jumpToDecade(decade) {
+    var wrapper = gridEl.querySelector('.liw-decade-wrapper[data-decade="' + decade + '"]');
+    if (wrapper) {
+      openDecade(wrapper);
+      scrollToDecade(wrapper);
+    }
+  }
+
+  // Exactly one decade is open, so the legend highlight is simply that decade
+  // -- no scroll tracking, no measuring, no floating anchor to position.
+  function markActiveDecade() {
+    if (!legend) {
+      return;
+    }
+
+    var openWrapper = gridEl.querySelector('.liw-decade-wrapper[data-collapsed="false"]');
+    var openDecadeIndex = openWrapper ? openWrapper.getAttribute('data-decade') : null;
+
+    legend.querySelectorAll('.liw-legend-item[data-decade]').forEach(function(chip) {
+      if (chip.getAttribute('data-decade') === openDecadeIndex) {
+        chip.setAttribute('aria-current', 'true');
+      } else {
+        chip.removeAttribute('aria-current');
+      }
+    });
+  }
+
 
   function createWeekTooltip(weekStart, eventsThisWeek, isNow) {
     var tip = el('span', 'liw-tip');
@@ -766,6 +721,8 @@
     });
   });
 
+  measureCalloutMetrics();
+
   var gridFragment = document.createDocumentFragment();
   for (var decade = 0; decade < totalDecades; decade += 1) {
     var decadeWrapper = createCollapsedCard(decade, eventsByDecade[decade], decadePalette(decade));
@@ -787,7 +744,6 @@
     var updateStickyOffset = function() {
       legendResizeFrame = null;
       root.style.setProperty('--liw-sticky-offset', (legend.offsetHeight + 16) + 'px');
-      scheduleLegendContextUpdate(true);
     };
     var scheduleStickyOffsetUpdate = function() {
       if (legendResizeFrame !== null) {
@@ -801,27 +757,19 @@
       document.fonts.ready.then(scheduleStickyOffsetUpdate);
     }
     window.addEventListener('scroll', function() {
-      var shouldStick = window.scrollY > legendTop;
-      var stickyChanged = legend.classList.contains('liw-legend-sticky') !== shouldStick;
-      legend.classList.toggle('liw-legend-sticky', shouldStick);
-      scheduleLegendContextUpdate(stickyChanged);
+      legend.classList.toggle('liw-legend-sticky', window.scrollY > legendTop);
     }, { passive: true });
-  }
 
-  var goNowButton = document.getElementById('go-now');
-  if (legendContext) {
-    legendContext.addEventListener('click', function() {
-      if (activeContextDecade === -1) {
-        return;
-      }
-      var wrapper = gridEl.querySelector('.liw-decade-wrapper[data-decade="' + activeContextDecade + '"]');
-      if (wrapper && wrapper.getAttribute('data-collapsed') === 'false') {
-        toggleDecade(wrapper);
-      }
+    legend.querySelectorAll('.liw-legend-item[data-decade]').forEach(function(chip) {
+      chip.addEventListener('click', function() {
+        jumpToDecade(chip.getAttribute('data-decade'));
+      });
     });
   }
 
-  scheduleLegendContextUpdate(true);
+  var goNowButton = document.getElementById('go-now');
+
+  markActiveDecade();
 
   if (goNowButton) {
     goNowButton.addEventListener('click', function() {
@@ -835,7 +783,7 @@
       var start = 0;
 
       if (currentDecadeWrapper && currentDecadeWrapper.getAttribute('data-collapsed') === 'true') {
-        toggleDecade(currentDecadeWrapper);
+        openDecade(currentDecadeWrapper);
         start = 500; // let the decade finish opening before chasing the box
       }
 
