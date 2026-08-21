@@ -3,9 +3,9 @@ layout: default
 title: Life In Weeks
 description: A life timeline in weeks, with events, decades, and a live marker for the current week.
 extra_styles:
-  - /css/life-in-weeks.css?v=decade-bar-1
+  - /css/life-in-weeks.css?v=legend-nav-1
 extra_scripts:
-  - /assets/js/life-in-weeks.js?v=decade-bar-1
+  - /assets/js/life-in-weeks.js?v=legend-nav-1
 ---
 
 {% assign liw = site.data.life-in-weeks %}
@@ -16,23 +16,18 @@ extra_scripts:
     <p>Each box is one week. Colors are decades.</p>
   </div>
 
-  <div class="liw-legend">
+  <nav class="liw-legend" aria-label="Jump to a decade">
     {% for decade in liw.decades %}
-    <span class="liw-legend-item" data-decade="{{ forloop.index0 }}">
+    <button class="liw-legend-item" type="button" data-decade="{{ forloop.index0 }}">
       <span class="liw-legend-swatch" style="border: 2px solid {{ decade.border }}; background: {{ decade.fill }};"></span>
       {{ decade.label }}
-    </span>
+    </button>
     {% endfor %}
-    <span class="liw-legend-item">
+    <span class="liw-legend-item liw-legend-item-static">
       <span class="liw-legend-swatch liw-swatch-future"></span>
       Future
     </span>
-    <button class="liw-legend-context" id="liw-legend-context" type="button" aria-hidden="true" tabindex="-1">
-      <span class="liw-legend-context-mark" aria-hidden="true"></span>
-      <span class="liw-legend-context-label">Collapse decade</span>
-      <span class="liw-legend-context-arrow" aria-hidden="true">↑</span>
-    </button>
-  </div>
+  </nav>
 
   <div class="liw-cta-wrapper">
     <button class="liw-go-now" id="go-now" type="button">

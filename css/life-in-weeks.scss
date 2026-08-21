@@ -86,7 +86,7 @@
   box-sizing: border-box;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
-  padding: 0.5rem 1rem 3.3rem;
+  padding: 0.5rem 1rem;
 }
 
 .liw-legend.liw-legend-sticky {
@@ -113,6 +113,9 @@
   color: var(--color-text-primary, #1a1a1a);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  line-height: 1.2;
+  -webkit-appearance: none;
+  appearance: none;
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease,
@@ -121,17 +124,28 @@
     box-shadow 0.2s ease;
 }
 
-.liw-legend-item:hover {
+/* Only the decade chips navigate; the Future chip is a key, not a control. */
+button.liw-legend-item {
+  cursor: pointer;
+}
+
+button.liw-legend-item:hover {
   border-color: var(--color-accent, #d2691e);
   background: rgba(210, 105, 30, 0.05);
   transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(210, 105, 30, 0.15);
 }
 
-.liw-legend-item.is-context-source {
-  border-color: var(--liw-context-border, var(--color-accent, #d2691e));
-  background: var(--liw-context-fill, rgba(210, 105, 30, 0.08));
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--liw-context-border, #d2691e) 20%, transparent);
+button.liw-legend-item:focus-visible {
+  outline: 2px solid var(--color-accent, #d2691e);
+  outline-offset: 2px;
+}
+
+/* The open decade, marked in the same accent as its bar down in the grid. */
+.liw-legend-item.is-active {
+  border-color: var(--color-accent, #d2691e);
+  background: rgba(210, 105, 30, 0.08);
+  box-shadow: 0 0 0 2px rgba(210, 105, 30, 0.2);
 }
 
 .liw-legend-swatch {
@@ -145,92 +159,6 @@
 .liw-swatch-future {
   border: 2px solid var(--color-border, #e5ded3);
   background: var(--color-bg, #faf8f3);
-}
-
-.liw-legend-context {
-  --liw-context-fill: #f6e7cf;
-  --liw-context-border: #d9b98c;
-  --liw-context-anchor: 22px;
-  --liw-context-stem: 0px;
-  position: absolute;
-  z-index: 2;
-  bottom: 0.55rem;
-  left: 50%;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-height: 2rem;
-  width: max-content;
-  max-width: calc(100% - 1rem);
-  padding: 0.42rem 0.68rem;
-  border: 1px solid var(--liw-context-border);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--liw-context-fill) 88%, white);
-  color: var(--color-text-primary, #1a1a1a);
-  box-shadow: 0 4px 12px rgba(67, 52, 31, 0.1);
-  font-family: var(--font-mono, "JetBrains Mono", monospace);
-  font-size: var(--liw-fs-meta);
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  cursor: pointer;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transform: translate(-14px, -8px);
-  transform-origin: var(--liw-context-anchor) top;
-  transition:
-    opacity 180ms cubic-bezier(0.23, 1, 0.32, 1),
-    transform 210ms cubic-bezier(0.23, 1, 0.32, 1),
-    box-shadow 180ms ease,
-    background-color 180ms ease,
-    visibility 0s linear 210ms;
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-.liw-legend-context::before {
-  content: "";
-  position: absolute;
-  bottom: 100%;
-  left: var(--liw-context-anchor);
-  width: 1px;
-  height: var(--liw-context-stem);
-  max-height: 18px;
-  background: var(--liw-context-border);
-  transform-origin: bottom;
-}
-
-.liw-legend-context.is-visible {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translate(0, 0);
-  transition-delay: 0s;
-}
-
-.liw-legend-context:hover {
-  box-shadow: 0 6px 16px rgba(67, 52, 31, 0.16);
-}
-
-.liw-legend-context:focus-visible {
-  outline: 2px solid var(--color-accent, #d2691e);
-  outline-offset: 3px;
-}
-
-.liw-legend-context-mark {
-  width: 9px;
-  height: 9px;
-  flex: 0 0 auto;
-  border: 2px solid var(--liw-context-border);
-  border-radius: 2px;
-  background: var(--liw-context-fill);
-}
-
-.liw-legend-context-arrow {
-  color: var(--color-accent, #d2691e);
-  font-size: 1.15em;
-  line-height: 1;
 }
 
 /* ========================================
@@ -877,15 +805,15 @@ html.dark .liw-legend-item {
   color: var(--color-text-primary);
 }
 
-html.dark .liw-legend-item:hover {
+html.dark button.liw-legend-item:hover {
   background: rgba(232, 133, 58, 0.1);
   border-color: var(--color-accent);
 }
 
-html.dark .liw-legend-context {
-  background: color-mix(in srgb, var(--liw-context-fill) 24%, #211e1a);
-  color: var(--color-text-primary);
-  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.34);
+html.dark .liw-legend-item.is-active {
+  background: rgba(232, 133, 58, 0.14);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(232, 133, 58, 0.24);
 }
 
 html.dark .liw-box {
@@ -1009,19 +937,12 @@ html.dark .liw-decade-collapsed:focus-visible {
 
   .liw-legend {
     gap: 0.35rem;
-    padding: 0.35rem 0.5rem 3rem;
+    padding: 0.35rem 0.5rem;
     margin-bottom: 0.5rem;
   }
 
   .liw-legend-item {
     padding: 0.22rem 0.45rem;
-  }
-
-  .liw-legend-context {
-    bottom: 0.45rem;
-    min-height: 1.9rem;
-    max-width: calc(100% - 0.75rem);
-    padding: 0.38rem 0.58rem;
   }
 
   .liw-collapsed-header {
@@ -1065,17 +986,6 @@ html.dark .liw-decade-collapsed:focus-visible {
    ======================================== */
 
 @media (prefers-reduced-motion: reduce) {
-  .liw-legend-context {
-    transform: none !important;
-    transition:
-      opacity 100ms linear,
-      visibility 0s linear 100ms !important;
-  }
-
-  .liw-legend-context.is-visible {
-    transition-delay: 0s !important;
-  }
-
   .liw-container,
   .liw-go-now .arrow,
   .liw-decade-collapsed,
@@ -1086,7 +996,7 @@ html.dark .liw-decade-collapsed:focus-visible {
   }
 
   .liw-container,
-  .liw-legend-item:hover,
+  button.liw-legend-item:hover,
   .liw-go-now:hover,
   .liw-go-now:active,
   .liw-go-now .arrow,

@@ -68,11 +68,6 @@
   }
 
   var legend = document.querySelector('.liw-legend');
-  var legendContext = document.getElementById('liw-legend-context');
-  var activeContextDecade = -1;
-  var legendContextFrame = null;
-  var legendContextNeedsPosition = false;
-  var legendContextPositionFrame = null;
 
   var eventsByWeek = {};
 
@@ -501,173 +496,91 @@
     renderDecade(parseInt(wrapper.getAttribute('data-decade'), 10), decadeElement);
   }
 
-  function toggleDecade(wrapper) {
-    var isCollapsed = wrapper.getAttribute('data-collapsed') === 'true';
-    var nextCollapsed = !isCollapsed;
-
-    if (isCollapsed) {
+  function setDecadeOpen(wrapper, shouldOpen) {
+    if (shouldOpen) {
       ensureDecadeRendered(wrapper);
     }
 
-    wrapper.setAttribute('data-collapsed', nextCollapsed ? 'true' : 'false');
+    wrapper.setAttribute('data-collapsed', shouldOpen ? 'false' : 'true');
 
     var toggleButton = wrapper.querySelector('.liw-decade-collapsed');
     var expandLabel = wrapper.querySelector('.liw-expand-btn');
 
     if (toggleButton) {
-      toggleButton.setAttribute('aria-expanded', isCollapsed ? 'true' : 'false');
+      toggleButton.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
     }
 
     if (expandLabel) {
-      expandLabel.innerHTML = collapsedCardText(isCollapsed);
-    }
-
-    scheduleLegendContextUpdate();
-
-    if (isCollapsed) {
-      setTimeout(function() {
-        scrollIntoView(wrapper, 'start');
-      }, 100);
+      expandLabel.innerHTML = collapsedCardText(shouldOpen);
     }
   }
 
-  function clearContextSource() {
-    legend.querySelectorAll('.liw-legend-item.is-context-source').forEach(function(item) {
-      item.classList.remove('is-context-source');
-    });
-  }
-
-  function hideLegendContext() {
-    if (!legend || !legendContext) {
-      return;
-    }
-    if (
-      activeContextDecade === -1 &&
-      !legendContext.classList.contains('is-visible') &&
-      legendContext.getAttribute('aria-hidden') === 'true'
-    ) {
-      return;
-    }
-
-    clearContextSource();
-    legendContext.classList.remove('is-visible');
-    legendContext.setAttribute('aria-hidden', 'true');
-    legendContext.removeAttribute('aria-controls');
-    legendContext.tabIndex = -1;
-    activeContextDecade = -1;
-    if (legendContextPositionFrame !== null) {
-      cancelAnimationFrame(legendContextPositionFrame);
-      legendContextPositionFrame = null;
-    }
-  }
-
-  function positionLegendContext(decade) {
-    if (!legend || !legendContext) {
-      return;
-    }
-
-    var source = legend.querySelector('.liw-legend-item[data-decade="' + decade + '"]');
-    if (!source) {
-      hideLegendContext();
-      return;
-    }
-
-    var palette = decadePalette(decade);
-    var action = 'Collapse ' + decadeLabel(decade);
-
-    clearContextSource();
-    if (activeContextDecade !== decade) {
-      legendContext.classList.remove('is-visible');
-    }
-    source.style.setProperty('--liw-context-fill', palette.fill);
-    source.style.setProperty('--liw-context-border', palette.border);
-    source.classList.add('is-context-source');
-    legendContext.style.setProperty('--liw-context-fill', palette.fill);
-    legendContext.style.setProperty('--liw-context-border', palette.border);
-    legendContext.querySelector('.liw-legend-context-label').textContent = action;
-    legendContext.setAttribute('aria-label', action);
-    legendContext.setAttribute('aria-controls', 'liw-decade-' + decade);
-    legendContext.setAttribute('aria-hidden', 'false');
-    legendContext.tabIndex = 0;
-
-    var legendRect = legend.getBoundingClientRect();
-    var sourceRect = source.getBoundingClientRect();
-    var contextWidth = legendContext.offsetWidth;
-    var desiredLeft = sourceRect.left - legendRect.left + (sourceRect.width - contextWidth) / 2;
-    var left = Math.max(8, Math.min(legendRect.width - contextWidth - 8, desiredLeft));
-    var anchor = sourceRect.left - legendRect.left + sourceRect.width / 2 - left;
-
-    legendContext.style.left = left + 'px';
-    legendContext.style.setProperty('--liw-context-anchor', Math.max(16, Math.min(contextWidth - 16, anchor)) + 'px');
-    activeContextDecade = decade;
-
-    if (legendContextPositionFrame !== null) {
-      cancelAnimationFrame(legendContextPositionFrame);
-    }
-    legendContextPositionFrame = requestAnimationFrame(function() {
-      legendContextPositionFrame = null;
-      if (activeContextDecade !== decade) {
-        return;
-      }
-      var contextRect = legendContext.getBoundingClientRect();
-      var liveSourceRect = source.getBoundingClientRect();
-      var sourceGap = contextRect.top - liveSourceRect.bottom + 1;
-      var stemHeight = sourceGap >= 0 && sourceGap <= 18 ? sourceGap : 0;
-      legendContext.style.setProperty('--liw-context-stem', stemHeight + 'px');
-      legendContext.classList.add('is-visible');
-    });
-  }
-
-  function syncLegendContext() {
-    legendContextFrame = null;
-    var needsPosition = legendContextNeedsPosition;
-    legendContextNeedsPosition = false;
-    if (!legend || !legendContext) {
-      return;
-    }
-
-    var readingTop = legend.classList.contains('liw-legend-sticky') ? legend.offsetHeight : 0;
-    var readingBottom = window.innerHeight;
-    var candidate = -1;
-    var nearestDistance = Number.POSITIVE_INFINITY;
-
-    gridEl.querySelectorAll('.liw-decade-wrapper[data-collapsed="false"]').forEach(function(wrapper) {
-      var rect = wrapper.getBoundingClientRect();
-      var intersects = rect.bottom > readingTop + 12 && rect.top < readingBottom - 32;
-      if (!intersects) {
-        return;
-      }
-
-      var distance = Math.abs(rect.top - readingTop);
-      if (distance < nearestDistance) {
-        candidate = parseInt(wrapper.getAttribute('data-decade'), 10);
-        nearestDistance = distance;
+  // One decade at a time. Opening one closes the rest, which holds the page at
+  // roughly two screens instead of letting it grow past fourteen.
+  function openDecade(wrapper) {
+    gridEl.querySelectorAll('.liw-decade-wrapper[data-collapsed="false"]').forEach(function(openWrapper) {
+      if (openWrapper !== wrapper) {
+        setDecadeOpen(openWrapper, false);
       }
     });
 
-    if (candidate === -1) {
-      hideLegendContext();
-      return;
-    }
-
-    if (
-      candidate === activeContextDecade &&
-      legendContext.classList.contains('is-visible') &&
-      !needsPosition
-    ) {
-      return;
-    }
-
-    positionLegendContext(candidate);
+    setDecadeOpen(wrapper, true);
+    markActiveDecade();
   }
 
-  function scheduleLegendContextUpdate(forcePosition) {
-    legendContextNeedsPosition = legendContextNeedsPosition || Boolean(forcePosition);
-    if (legendContextFrame !== null) {
+  function scrollToDecade(wrapper) {
+    // Let the reflow from closing the previous decade settle before chasing it.
+    setTimeout(function() {
+      scrollIntoView(wrapper, 'start');
+    }, 100);
+  }
+
+  function toggleDecade(wrapper) {
+    if (wrapper.getAttribute('data-collapsed') === 'false') {
+      setDecadeOpen(wrapper, false);
+      markActiveDecade();
       return;
     }
-    legendContextFrame = requestAnimationFrame(syncLegendContext);
+
+    openDecade(wrapper);
+    scrollToDecade(wrapper);
   }
+
+  // A legend chip navigates; closing a decade stays the decade bar's job.
+  function jumpToDecade(decade) {
+    var wrapper = gridEl.querySelector('.liw-decade-wrapper[data-decade="' + decade + '"]');
+    if (!wrapper) {
+      return;
+    }
+
+    if (wrapper.getAttribute('data-collapsed') === 'true') {
+      openDecade(wrapper);
+    }
+
+    scrollToDecade(wrapper);
+  }
+
+  // Exactly one decade is open, so the legend highlight is simply that decade
+  // -- no scroll tracking, no measuring, no floating anchor to position.
+  function markActiveDecade() {
+    if (!legend) {
+      return;
+    }
+
+    var openWrapper = gridEl.querySelector('.liw-decade-wrapper[data-collapsed="false"]');
+    var openDecade = openWrapper ? openWrapper.getAttribute('data-decade') : null;
+
+    legend.querySelectorAll('.liw-legend-item[data-decade]').forEach(function(chip) {
+      var isOpen = chip.getAttribute('data-decade') === openDecade;
+      chip.classList.toggle('is-active', isOpen);
+      if (isOpen) {
+        chip.setAttribute('aria-current', 'true');
+      } else {
+        chip.removeAttribute('aria-current');
+      }
+    });
+  }
+
 
   function createWeekTooltip(weekStart, eventsThisWeek, isNow) {
     var tip = el('span', 'liw-tip');
@@ -831,7 +744,6 @@
     var updateStickyOffset = function() {
       legendResizeFrame = null;
       root.style.setProperty('--liw-sticky-offset', (legend.offsetHeight + 16) + 'px');
-      scheduleLegendContextUpdate(true);
     };
     var scheduleStickyOffsetUpdate = function() {
       if (legendResizeFrame !== null) {
@@ -845,27 +757,19 @@
       document.fonts.ready.then(scheduleStickyOffsetUpdate);
     }
     window.addEventListener('scroll', function() {
-      var shouldStick = window.scrollY > legendTop;
-      var stickyChanged = legend.classList.contains('liw-legend-sticky') !== shouldStick;
-      legend.classList.toggle('liw-legend-sticky', shouldStick);
-      scheduleLegendContextUpdate(stickyChanged);
+      legend.classList.toggle('liw-legend-sticky', window.scrollY > legendTop);
     }, { passive: true });
-  }
 
-  var goNowButton = document.getElementById('go-now');
-  if (legendContext) {
-    legendContext.addEventListener('click', function() {
-      if (activeContextDecade === -1) {
-        return;
-      }
-      var wrapper = gridEl.querySelector('.liw-decade-wrapper[data-decade="' + activeContextDecade + '"]');
-      if (wrapper && wrapper.getAttribute('data-collapsed') === 'false') {
-        toggleDecade(wrapper);
-      }
+    legend.querySelectorAll('.liw-legend-item[data-decade]').forEach(function(chip) {
+      chip.addEventListener('click', function() {
+        jumpToDecade(chip.getAttribute('data-decade'));
+      });
     });
   }
 
-  scheduleLegendContextUpdate(true);
+  var goNowButton = document.getElementById('go-now');
+
+  markActiveDecade();
 
   if (goNowButton) {
     goNowButton.addEventListener('click', function() {
@@ -879,7 +783,7 @@
       var start = 0;
 
       if (currentDecadeWrapper && currentDecadeWrapper.getAttribute('data-collapsed') === 'true') {
-        toggleDecade(currentDecadeWrapper);
+        openDecade(currentDecadeWrapper);
         start = 500; // let the decade finish opening before chasing the box
       }
 
