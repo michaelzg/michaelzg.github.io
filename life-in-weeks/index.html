@@ -3,9 +3,9 @@ layout: default
 title: Life In Weeks
 description: A life timeline in weeks, with events, decades, and a live marker for the current week.
 extra_styles:
-  - /css/life-in-weeks.css?v=legend-nav-1
+  - /css/life-in-weeks.css?v=cleanup-2
 extra_scripts:
-  - /assets/js/life-in-weeks.js?v=legend-nav-1
+  - /assets/js/life-in-weeks.js?v=cleanup-2
 ---
 
 {% assign liw = site.data.life-in-weeks %}
@@ -23,7 +23,7 @@ extra_scripts:
       {{ decade.label }}
     </button>
     {% endfor %}
-    <span class="liw-legend-item liw-legend-item-static">
+    <span class="liw-legend-item">
       <span class="liw-legend-swatch liw-swatch-future"></span>
       Future
     </span>

@@ -45,6 +45,7 @@
   var CALLOUT_MAX_SPAN = 5;
   var CALLOUT_RULER = 'MMMMMMMMMMxxxxxxxxxx';
   var GRID_GAP = 2;
+  var textRuler = null;
   var WEEKS_PER_DECADE = WEEKS_PER_YEAR * 10;
   var totalWeeks = LIFESPAN * WEEKS_PER_YEAR;
   var totalDecades = Math.ceil(totalWeeks / WEEKS_PER_DECADE);
@@ -112,25 +113,28 @@
   // Both the week column and the callout font scale with the viewport, so a
   // fixed characters-per-week number is only ever right at one window size.
   // Measure the pair the label geometry actually depends on.
-  var calloutMetrics = { advance: 6.34, column: 46 };
+  var calloutMetrics = { advance: 6.34, column: 46, measuredAt: 0 };
 
   function measureCalloutMetrics() {
     var gridWidth = gridEl.clientWidth;
-    if (!gridWidth) {
+    if (!gridWidth || gridWidth === calloutMetrics.measuredAt) {
       return;
     }
 
+    calloutMetrics.measuredAt = gridWidth;
     calloutMetrics.column = (gridWidth - (MAX_BOXES_IN_ROW - 1) * GRID_GAP) / MAX_BOXES_IN_ROW;
 
     var probe = el('span', 'liw-callout');
     probe.style.visibility = 'hidden';
     gridEl.appendChild(probe);
     var probeStyle = window.getComputedStyle(probe);
-    var ruler = document.createElement('canvas').getContext('2d');
-    ruler.font = probeStyle.fontWeight + ' ' + probeStyle.fontSize + ' ' + probeStyle.fontFamily;
+    var font = probeStyle.fontWeight + ' ' + probeStyle.fontSize + ' ' + probeStyle.fontFamily;
     gridEl.removeChild(probe);
 
-    var advance = ruler.measureText(CALLOUT_RULER).width / CALLOUT_RULER.length;
+    textRuler = textRuler || document.createElement('canvas').getContext('2d');
+    textRuler.font = font;
+
+    var advance = textRuler.measureText(CALLOUT_RULER).width / CALLOUT_RULER.length;
     if (advance > 0) {
       calloutMetrics.advance = advance;
     }
@@ -145,7 +149,9 @@
     return Math.max(1, Math.floor(width / calloutMetrics.advance));
   }
 
-  function calloutSpan(text) {
+  // Narrowest span holding the text on one line, and whether it got there --
+  // the loop can also stop at CALLOUT_MAX_SPAN, meaning it never fits.
+  function calloutOneLine(text) {
     var characterCount = Array.from(text).length;
     var span = CALLOUT_MIN_SPAN;
 
@@ -153,7 +159,7 @@
       span += 1;
     }
 
-    return span;
+    return { span: span, fits: characterCount <= calloutCapacity(span) };
   }
 
   function estimatedCalloutLines(text, capacity) {
@@ -323,7 +329,7 @@
 
     callout.setAttribute('aria-hidden', 'true');
     callout.setAttribute('data-rows', String(option.rows));
-    callout.setAttribute('data-span', String(option.span));
+    callout.style.setProperty('--liw-span', String(option.span));
     callout.setAttribute('data-vertical', option.vertical);
     callout.appendChild(el('span', 'liw-callout-label', candidate.text));
 
@@ -349,6 +355,7 @@
         }
 
         var shapes = calloutShapes(text);
+        var oneLine = calloutOneLine(text);
         var candidate = {
           box: box,
           column: column,
@@ -357,9 +364,9 @@
           stackedShape: shapes.stacked,
           text: text,
           verticalShape: shapes.vertical,
-          wideSpan: calloutSpan(text)
+          wideSpan: oneLine.span
         };
-        candidate.wideFits = Array.from(text).length <= calloutCapacity(candidate.wideSpan);
+        candidate.wideFits = oneLine.fits;
         candidate.prefersStacked = candidate.wideSpan >= 4;
         candidate.initialLayouts = calloutLayouts(candidate, reserved, rowBoxesByRow);
         if (candidate.initialLayouts.length > 0) {
@@ -549,15 +556,10 @@
   // A legend chip navigates; closing a decade stays the decade bar's job.
   function jumpToDecade(decade) {
     var wrapper = gridEl.querySelector('.liw-decade-wrapper[data-decade="' + decade + '"]');
-    if (!wrapper) {
-      return;
-    }
-
-    if (wrapper.getAttribute('data-collapsed') === 'true') {
+    if (wrapper) {
       openDecade(wrapper);
+      scrollToDecade(wrapper);
     }
-
-    scrollToDecade(wrapper);
   }
 
   // Exactly one decade is open, so the legend highlight is simply that decade
@@ -568,12 +570,10 @@
     }
 
     var openWrapper = gridEl.querySelector('.liw-decade-wrapper[data-collapsed="false"]');
-    var openDecade = openWrapper ? openWrapper.getAttribute('data-decade') : null;
+    var openDecadeIndex = openWrapper ? openWrapper.getAttribute('data-decade') : null;
 
     legend.querySelectorAll('.liw-legend-item[data-decade]').forEach(function(chip) {
-      var isOpen = chip.getAttribute('data-decade') === openDecade;
-      chip.classList.toggle('is-active', isOpen);
-      if (isOpen) {
+      if (chip.getAttribute('data-decade') === openDecadeIndex) {
         chip.setAttribute('aria-current', 'true');
       } else {
         chip.removeAttribute('aria-current');
