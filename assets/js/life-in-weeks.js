@@ -451,8 +451,8 @@
 
     var card = el('button', 'liw-decade-collapsed');
     card.type = 'button';
-    card.style.background = decadeColors.fill;
-    card.style.borderColor = decadeColors.border;
+    card.style.setProperty('--liw-card-fill', decadeColors.fill);
+    card.style.setProperty('--liw-card-border', decadeColors.border);
     card.setAttribute('aria-expanded', isDefaultExpanded ? 'true' : 'false');
     card.setAttribute('aria-controls', decadeId);
 
