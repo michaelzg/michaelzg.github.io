@@ -755,6 +755,45 @@
     decadeElement.setAttribute('data-rendered', 'true');
   }
 
+  /*
+    The decade's events as prose, for the widths where a callout cannot fit
+    beside its week. Same source and same order as the grid, birthdays left out
+    exactly as calloutText() leaves them out -- the list is the callouts, moved
+    below the grid. It is cheap enough (events, not weeks) to build for every
+    decade up front; the stylesheet decides when it is shown.
+  */
+  function createDecadeList(decade, palette) {
+    var list = el('ul', 'liw-decade-list');
+    var firstWeek = decade * WEEKS_PER_DECADE;
+    var lastWeek = Math.min(firstWeek + WEEKS_PER_DECADE, totalWeeks);
+
+    list.style.setProperty('--liw-list-edge', palette.border);
+    list.style.setProperty('--liw-list-fill', palette.fill);
+
+    for (var weekIdx = firstWeek; weekIdx < lastWeek; weekIdx += 1) {
+      (eventsByWeek[weekIdx] || []).forEach(function(eventItem) {
+        if (eventItem.isBirthday) {
+          return;
+        }
+
+        var item = el('li', 'liw-list-item' + (eventItem.kind === 'world' ? ' liw-list-item-world' : ''));
+        item.setAttribute('data-week-index', String(weekIdx));
+        item.appendChild(el('span', 'liw-list-date', formatDate(eventItem.eventDate)));
+        item.appendChild(el('span', 'liw-list-label', eventItem.label));
+        if (eventItem.description) {
+          item.appendChild(el('span', 'liw-list-desc', eventItem.description));
+        }
+        list.appendChild(item);
+      });
+    }
+
+    if (!list.firstChild) {
+      list.appendChild(el('li', 'liw-list-empty', 'Nothing recorded in this decade yet.'));
+    }
+
+    return list;
+  }
+
   var labelsSeenByDecade = [];
   for (var decadeIndex = 0; decadeIndex < totalDecades; decadeIndex += 1) {
     eventsByDecade[decadeIndex] = [];
@@ -792,6 +831,7 @@
     decadeElement.id = decadeWrapper.dataset.controls;
     decadeElement.setAttribute('data-rendered', 'false');
     decadeWrapper.appendChild(decadeElement);
+    decadeWrapper.appendChild(createDecadeList(decade, decadePalette(decade)));
     gridFragment.appendChild(decadeWrapper);
 
     if (decade === defaultExpandedDecade) {
@@ -799,6 +839,37 @@
     }
   }
   gridEl.appendChild(gridFragment);
+
+  /*
+    On a narrow screen a week box is about a finger wide and carries no text, so
+    it points at the list rather than opening a tooltip of its own: tap the week,
+    and the entry that belongs to it lights up and scrolls into view.
+  */
+  var isNarrow = window.matchMedia('(max-width: 768px)');
+
+  gridEl.addEventListener('click', function(clickEvent) {
+    if (!isNarrow.matches) {
+      return;
+    }
+
+    var box = clickEvent.target.closest('.liw-box[data-has-events="true"]');
+    if (!box) {
+      return;
+    }
+
+    var wrapper = box.closest('.liw-decade-wrapper');
+    var item = wrapper && wrapper.querySelector(
+      '.liw-list-item[data-week-index="' + box.getAttribute('data-week-index') + '"]');
+    if (!item) {
+      return;
+    }
+
+    gridEl.querySelectorAll('.liw-list-item.liw-list-active').forEach(function(active) {
+      active.classList.remove('liw-list-active');
+    });
+    item.classList.add('liw-list-active');
+    scrollIntoView(item, 'center');
+  });
 
   if (legend) {
     var legendTop = legend.offsetTop;
