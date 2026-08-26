@@ -25,6 +25,10 @@
   --liw-fs-grid: clamp(0.66rem, 0.95vw, 0.8125rem);
   --liw-box-h: clamp(1.85rem, 2.6vw, 2.55rem);
   --liw-fs-mark: calc(var(--liw-box-h) * 0.45);
+  --liw-world-ink: #7a2f3a;
+  --liw-world-edge: #a4515d;
+  --liw-world-paper: #fdf4f2;
+  --liw-world-cell: #f2d9db;
 
   width: 100vw;
   margin-left: calc(-50vw + 50%);
@@ -163,6 +167,13 @@ button.liw-legend-item:focus-visible {
 .liw-swatch-future {
   border: 2px solid var(--color-border, #e5ded3);
   background: var(--color-bg, #faf8f3);
+}
+
+.liw-swatch-world {
+  width: 14px;
+  height: 8px;
+  border-radius: 1px;
+  background: var(--liw-world-ink);
 }
 
 /* ========================================
@@ -446,6 +457,103 @@ button.liw-legend-item:focus-visible {
 .liw-box.liw-callout-anchor:hover .liw-callout-below,
 .liw-box.liw-callout-anchor:focus-visible .liw-callout-below {
   transform: translateY(1px);
+}
+
+/* ========================================
+   WORLD EVENTS
+   ======================================== */
+
+/*
+  Things that happened to everybody rather than to one person.
+
+  A life event is a diary entry: sentence case, warm, rounded, lifted off the
+  page by a shadow, tinted to the decade it belongs to. A world event is a
+  dateline stamped into that page -- flat, square, shadowless, and set in the
+  small tracked uppercase the legend and the decade stats already use for
+  metadata. The life is the content; the world is the marginalia around it.
+
+  The band is one fixed oxblood, the same in light and dark. That constancy is
+  the point: a diary entry is pale on cream in light and near-black in dark, so
+  a world event that also flipped would leave nothing stable to recognise --
+  the reader would have to re-learn which is which per theme. Holding one
+  mid-tone colour instead means it never matches either state of a diary entry,
+  and never has to fight a decade palette for a hue. Small, flat and quiet keeps
+  it from outranking the diary despite the contrast.
+*/
+.liw-callout-world {
+  --liw-callout-surface: var(--liw-world-ink);
+  --liw-callout-border: var(--liw-world-edge);
+  border-radius: 2px;
+  box-shadow: none;
+  color: var(--liw-world-paper);
+  font-size: calc(var(--liw-fs-grid) * 0.88);
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/*
+  A leader line rather than a speech tail -- the callout clears its anchor by
+  only 4px, so this reuses the arrow's position and swaps the shape. Each rule
+  needs both classes to outrank the arrow's own direction rules.
+*/
+.liw-callout-world::before {
+  border: 0;
+  border-radius: 0;
+  background: var(--liw-world-edge);
+}
+
+.liw-callout-world.liw-callout-right::before,
+.liw-callout-world.liw-callout-left::before {
+  width: 7px;
+  height: 2px;
+  transform: translateY(-50%);
+}
+
+.liw-callout-world.liw-callout-right::before {
+  left: -7px;
+}
+
+.liw-callout-world.liw-callout-left::before {
+  right: -7px;
+}
+
+.liw-callout-world.liw-callout-above::before,
+.liw-callout-world.liw-callout-below::before {
+  width: 2px;
+  height: 7px;
+  transform: translateX(-50%);
+}
+
+.liw-callout-world.liw-callout-above::before {
+  top: auto;
+  bottom: -7px;
+}
+
+.liw-callout-world.liw-callout-below::before {
+  top: -7px;
+}
+
+/*
+  Hover speaks the page's own language -- the accent ring the legend and the
+  Now marker use -- instead of brightening a fill the way a diary entry does.
+*/
+.liw-box.liw-callout-anchor:hover .liw-callout-world,
+.liw-box.liw-callout-anchor:focus-visible .liw-callout-world {
+  border-color: var(--color-accent, #d2691e);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent, #d2691e) 32%, transparent);
+}
+
+/*
+  The week itself is stamped too, so a world week is findable before it is read
+  -- but as the pale member of the same oxblood, not the deep one. Emoji are
+  full-colour artwork with their own dark passages, and they disappeared into a
+  saturated cell; on the tint they read as clearly as they do on any other week.
+  Band and cell stay one family, one dark and one light.
+*/
+.liw-box[data-kind="world"] {
+  border-color: var(--liw-world-ink);
+  background: var(--liw-world-cell);
 }
 
 .liw-box.liw-future {
@@ -861,6 +969,33 @@ html.dark .liw-box.liw-callout-anchor:focus-visible .liw-callout {
   --liw-callout-surface: color-mix(in srgb, var(--liw-callout-border) 26%, #16130f);
   border-color: var(--liw-callout-border);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+}
+
+/*
+  Dark restates the world palette rather than changing it. The values are
+  identical to the light ones on purpose -- these rules exist only to outrank
+  html.dark's decade-tinted callout rules, which would otherwise repaint the
+  band and undo the constancy the design depends on.
+*/
+html.dark .liw-callout-world {
+  --liw-callout-surface: var(--liw-world-ink);
+  --liw-callout-border: var(--liw-world-edge);
+  border-color: var(--liw-world-edge);
+  box-shadow: none;
+  color: var(--liw-world-paper);
+}
+
+html.dark .liw-callout-world::before {
+  border: 0;
+  background: var(--liw-world-edge);
+}
+
+html.dark .liw-box.liw-callout-anchor:hover .liw-callout-world,
+html.dark .liw-box.liw-callout-anchor:focus-visible .liw-callout-world {
+  --liw-callout-surface: var(--liw-world-ink);
+  border-color: var(--color-accent, #e8853a);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent, #e8853a) 40%, transparent);
+  color: var(--liw-world-paper);
 }
 
 html.dark .liw-box .liw-tip {

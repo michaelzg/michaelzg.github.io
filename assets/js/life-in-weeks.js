@@ -39,7 +39,24 @@
   var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   var DECADES = CONFIG.decades;
-  var EVENTS = CONFIG.events;
+
+  // Two files, one timeline. _data/world-events.yml is the world's list and
+  // _data/life-in-weeks.yml is the personal one; membership in the former is
+  // what makes an event a world event, so neither file carries a per-event flag.
+  var worldEl = document.getElementById('life-in-weeks-world');
+  var WORLD_EVENTS = [];
+  if (worldEl) {
+    try {
+      WORLD_EVENTS = JSON.parse(worldEl.textContent) || [];
+    } catch (error) {
+      WORLD_EVENTS = [];
+    }
+  }
+
+  var EVENTS = CONFIG.events.concat(WORLD_EVENTS.map(function(eventItem) {
+    eventItem.kind = 'world';
+    return eventItem;
+  }));
   var MAX_BOXES_IN_ROW = 21;
   var CALLOUT_MIN_SPAN = 2;
   var CALLOUT_MAX_SPAN = 5;
@@ -49,7 +66,10 @@
   var WEEKS_PER_DECADE = WEEKS_PER_YEAR * 10;
   var totalWeeks = LIFESPAN * WEEKS_PER_YEAR;
   var totalDecades = Math.ceil(totalWeeks / WEEKS_PER_DECADE);
-  var emojiPattern = /(?:\p{Regional_Indicator}{2}|\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*)/gu;
+  // Keycaps lead: they open with an ASCII digit, which Extended_Pictographic does
+  // not cover, so a label like "0\uFE0F\u20E3 NetZero" would keep its 0 in the
+  // callout text and fall back to the generic diamond on the week box.
+  var emojiPattern = /(?:[0-9#*]\uFE0F?\u20E3|\p{Regional_Indicator}{2}|\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*)/gu;
   var currentWeekIdx = Math.floor((NOW - BIRTH) / MS_PER_WEEK);
   var defaultExpandedDecade = Math.max(0, Math.min(
     totalDecades - 1,
@@ -110,10 +130,43 @@
     }).filter(Boolean).join(' \u00B7 ');
   }
 
+  // A week reads as the world's only when nothing personal happened in it -- on
+  // a week holding both, the personal event wins the styling.
+  function isWorldWeek(eventsThisWeek) {
+    var owned = (eventsThisWeek || []).filter(function(eventItem) {
+      return !eventItem.isBirthday;
+    });
+
+    return owned.length > 0 && owned.every(function(eventItem) {
+      return eventItem.kind === 'world';
+    });
+  }
+
   // Both the week column and the callout font scale with the viewport, so a
   // fixed characters-per-week number is only ever right at one window size.
   // Measure the pair the label geometry actually depends on.
-  var calloutMetrics = { advance: 6.34, column: 46, measuredAt: 0 };
+  var calloutMetrics = { advance: 6.34, worldAdvance: 6.34, column: 46, measuredAt: 0 };
+
+  // World labels are set smaller, uppercase and tracked out, so they hold a
+  // different number of characters per week than personal labels do. Measure the
+  // two faces separately rather than letting one stand in for both.
+  function measureAdvance(className) {
+    var probe = el('span', className);
+    probe.style.visibility = 'hidden';
+    gridEl.appendChild(probe);
+
+    var probeStyle = window.getComputedStyle(probe);
+    var font = probeStyle.fontWeight + ' ' + probeStyle.fontSize + ' ' + probeStyle.fontFamily;
+    var tracking = parseFloat(probeStyle.letterSpacing) || 0;
+    var isUpper = probeStyle.textTransform === 'uppercase';
+    gridEl.removeChild(probe);
+
+    textRuler = textRuler || document.createElement('canvas').getContext('2d');
+    textRuler.font = font;
+
+    var sample = isUpper ? CALLOUT_RULER.toUpperCase() : CALLOUT_RULER;
+    return textRuler.measureText(sample).width / sample.length + tracking;
+  }
 
   function measureCalloutMetrics() {
     var gridWidth = gridEl.clientWidth;
@@ -124,19 +177,14 @@
     calloutMetrics.measuredAt = gridWidth;
     calloutMetrics.column = (gridWidth - (MAX_BOXES_IN_ROW - 1) * GRID_GAP) / MAX_BOXES_IN_ROW;
 
-    var probe = el('span', 'liw-callout');
-    probe.style.visibility = 'hidden';
-    gridEl.appendChild(probe);
-    var probeStyle = window.getComputedStyle(probe);
-    var font = probeStyle.fontWeight + ' ' + probeStyle.fontSize + ' ' + probeStyle.fontFamily;
-    gridEl.removeChild(probe);
-
-    textRuler = textRuler || document.createElement('canvas').getContext('2d');
-    textRuler.font = font;
-
-    var advance = textRuler.measureText(CALLOUT_RULER).width / CALLOUT_RULER.length;
+    var advance = measureAdvance('liw-callout');
     if (advance > 0) {
       calloutMetrics.advance = advance;
+    }
+
+    var worldAdvance = measureAdvance('liw-callout liw-callout-world');
+    if (worldAdvance > 0) {
+      calloutMetrics.worldAdvance = worldAdvance;
     }
   }
 
@@ -144,22 +192,23 @@
   // .liw-callout[data-span] in the stylesheet: each week contributes a box
   // padding box (4px of border in from the column), plus the rule's 6px-per-
   // extra-week bonus, less the callout's own 20px of padding and border.
-  function calloutCapacity(span) {
+  function calloutCapacity(span, isWorld) {
     var width = span * (calloutMetrics.column - 4) + 6 * span - 22;
-    return Math.max(1, Math.floor(width / calloutMetrics.advance));
+    var advance = isWorld ? calloutMetrics.worldAdvance : calloutMetrics.advance;
+    return Math.max(1, Math.floor(width / advance));
   }
 
   // Narrowest span holding the text on one line, and whether it got there --
   // the loop can also stop at CALLOUT_MAX_SPAN, meaning it never fits.
-  function calloutOneLine(text) {
+  function calloutOneLine(text, isWorld) {
     var characterCount = Array.from(text).length;
     var span = CALLOUT_MIN_SPAN;
 
-    while (span < CALLOUT_MAX_SPAN && calloutCapacity(span) < characterCount) {
+    while (span < CALLOUT_MAX_SPAN && calloutCapacity(span, isWorld) < characterCount) {
       span += 1;
     }
 
-    return { span: span, fits: characterCount <= calloutCapacity(span) };
+    return { span: span, fits: characterCount <= calloutCapacity(span, isWorld) };
   }
 
   function estimatedCalloutLines(text, capacity) {
@@ -191,9 +240,9 @@
 
   // Both shape choices depend only on how the text wraps at span 2 and span 3,
   // so measure each width once and derive both from the pair.
-  function calloutShapes(text) {
-    var atTwo = estimatedCalloutLines(text, calloutCapacity(2));
-    var atThree = estimatedCalloutLines(text, calloutCapacity(3));
+  function calloutShapes(text, isWorld) {
+    var atTwo = estimatedCalloutLines(text, calloutCapacity(2, isWorld));
+    var atThree = estimatedCalloutLines(text, calloutCapacity(3, isWorld));
     var stacked = null;
 
     if (atTwo <= 2) {
@@ -324,7 +373,8 @@
   }
 
   function appendCallout(candidate, option) {
-    var callout = el('span', 'liw-callout liw-callout-' + option.direction);
+    var callout = el('span', 'liw-callout liw-callout-' + option.direction +
+      (candidate.isWorld ? ' liw-callout-world' : ''));
     var anchor = candidate.box.element;
 
     callout.setAttribute('aria-hidden', 'true');
@@ -354,11 +404,13 @@
           return;
         }
 
-        var shapes = calloutShapes(text);
-        var oneLine = calloutOneLine(text);
+        var isWorld = isWorldWeek(box.eventsThisWeek);
+        var shapes = calloutShapes(text, isWorld);
+        var oneLine = calloutOneLine(text, isWorld);
         var candidate = {
           box: box,
           column: column,
+          isWorld: isWorld,
           palette: palette,
           rowIndex: rowIndex,
           stackedShape: shapes.stacked,
@@ -622,11 +674,18 @@
     var eventsThisWeek = eventsByWeek[weekIdx];
     var hasEvents = Boolean(eventsThisWeek);
 
+    var isWorld = isWorldWeek(eventsThisWeek);
+
     var box = el('button', 'liw-box' + (isFuture ? ' liw-future' : '') + (hasEvents ? ' liw-has-label' : '') + (isNow ? ' liw-now' : ''));
     box.type = 'button';
-    box.style.borderColor = palette.border;
-    if (!isFuture) {
-      box.style.backgroundColor = palette.fill;
+
+    // A world week is painted from the world tokens in the stylesheet instead,
+    // so the decade's colours are left off rather than overridden.
+    if (!isWorld) {
+      box.style.borderColor = palette.border;
+      if (!isFuture) {
+        box.style.backgroundColor = palette.fill;
+      }
     }
 
     if (isNow) {
@@ -651,6 +710,9 @@
     box.setAttribute('data-has-events', String(hasEvents));
     box.setAttribute('data-is-current', String(isNow));
     box.setAttribute('data-is-future', String(isFuture));
+    if (isWorld) {
+      box.setAttribute('data-kind', 'world');
+    }
 
     return {
       element: box,

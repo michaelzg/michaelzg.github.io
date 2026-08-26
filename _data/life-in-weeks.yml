@@ -40,6 +40,7 @@ decades:
 # Life events — sorted by date.
 # Labels support emojis! Just paste them directly, e.g. "🎓 Graduated"
 # Add an optional 'description' field for extra detail shown in the hover tooltip.
+# World events live in _data/world-events.yml and are merged in at build time.
 events:
   - date: "1993-03-15"
     label: "👶 Born"
