@@ -897,6 +897,100 @@ button.liw-legend-item:focus-visible {
 }
 
 /* ========================================
+   DECADE LIST (narrow screens)
+   ======================================== */
+
+/*
+  What the callouts say on a wide screen, said as a list on a narrow one. The
+  grid keeps its job -- the shape of a life, and which weeks something landed in
+  -- and the list takes over the reading. It is built for every decade and shown
+  only for the open one, and only under the mobile breakpoint; on a wide screen
+  the callouts are already saying this and the list would repeat them.
+*/
+.liw-decade-list {
+  display: none;
+  margin: 0.85rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.liw-list-item {
+  padding: 0.5rem 0.7rem 0.55rem;
+  margin-bottom: 0.4rem;
+  border: 1px solid var(--color-border, #e5ded3);
+  border-left: 3px solid var(--liw-list-edge, var(--color-border, #e5ded3));
+  border-radius: 6px;
+  /* The same surface a callout paints on a wide screen, so an entry and the
+     label it replaces are one material. */
+  background: color-mix(in srgb, var(--liw-list-fill, var(--color-bg, #faf8f3)) 55%, #fff);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+/* Tapping the week in the grid marks its entry here. */
+.liw-list-item.liw-list-active {
+  border-color: var(--color-accent, #d2691e);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent, #d2691e) 25%, transparent);
+}
+
+.liw-list-date {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--liw-fs-meta);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary, #5a5a5a);
+}
+
+.liw-list-label {
+  display: block;
+  margin-top: 0.15rem;
+  font-family: var(--font-mono);
+  font-size: var(--liw-fs-body);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--color-text-primary, #1a1a1a);
+}
+
+.liw-list-desc {
+  display: block;
+  margin-top: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: var(--liw-fs-meta);
+  line-height: 1.5;
+  color: var(--color-text-secondary, #5a5a5a);
+}
+
+.liw-list-empty {
+  padding: 0.6rem 0.7rem;
+  font-family: var(--font-mono);
+  font-size: var(--liw-fs-meta);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary, #5a5a5a);
+}
+
+/* The diary/dateline split the callouts make, kept in the list. */
+.liw-list-item-world {
+  border-left-color: var(--liw-world-edge);
+  background: var(--liw-world-paper);
+}
+
+.liw-list-item-world .liw-list-date,
+.liw-list-item-world .liw-list-desc {
+  color: color-mix(in srgb, var(--liw-world-ink) 78%, #fff);
+}
+
+.liw-list-item-world .liw-list-label {
+  color: var(--liw-world-ink);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ========================================
    DARK MODE — Life In Weeks overrides
    ======================================== */
 
@@ -1015,6 +1109,35 @@ html.dark .liw-decade-collapsed {
   border-color: var(--color-border);
 }
 
+/*
+  The list darkens the way a callout does -- near-black tinted by the decade's
+  border colour -- so a decade still reads as one colour across grid and list.
+*/
+html.dark .liw-list-item {
+  border-color: var(--color-border);
+  background: color-mix(in srgb, var(--liw-list-edge, var(--color-border)) 12%, #16130f);
+}
+
+html.dark .liw-list-label {
+  color: #f4eee4;
+}
+
+/* The world stays one oxblood in both themes, as the band does. */
+html.dark .liw-list-item-world {
+  border-color: color-mix(in srgb, var(--liw-world-edge) 45%, transparent);
+  border-left-color: var(--liw-world-edge);
+  background: color-mix(in srgb, var(--liw-world-ink) 45%, #16130f);
+}
+
+html.dark .liw-list-item-world .liw-list-label {
+  color: var(--liw-world-paper);
+}
+
+html.dark .liw-list-item-world .liw-list-date,
+html.dark .liw-list-item-world .liw-list-desc {
+  color: color-mix(in srgb, var(--liw-world-paper) 72%, transparent);
+}
+
 html.dark .liw-decade-collapsed:hover,
 html.dark .liw-decade-collapsed:focus-visible {
   border-color: var(--color-accent);
@@ -1026,25 +1149,57 @@ html.dark .liw-decade-collapsed:focus-visible {
    ======================================== */
 
 @media only screen and (max-width: 768px) {
-  /* The scale steps down as a unit; every rule below still reads the tokens. */
+  /*
+    The scale steps down as a unit, but no further than a phone can read: 11px
+    for metadata and 13px for body is the floor, the same floor the rest of the
+    site uses. --liw-fs-mark stops tracking --liw-box-h here because the week
+    boxes are sized by the column width rather than by a height token.
+  */
   .liw-container {
-    --liw-fs-meta: 0.62rem;
-    --liw-fs-body: 0.75rem;
-    --liw-fs-title: 0.82rem;
-    --liw-box-h: 1.5rem;
+    --liw-fs-meta: 0.6875rem;
+    --liw-fs-body: 0.8125rem;
+    --liw-fs-title: 0.9rem;
+    --liw-fs-mark: 0.6rem;
   }
 
+  /*
+    A callout needs two to five empty week columns beside it. At 21 columns in a
+    phone's width a column is ~14px, so there is no span that holds a word --
+    the decade list below the grid carries the text instead.
+  */
   .liw-callout {
     display: none;
   }
 
-  .liw-flex-row {
-    min-width: 42rem;
+  /*
+    The grid fits the viewport. It used to be held open at 42rem inside a
+    per-decade overflow-x scroller, which meant every decade was its own
+    sideways-scrolling strip -- and because overflow-y computes to auto when
+    overflow-x is not visible, a second, vertical scroller nested inside the
+    page as well.
+  */
+  .liw-box {
+    aspect-ratio: 1;
+    height: auto;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border-width: 1px;
+    border-radius: 3px;
+  }
+
+  /* Tooltips assume a pointer and a box wide enough to aim at; neither holds
+     here, so a tap lights up the matching row in the list instead. */
+  .liw-box .liw-tip {
+    display: none;
   }
 
   .liw-decade {
-    overflow-x: auto;
-    scrollbar-width: thin;
+    padding: 4px 0;
+  }
+
+  .liw-decade-wrapper[data-collapsed="false"] .liw-decade-list {
+    display: block;
   }
 
   .liw-header {
