@@ -1,0 +1,32 @@
+# Things that happened to everybody, not to me.
+#
+# Kept apart from _data/life-in-weeks.yml on purpose: this list is the world's,
+# that one is mine. Both are inlined into the page at build time and merged into
+# a single timeline. Being in this file is what marks an event as a world event
+# -- there is no per-event flag to remember.
+#
+# Same shape as a life event: date, label (emoji welcome), optional description.
+events:
+  - date: "1996-12-01"
+    label: "📞 AOL $19.95 a month"
+    description: "Flat rate replaced $2.95 an hour. Everyone dialed in at once and got busy signals for months."
+
+  - date: "1997-07-12"
+    label: "🐺 Princess Mononoke"
+
+  - date: "1998-10-19"
+    label: "0️⃣ NetZero $0 a month"
+    description: "Free 56k dial-up, paid for by a banner ad that never closed"
+
+  - date: "2001-07-20"
+    label: "🏮 Spirited Away"
+
+  - date: "2007-01-09"
+    label: "📱 iPhone announced"
+
+  - date: "2008-08-08"
+    label: "🔥 Beijing Olympics"
+
+  - date: "2012-10-29"
+    label: "🌪 Hurricane Sandy"
+    description: "The outage-prediction research got real"

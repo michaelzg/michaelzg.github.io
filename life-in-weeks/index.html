@@ -9,6 +9,7 @@ extra_scripts:
 ---
 
 {% assign liw = site.data.life-in-weeks %}
+{% assign world_events = site.data.world-events.events %}
 
 <div class="liw-container">
   <div class="liw-header">
@@ -27,6 +28,10 @@ extra_scripts:
       <span class="liw-legend-swatch liw-swatch-future"></span>
       Future
     </span>
+    <span class="liw-legend-item">
+      <span class="liw-legend-swatch liw-swatch-world"></span>
+      World
+    </span>
   </nav>
 
   <div class="liw-cta-wrapper">
@@ -41,3 +46,9 @@ extra_scripts:
 </div>
 
 <script id="life-in-weeks-config" type="application/json">{{ liw | jsonify }}</script>
+{% comment %}
+  The world's events arrive as their own list and are merged into the timeline
+  on load. Keeping them in a second file means _data/life-in-weeks.yml stays a
+  record of one life, and no entry has to carry a flag saying which it is.
+{% endcomment %}
+<script id="life-in-weeks-world" type="application/json">{{ world_events | jsonify }}</script>
