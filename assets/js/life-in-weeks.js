@@ -57,7 +57,18 @@
     eventItem.kind = 'world';
     return eventItem;
   }));
-  var MAX_BOXES_IN_ROW = 21;
+  // Weeks per row, owned by the stylesheet's --liw-cols so the breakpoint that
+  // changes it and the rule that lays the row out cannot drift apart. A narrow
+  // screen buys column width with rows: a callout has to fit in the columns
+  // beside its anchor, and at 21 columns on a phone none of them holds a word.
+  var DEFAULT_BOXES_IN_ROW = 21;
+  var boxesInRow = DEFAULT_BOXES_IN_ROW;
+
+  function readBoxesInRow() {
+    var declared = parseInt(getComputedStyle(gridEl).getPropertyValue('--liw-cols'), 10);
+    return declared > 0 ? declared : DEFAULT_BOXES_IN_ROW;
+  }
+
   var CALLOUT_MIN_SPAN = 2;
   var CALLOUT_MAX_SPAN = 5;
   var CALLOUT_RULER = 'MMMMMMMMMMxxxxxxxxxx';
@@ -175,7 +186,7 @@
     }
 
     calloutMetrics.measuredAt = gridWidth;
-    calloutMetrics.column = (gridWidth - (MAX_BOXES_IN_ROW - 1) * GRID_GAP) / MAX_BOXES_IN_ROW;
+    calloutMetrics.column = (gridWidth - (boxesInRow - 1) * GRID_GAP) / boxesInRow;
 
     var advance = measureAdvance('liw-callout');
     if (advance > 0) {
@@ -238,23 +249,55 @@
     return lines;
   }
 
-  // Both shape choices depend only on how the text wraps at span 2 and span 3,
-  // so measure each width once and derive both from the pair.
-  function calloutShapes(text, isWorld) {
-    var atTwo = estimatedCalloutLines(text, calloutCapacity(2, isWorld));
-    var atThree = estimatedCalloutLines(text, calloutCapacity(3, isWorld));
-    var stacked = null;
+  // Footprints a stacked callout can take, smallest first.
+  var STACKED_SHAPES = [
+    { rows: 2, span: 2 },
+    { rows: 2, span: 3 },
+    { rows: 2, span: 4 },
+    { rows: 3, span: 3 },
+    { rows: 3, span: 4 }
+  ];
 
-    if (atTwo <= 2) {
-      stacked = { rows: 2, span: 2 };
-    } else if (atThree <= 2) {
-      stacked = { rows: 2, span: 3 };
-    } else if (atThree <= 3) {
-      stacked = { rows: 3, span: 3 };
-    }
+  function longestWordLength(text) {
+    return text.split(/\s+/).reduce(function(longest, word) {
+      return Math.max(longest, Array.from(word).length);
+    }, 0);
+  }
+
+  /*
+    The stacked shape is the smallest footprint the text fits in -- but the
+    smallest one that can break between words, when there is one. Three columns
+    on a phone is an eight-character line, which cuts "internship" in half; the
+    fourth column buys the four characters that keep it whole, and is worth the
+    three extra cells. Only if nothing wraps cleanly does the smallest shape
+    win and the word get broken.
+
+    The vertical shape stays at span 3: it is centred on its anchor, and the
+    stylesheet's above/below rules are written for that width.
+  */
+  function calloutShapes(text, isWorld) {
+    var longestWord = longestWordLength(text);
+    var wordSafe = null;
+    var smallest = null;
+
+    STACKED_SHAPES.forEach(function(shape) {
+      var capacity = calloutCapacity(shape.span, isWorld);
+      if (estimatedCalloutLines(text, capacity) > shape.rows) {
+        return;
+      }
+      if (!smallest) {
+        smallest = shape;
+      }
+      if (!wordSafe && longestWord <= capacity) {
+        wordSafe = shape;
+      }
+    });
+
+    var atThree = estimatedCalloutLines(text, calloutCapacity(3, isWorld));
 
     return {
-      stacked: stacked,
+      stacked: wordSafe || smallest,
+      stackedWraps: Boolean(wordSafe),
       vertical: atThree <= 3 ? { rows: atThree, span: 3 } : null
     };
   }
@@ -419,7 +462,9 @@
           wideSpan: oneLine.span
         };
         candidate.wideFits = oneLine.fits;
-        candidate.prefersStacked = candidate.wideSpan >= 4;
+        // Rank the compact stacked form first only when it wraps between words;
+        // otherwise a wider single line is the more readable of the two.
+        candidate.prefersStacked = candidate.wideSpan >= 4 && shapes.stackedWraps;
         candidate.initialLayouts = calloutLayouts(candidate, reserved, rowBoxesByRow);
         if (candidate.initialLayouts.length > 0) {
           candidates.push(candidate);
@@ -485,7 +530,13 @@
   }
 
   var eventsByDecade = {};
-  var nowBox = null;
+  var nowDecade = Math.floor(currentWeekIdx / WEEKS_PER_DECADE);
+
+  // Looked up rather than held: a decade is thrown away and laid out again when
+  // the column count changes, so a cached element outlives the box it names.
+  function currentWeekBox() {
+    return gridEl.querySelector('.liw-box[data-is-current="true"]');
+  }
 
   function collapsedCardText(isExpanded) {
     return isExpanded ? 'Collapse <span class="liw-expand-arrow">\u2191</span>' : 'Expand <span class="liw-expand-arrow">\u2193</span>';
@@ -688,10 +739,6 @@
       }
     }
 
-    if (isNow) {
-      nowBox = box;
-    }
-
     if (hasEvents) {
       var eventMark = el('span', 'liw-event-mark', eventsThisWeek.slice(0, 2).map(function(eventItem) {
         var matches = eventItem.label.match(emojiPattern);
@@ -737,7 +784,7 @@
     var decadeRows = [];
 
     for (var weekIdx = firstWeek; weekIdx < lastWeek; weekIdx += 1) {
-      if (!currentRow || currentRowBoxes.length === MAX_BOXES_IN_ROW) {
+      if (!currentRow || currentRowBoxes.length === boxesInRow) {
         currentRow = el('div', 'liw-flex-row');
         currentRowBoxes = [];
         fragment.appendChild(currentRow);
@@ -753,45 +800,6 @@
 
     decadeElement.appendChild(fragment);
     decadeElement.setAttribute('data-rendered', 'true');
-  }
-
-  /*
-    The decade's events as prose, for the widths where a callout cannot fit
-    beside its week. Same source and same order as the grid, birthdays left out
-    exactly as calloutText() leaves them out -- the list is the callouts, moved
-    below the grid. It is cheap enough (events, not weeks) to build for every
-    decade up front; the stylesheet decides when it is shown.
-  */
-  function createDecadeList(decade, palette) {
-    var list = el('ul', 'liw-decade-list');
-    var firstWeek = decade * WEEKS_PER_DECADE;
-    var lastWeek = Math.min(firstWeek + WEEKS_PER_DECADE, totalWeeks);
-
-    list.style.setProperty('--liw-list-edge', palette.border);
-    list.style.setProperty('--liw-list-fill', palette.fill);
-
-    for (var weekIdx = firstWeek; weekIdx < lastWeek; weekIdx += 1) {
-      (eventsByWeek[weekIdx] || []).forEach(function(eventItem) {
-        if (eventItem.isBirthday) {
-          return;
-        }
-
-        var item = el('li', 'liw-list-item' + (eventItem.kind === 'world' ? ' liw-list-item-world' : ''));
-        item.setAttribute('data-week-index', String(weekIdx));
-        item.appendChild(el('span', 'liw-list-date', formatDate(eventItem.eventDate)));
-        item.appendChild(el('span', 'liw-list-label', eventItem.label));
-        if (eventItem.description) {
-          item.appendChild(el('span', 'liw-list-desc', eventItem.description));
-        }
-        list.appendChild(item);
-      });
-    }
-
-    if (!list.firstChild) {
-      list.appendChild(el('li', 'liw-list-empty', 'Nothing recorded in this decade yet.'));
-    }
-
-    return list;
   }
 
   var labelsSeenByDecade = [];
@@ -822,6 +830,7 @@
     });
   });
 
+  boxesInRow = readBoxesInRow();
   measureCalloutMetrics();
 
   var gridFragment = document.createDocumentFragment();
@@ -831,7 +840,6 @@
     decadeElement.id = decadeWrapper.dataset.controls;
     decadeElement.setAttribute('data-rendered', 'false');
     decadeWrapper.appendChild(decadeElement);
-    decadeWrapper.appendChild(createDecadeList(decade, decadePalette(decade)));
     gridFragment.appendChild(decadeWrapper);
 
     if (decade === defaultExpandedDecade) {
@@ -841,35 +849,39 @@
   gridEl.appendChild(gridFragment);
 
   /*
-    On a narrow screen a week box is about a finger wide and carries no text, so
-    it points at the list rather than opening a tooltip of its own: tap the week,
-    and the entry that belongs to it lights up and scrolls into view.
+    A decade is laid out once and kept, so a resize that changes --liw-cols --
+    a rotation, mostly -- leaves rows the wrong length and callouts measured
+    against the wrong column. Throw the rendered decades away and lay the open
+    one out again at the new width.
   */
-  var isNarrow = window.matchMedia('(max-width: 768px)');
+  var relayoutTimer = null;
 
-  gridEl.addEventListener('click', function(clickEvent) {
-    if (!isNarrow.matches) {
+  function relayoutIfColumnsChanged() {
+    relayoutTimer = null;
+
+    var columns = readBoxesInRow();
+    if (columns === boxesInRow) {
       return;
     }
 
-    var box = clickEvent.target.closest('.liw-box[data-has-events="true"]');
-    if (!box) {
-      return;
-    }
+    boxesInRow = columns;
+    calloutMetrics.measuredAt = 0;
+    measureCalloutMetrics();
 
-    var wrapper = box.closest('.liw-decade-wrapper');
-    var item = wrapper && wrapper.querySelector(
-      '.liw-list-item[data-week-index="' + box.getAttribute('data-week-index') + '"]');
-    if (!item) {
-      return;
-    }
-
-    gridEl.querySelectorAll('.liw-list-item.liw-list-active').forEach(function(active) {
-      active.classList.remove('liw-list-active');
+    gridEl.querySelectorAll('.liw-decade[data-rendered="true"]').forEach(function(decadeElement) {
+      decadeElement.textContent = '';
+      decadeElement.setAttribute('data-rendered', 'false');
     });
-    item.classList.add('liw-list-active');
-    scrollIntoView(item, 'center');
-  });
+
+    gridEl.querySelectorAll('.liw-decade-wrapper[data-collapsed="false"]').forEach(ensureDecadeRendered);
+  }
+
+  // Debounced rather than scheduled on a frame: this rebuilds every box in the
+  // open decade, so it wants to run once the drag or the rotation has settled.
+  window.addEventListener('resize', function() {
+    clearTimeout(relayoutTimer);
+    relayoutTimer = setTimeout(relayoutIfColumnsChanged, 150);
+  }, { passive: true });
 
   if (legend) {
     var legendTop = legend.offsetTop;
@@ -906,25 +918,32 @@
 
   if (goNowButton) {
     goNowButton.addEventListener('click', function() {
-      if (!nowBox) {
+      var currentDecadeWrapper = gridEl.querySelector('.liw-decade-wrapper[data-decade="' + nowDecade + '"]');
+      if (!currentDecadeWrapper) {
         return;
       }
 
-      var currentDecadeWrapper = nowBox.closest('.liw-decade-wrapper');
       var accent = getComputedStyle(root).getPropertyValue('--color-accent').trim() || '#D2691E';
       var accentRgb = root.classList.contains('dark') ? '232, 133, 58' : '210, 105, 30';
       var start = 0;
 
-      if (currentDecadeWrapper && currentDecadeWrapper.getAttribute('data-collapsed') === 'true') {
+      if (currentDecadeWrapper.getAttribute('data-collapsed') === 'true') {
         openDecade(currentDecadeWrapper);
         start = 500; // let the decade finish opening before chasing the box
       }
 
       function glow(spread, blur, alpha) {
-        nowBox.style.boxShadow = '0 0 0 ' + spread + 'px ' + accent + ', 0 0 ' + blur + 'px rgba(' + accentRgb + ', ' + alpha + ')';
+        var nowBox = currentWeekBox();
+        if (nowBox) {
+          nowBox.style.boxShadow = '0 0 0 ' + spread + 'px ' + accent + ', 0 0 ' + blur + 'px rgba(' + accentRgb + ', ' + alpha + ')';
+        }
       }
 
       setTimeout(function() {
+        var nowBox = currentWeekBox();
+        if (!nowBox) {
+          return;
+        }
         scrollIntoView(nowBox, 'center');
         nowBox.style.transition = 'box-shadow 0.3s ease';
       }, start);
