@@ -20,6 +20,7 @@
   summary: A cinematic scroll flight through a handcrafted floating shrine world.
   accent: "#E6A66D"
   path: /projects/tiny-forest-shrine/
+  action: Watch
   preview_image: /assets/img/projects/tiny-forest-shrine.webp
   preview_position: 62% 50%
 
@@ -28,6 +29,16 @@
   summary: Interactive atlas for understanding H3 cell scales in real geography.
   accent: "#D2691E"
   path: /projects/h3-atlas/
+  action: Explore map
   preview_image: /assets/img/projects/h3-atlas.webp
   preview_position: 54% 50%
   external_url: https://h3geo.org/
+
+- slug: life-in-weeks
+  title: Life In Weeks
+  summary: My life so far, one box per week, with the world's events alongside.
+  accent: "#D9B98C"
+  path: /life-in-weeks/
+  action: See the weeks
+  preview_image: /assets/img/projects/life-in-weeks.webp
+  preview_position: 72% 45%

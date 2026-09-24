@@ -940,6 +940,10 @@ html.dark .global-theme-toggle {
   }
 
   .project-card:hover .project-card__open i {
+    transform: translateX(3px);
+  }
+
+  .project-card:hover .project-card__link[target="_blank"] .project-card__open i {
     transform: translate(2px, -2px);
   }
 }
