@@ -1,7 +1,8 @@
 <head>
     {% assign meta_title = page.title | default: site.title %}
     {% assign meta_description = page.description | default: page.summary | default: page.excerpt | default: site.description %}
-    {% assign meta_description = meta_description | strip_html | strip_newlines | strip %}
+    {% comment %} normalize_whitespace, not strip_newlines: dropping a newline outright glued the words on either side together. {% endcomment %}
+    {% assign meta_description = meta_description | strip_html | normalize_whitespace | strip %}
     {% assign canonical_url = page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url %}
     {% assign og_type = page.og_type %}
     {% if og_type == nil %}
@@ -68,6 +69,14 @@
     <meta property="og:description" content="{{ meta_description | xml_escape }}">
     <meta property="og:url" content="{{ canonical_url }}">
     <meta property="og:site_name" content="{{ site.title | xml_escape }}">
+    {% if page.og_image %}
+    <meta property="og:image" content="{{ page.og_image | absolute_url }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    {% else %}
+    <meta name="twitter:card" content="summary">
+    {% endif %}
 
         
     {% if site.google_analytics %}
