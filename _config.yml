@@ -19,6 +19,9 @@ markdown:     kramdown
 redcarpet:
   extensions: ['smart', 'tables', 'with_toc_data']
 permalink:    pretty
+# Post dates, and so post URLs, are resolved in this zone. GitHub Pages builds
+# in UTC, so pinning it here keeps local builds from minting different URLs.
+timezone:     UTC
 paginate:     6
 sass:
   compressed: true
