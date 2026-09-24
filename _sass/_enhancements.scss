@@ -16,6 +16,7 @@
 // ========================================
 
 :root {
+  color-scheme: light;
   // Colors
   --color-bg: #FAF8F3;           // Warm cream background
   --color-text-primary: #1A1A1A; // Near-black text
@@ -55,10 +56,12 @@
 
 // ========================================
 // DARK MODE TOKENS (applied via .dark class on <html>)
-// Activated by time-of-day (9PM–7AM) or manual toggle
+// Activated by the OS dark setting, the time of day (6PM–7AM), or the
+// manual toggle, which outranks both (see _includes/head.html)
 // ========================================
 
 html.dark {
+  color-scheme: dark;              // Dark scrollbars and form controls
   --color-bg: #1A1714;           // Warm charcoal — like dark oak
   --color-text-primary: #F0EAE0; // Warm parchment white
   --color-text-secondary: #B8A089;    // Muted sand — warm, readable

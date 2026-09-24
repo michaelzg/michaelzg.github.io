@@ -41,11 +41,19 @@
     <!-- Dark mode: apply before first paint to avoid flash -->
     <script>
       (function() {
+        // Dark whenever the OS asks for it, and otherwise from 6pm to 7am. A
+        // manual toggle outranks both and is kept across tabs and visits.
         var DARK_START = 18, DARK_END = 7;
         var h = new Date().getHours();
-        var autoDark = h >= DARK_START || h < DARK_END;
-        var override = sessionStorage.getItem('theme-override');
-        if (override === 'dark' || (!override && autoDark)) {
+        var osDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var autoDark = osDark || h >= DARK_START || h < DARK_END;
+        var override = null;
+        try {
+          override = window.localStorage.getItem('theme-override');
+        } catch (error) {
+          // Storage can be blocked; fall back to the automatic choice.
+        }
+        if (override === 'dark' || (override !== 'light' && autoDark)) {
           document.documentElement.classList.add('dark');
         }
       })();
