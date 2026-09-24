@@ -26,5 +26,7 @@ description: Writing on software, projects, and the tools I build for myself.
     {% endfor %}
   </div>
 
-  {% include pagination.html %}
+  {% if paginator.total_pages > 1 %}
+    {% include pagination.html %}
+  {% endif %}
 </div>

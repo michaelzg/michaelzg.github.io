@@ -497,6 +497,75 @@ pre, code {
   opacity: 0.5;
 }
 
+// Older / newer links at the end of a post
+.post-nav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  margin: 3.5rem 0 1rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.post-nav__link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition:
+    border-color var(--transition-snappy),
+    transform var(--transition-snappy);
+}
+
+.post-nav__link--newer {
+  text-align: right;
+}
+
+// Side by side from tablet up, with Newer always in the right-hand column
+// so the oldest post's lone link does not stretch across the page.
+@media screen and (min-width: 40em) {
+  .post-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .post-nav__link--newer {
+    grid-column: 2;
+  }
+}
+
+.post-nav__label {
+  font: 600 0.7rem/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.post-nav__title {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.4;
+  color: var(--color-text-primary);
+}
+
+.post-nav__link:hover,
+.post-nav__link:focus-visible {
+  border-color: var(--color-accent);
+}
+
+.post-nav__link:hover .post-nav__title {
+  color: var(--color-accent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .post-nav__link:hover {
+    transform: translateY(-2px);
+  }
+}
+
 // ========================================
 // 7. FOOTER
 // ========================================
