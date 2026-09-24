@@ -884,13 +884,6 @@ html.dark .global-theme-toggle {
   color: var(--color-text-primary);
 }
 
-.project-card__summary {
-  margin: 0.65rem 0 0;
-  font-size: 0.95rem;
-  color: var(--color-text-secondary);
-  line-height: 1.65;
-}
-
 .project-card__open {
   display: inline-flex;
   align-items: center;
@@ -983,22 +976,13 @@ html.dark .global-theme-toggle {
   padding: 1.3rem 1.5rem;
 }
 
-.projects-shell .project-card__title,
-.projects-shell .project-card__summary {
+.projects-shell .project-card__title {
   color: #fff9f1;
   text-shadow: 0 2px 20px rgba(0, 0, 0, 0.72);
 }
 
 .projects-shell .project-card__title {
   font-size: clamp(1.25rem, 2.5vw, 1.55rem);
-}
-
-.projects-shell .project-card__summary {
-  max-width: 44ch;
-  margin-top: 0.45rem;
-  color: rgba(255, 249, 241, 0.72);
-  font-size: 0.86rem;
-  line-height: 1.52;
 }
 
 .projects-shell .project-card__footer {

@@ -1,6 +1,5 @@
 - slug: pandamonium
   title: Pandamonium
-  summary: Fight. Grow stronger. Survive.
   accent: "#D6AD58"
   launch_url: https://pandamonium.michaelzg.com/
   action: Play game
@@ -9,7 +8,6 @@
 
 - slug: baconeggs
   title: Breakfast at the Hearth
-  summary: A fire spirit keeps a skillet of bacon and eggs sizzling. Drag to look around, tap to toss the pan.
   accent: "#E8702A"
   path: /projects/baconeggs/
   preview_image: /assets/img/projects/baconeggs.webp
@@ -17,7 +15,6 @@
 
 - slug: tiny-forest-shrine
   title: Tiny Forest Shrine
-  summary: A cinematic scroll flight through a handcrafted floating shrine world.
   accent: "#E6A66D"
   path: /projects/tiny-forest-shrine/
   action: Watch
@@ -26,7 +23,6 @@
 
 - slug: h3-atlas
   title: H3 Atlas Lab
-  summary: Interactive atlas for understanding H3 cell scales in real geography.
   accent: "#D2691E"
   path: /projects/h3-atlas/
   action: Explore map
@@ -36,7 +32,6 @@
 
 - slug: life-in-weeks
   title: Life In Weeks
-  summary: My life so far, one box per week, with the world's events alongside.
   accent: "#D9B98C"
   path: /life-in-weeks/
   action: See the weeks

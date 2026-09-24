@@ -36,7 +36,6 @@ description: Interactive projects and software experiments.
 
           <div class="project-card__content">
             <h2 class="project-card__title">{{ project.title }}</h2>
-            <p class="project-card__summary">{{ project.summary }}</p>
             {% comment %} The diagonal arrow promises a new tab, so only projects hosted elsewhere get it. {% endcomment %}
             <span class="project-card__open" aria-hidden="true">{{ project_action }} <i>{% if project.launch_url %}&#8599;{% else %}&#8594;{% endif %}</i></span>
           </div>
