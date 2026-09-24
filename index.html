@@ -4,13 +4,14 @@ description: Writing on software, projects, and the tools I build for myself.
 ---
 
 <div class="home">
+  <h1 class="sr-only">Writing</h1>
 
   <div class="posts">
     {% for post in paginator.posts %}
       <div class="post">
         
         <a href="{{ post.url | prepend: site.baseurl }}" class="post-link">
-            <span class="h4 post-title">{{ post.title }}</span> 
+            <h2 class="h4 post-title">{{ post.title }}</h2>
         </a>
         <span class="post-meta post-date">{{ post.date | date: "%b %-d, %Y" }} </span>
         

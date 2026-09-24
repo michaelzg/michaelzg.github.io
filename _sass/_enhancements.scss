@@ -211,6 +211,25 @@ pre, code {
   border: 0;
 }
 
+.skip-link {
+  position: absolute;
+  z-index: 1000;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-text-primary);
+  color: var(--color-bg);
+  font: 600 0.8rem/1 var(--font-mono);
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+  color: var(--color-bg);
+}
+
 // ========================================
 // 4. HEADER
 // ========================================
@@ -1104,7 +1123,7 @@ body.page-h3-simple {
   color: var(--panel-text-muted);
 }
 
-.h3-simple__brand h2 {
+.h3-simple__brand h1 {
   margin: 0.22rem 0 0;
   font-size: 1.28rem;
   line-height: 1.1;
