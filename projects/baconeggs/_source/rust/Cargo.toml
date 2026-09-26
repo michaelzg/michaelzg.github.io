@@ -1,0 +1,27 @@
+[package]
+name = "hearth"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "=0.2.100"
+js-sys = "=0.3.77"
+glam = "0.29"
+gltf = { version = "1.4", default-features = false, features = ["utils", "names"] }
+png = "0.17"
+
+[dependencies.web-sys]
+version = "=0.3.77"
+features = [
+  "WebGl2RenderingContext", "WebGlProgram", "WebGlShader", "WebGlBuffer",
+  "WebGlVertexArrayObject", "WebGlTexture", "WebGlFramebuffer", "WebGlRenderbuffer",
+  "WebGlUniformLocation", "HtmlCanvasElement", "console",
+]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

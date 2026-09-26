@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Breakfast at the Hearth</title>
+<meta name="description" content="A fire spirit keeps a skillet of bacon and eggs sizzling. Drag to look around; tap to toss the pan.">
+<style>
+  :root { color-scheme: dark; --soot: #3b2a20; }
+  html, body { height: 100%; margin: 0; background: var(--soot); overflow: hidden; }
+  #stage {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    display: block; cursor: grab; touch-action: none;
+    opacity: 0; transition: opacity 1.2s ease;
+  }
+  #stage.ready { opacity: 1; }
+  #stage:active { cursor: grabbing; }
+  /* wordless hint: an orbit glyph that fades once someone drags */
+  #hint {
+    position: fixed; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%); width: 44px; height: 44px; pointer-events: none;
+    opacity: 0; transition: opacity .8s ease;
+  }
+  #hint.show { opacity: .6; animation: sway 2.6s ease-in-out infinite; }
+  @keyframes sway { 0%,100% { transform: translateX(-50%) rotate(-10deg); } 50% { transform: translateX(-50%) rotate(10deg); } }
+  @media (prefers-reduced-motion: reduce) { #hint.show { animation: none; } }
+</style>
+</head>
+<body>
+<canvas id="stage" aria-label="A fire spirit keeps a skillet of bacon and eggs sizzling. Drag to look around; tap to toss the pan."></canvas>
+<svg id="hint" viewBox="0 0 44 44" fill="none" stroke="#f6dcb8" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+  <ellipse cx="22" cy="24" rx="17" ry="7"/>
+  <path d="M34 17.5l4.5 3.5-5 2.5"/>
+  <path d="M22 8c-2.6 3-4 5.2-4 7.4a4 4 0 0 0 8 0c0-2.2-1.4-4.4-4-7.4z" fill="#ff8a2a" stroke="none"/>
+</svg>
+
+<script type="module">
+import init, { App } from './pkg/hearth.js';
+
+const canvas = document.getElementById('stage');
+const hint = document.getElementById('hint');
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// always revalidate: the model, the wasm and this page must come from the same version
+const asset = (path) => fetch(new URL(path, import.meta.url), { cache: 'no-cache' });
+await init({ module_or_path: asset('./pkg/hearth_bg.wasm') });
+const glb = new Uint8Array(await (await asset('./hearth.glb')).arrayBuffer());
+const app = new App(canvas, glb, reduced);
+
+function resize() {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = innerWidth, h = innerHeight;
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  app.resize(canvas.width, canvas.height, w, h);
+}
+addEventListener('resize', resize);
+resize();
+
+let dragged = false;
+canvas.addEventListener('pointerdown', (e) => {
+  canvas.setPointerCapture(e.pointerId);
+  app.pointer_down(e.pointerId, e.clientX, e.clientY, performance.now());
+});
+canvas.addEventListener('pointermove', (e) => {
+  app.pointer_move(e.pointerId, e.clientX, e.clientY);
+  if (e.buttons && !dragged) { dragged = true; hint.classList.remove('show'); }
+});
+canvas.addEventListener('pointerup', (e) => app.pointer_up(e.pointerId, e.clientX, e.clientY, performance.now()));
+canvas.addEventListener('pointercancel', (e) => app.pointer_up(e.pointerId, e.clientX, e.clientY, Infinity));
+canvas.addEventListener('wheel', (e) => { e.preventDefault(); app.wheel(e.deltaY); }, { passive: false });
+
+let last = performance.now();
+function loop(now) {
+  app.frame(Math.min(0.05, (now - last) / 1000));
+  last = now;
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+requestAnimationFrame(() => {
+  canvas.classList.add('ready');
+  setTimeout(() => { if (!dragged) hint.classList.add('show'); }, 2500);
+});
+</script>
+</body>
+</html>

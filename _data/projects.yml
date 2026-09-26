@@ -7,6 +7,14 @@
   preview_image: /assets/img/projects/pandamonium.webp
   preview_position: 56% 52%
 
+- slug: baconeggs
+  title: Breakfast at the Hearth
+  summary: A fire spirit keeps a skillet of bacon and eggs sizzling. Drag to look around, tap to toss the pan.
+  accent: "#E8702A"
+  path: /projects/baconeggs/
+  preview_image: /assets/img/projects/baconeggs.webp
+  preview_position: 50% 55%
+
 - slug: tiny-forest-shrine
   title: Tiny Forest Shrine
   summary: A cinematic scroll flight through a handcrafted floating shrine world.
