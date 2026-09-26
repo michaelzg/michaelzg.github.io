@@ -44,4 +44,4 @@ python3 -m http.server 8000
 
 To preview it inside the blog, run `make serve` from the repo root and open http://localhost:4000/projects/baconeggs/.
 
-Jekyll skips `_source/` because of the leading underscore, so only `index.html`, `pkg/` and `hearth.glb` are published. GitHub Pages doesn't build Rust or Blender files, so commit the rebuilt `pkg/` and `hearth.glb`.
+Jekyll skips `_source/` because of the leading underscore, so only `index.html`, `pkg/` and `hearth.glb` are published. On deploy, `.github/workflows/pages.yml` rebuilds `pkg/` from the Rust source before building the site. CI has no Blender, so commit `hearth.glb` whenever you re-export the model.

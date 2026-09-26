@@ -750,7 +750,7 @@ impl App {
             target: Vec3::new(0.0, 0.40, 0.14),
             radius: 5.6,
             theta: 0.0,
-            phi: 0.5,
+            phi: 0.95,
             d_theta: 0.0,
             d_phi: 0.0,
             fov: 32f32.to_radians(),
