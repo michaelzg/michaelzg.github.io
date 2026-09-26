@@ -1,15 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 {% include head.html %}
 <body>
+  <a class="skip-link" href="#content">Skip to content</a>
   <div class="site-wrap center">
     {% include header.html %}
 
-    <div class="post p2 p-responsive wrap" role="main">
+    <main class="post p2 p-responsive wrap" id="content">
       <div class="measure">
         {{ content }}
       </div>
-    </div>
+    </main>
   </div>
 
   {% include footer.html %}

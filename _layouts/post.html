@@ -20,6 +20,23 @@ layout: default
   {{ content }}
 </article>
 
+{% if page.previous or page.next %}
+<nav class="post-nav" aria-label="More writing">
+  {% if page.previous %}
+  <a class="post-nav__link post-nav__link--older" href="{{ page.previous.url | relative_url }}" rel="prev">
+    <span class="post-nav__label">&larr; Older</span>
+    <span class="post-nav__title">{{ page.previous.title }}</span>
+  </a>
+  {% endif %}
+  {% if page.next %}
+  <a class="post-nav__link post-nav__link--newer" href="{{ page.next.url | relative_url }}" rel="next">
+    <span class="post-nav__label">Newer &rarr;</span>
+    <span class="post-nav__title">{{ page.next.title }}</span>
+  </a>
+  {% endif %}
+</nav>
+{% endif %}
+
 {% if site.show_related_posts %}
   <h3 class="related-post-title">Related Posts</h3>
   {% for post in site.related_posts %}

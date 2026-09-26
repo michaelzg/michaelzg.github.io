@@ -1,4 +1,4 @@
-# Breakfast at the Hearth
+# Bacon and Eggs
 
 A fire spirit keeps a skillet of bacon and eggs sizzling. Drag to orbit, pinch or scroll to zoom, tap to toss the pan. Live at [michaelzg.com/projects/baconeggs/](https://michaelzg.com/projects/baconeggs/).
 

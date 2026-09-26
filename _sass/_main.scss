@@ -160,7 +160,7 @@ table {
 }
 
 p {
-  font-weight: 300;
+  font-weight: 400;
   line-height: 1.5;
   color: #333;
 }
@@ -170,20 +170,39 @@ pre, code {
 }
 
 code {
-  color: #7a7a7a;
+  font-size: 0.88em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--code-bg);
+  color: var(--code-text);
 }
 
 pre {
-  padding: 1.125em;
-  font-size: 1.125rem;
-  line-height: 1.11;
-  overflow-x: scroll;
+  padding: 1em 1.125em;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  tab-size: 2;
   margin-bottom: 0.88em;
 }
 
-.highlight .p {
-  font-size: 1.125rem;
-  line-height: 1;
+pre code {
+  font-size: inherit;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+}
+
+div.highlight {
+  border: 1px solid var(--code-border);
+  border-radius: 6px;
+  margin-bottom: 0.88em;
+}
+
+div.highlight pre {
+  margin-bottom: 0;
+  border-radius: inherit;
 }
 
 blockquote {
@@ -329,7 +348,7 @@ h6,
 
 footer,
 footer .wrap {
-  font-weight: 300;
+  font-weight: 400;
   clear: both;
 }
 

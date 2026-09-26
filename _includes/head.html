@@ -1,7 +1,8 @@
 <head>
     {% assign meta_title = page.title | default: site.title %}
     {% assign meta_description = page.description | default: page.summary | default: page.excerpt | default: site.description %}
-    {% assign meta_description = meta_description | strip_html | strip_newlines | strip %}
+    {% comment %} normalize_whitespace, not strip_newlines: dropping a newline outright glued the words on either side together. {% endcomment %}
+    {% assign meta_description = meta_description | strip_html | normalize_whitespace | strip %}
     {% assign canonical_url = page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url %}
     {% assign og_type = page.og_type %}
     {% if og_type == nil %}
@@ -31,9 +32,10 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     {% endif %}
 
-    <!-- Fonts -->
-    <link href='//fonts.googleapis.com/css?family=Merriweather:900,900italic,300,300italic' rel='stylesheet' type='text/css'>
-    <link href='//fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap' rel='stylesheet' type='text/css'>
+    <!-- Fonts: Merriweather 400 for prose, 700 for headings, 300 for the shrine's display type -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
     <link rel="shortcut icon" type="image/x-icon" href="/assets/img/favicon.ico">
@@ -41,11 +43,19 @@
     <!-- Dark mode: apply before first paint to avoid flash -->
     <script>
       (function() {
+        // Dark whenever the OS asks for it, and otherwise from 6pm to 7am. A
+        // manual toggle outranks both and is kept across tabs and visits.
         var DARK_START = 18, DARK_END = 7;
         var h = new Date().getHours();
-        var autoDark = h >= DARK_START || h < DARK_END;
-        var override = sessionStorage.getItem('theme-override');
-        if (override === 'dark' || (!override && autoDark)) {
+        var osDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var autoDark = osDark || h >= DARK_START || h < DARK_END;
+        var override = null;
+        try {
+          override = window.localStorage.getItem('theme-override');
+        } catch (error) {
+          // Storage can be blocked; fall back to the automatic choice.
+        }
+        if (override === 'dark' || (override !== 'light' && autoDark)) {
           document.documentElement.classList.add('dark');
         }
       })();
@@ -59,6 +69,14 @@
     <meta property="og:description" content="{{ meta_description | xml_escape }}">
     <meta property="og:url" content="{{ canonical_url }}">
     <meta property="og:site_name" content="{{ site.title | xml_escape }}">
+    {% if page.og_image %}
+    <meta property="og:image" content="{{ page.og_image | absolute_url }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    {% else %}
+    <meta name="twitter:card" content="summary">
+    {% endif %}
 
         
     {% if site.google_analytics %}

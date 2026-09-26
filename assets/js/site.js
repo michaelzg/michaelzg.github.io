@@ -2,9 +2,17 @@
   var root = document.documentElement;
   var themeTransitionFrame = null;
 
+  function readThemeOverride() {
+    try {
+      return window.localStorage.getItem('theme-override');
+    } catch (error) {
+      return null;
+    }
+  }
+
   function setThemeOverride(value) {
     try {
-      window.sessionStorage.setItem('theme-override', value);
+      window.localStorage.setItem('theme-override', value);
     } catch (error) {
       // Ignore storage failures and keep the in-memory theme.
     }
@@ -80,9 +88,24 @@
     btn.innerHTML = '<span class="toggle-icon" id="global-toggle-icon"></span><span id="global-toggle-label"></span>';
     root.appendChild(btn);
 
-    // head.html already resolved override-vs-time-of-day before first paint;
-    // read that decision back instead of duplicating the rule here.
+    // head.html already resolved override, OS setting and time of day before
+    // first paint; read that decision back instead of duplicating the rule here.
     applyTheme(root.classList.contains('dark'), false);
+
+    // Follow the OS into dark mode while the page is open, unless the reader
+    // has picked a theme themselves. Leaving OS dark hands back to the clock,
+    // which only head.html knows, so that direction waits for the next load.
+    if (window.matchMedia) {
+      var osDark = window.matchMedia('(prefers-color-scheme: dark)');
+      var onOsChange = function(event) {
+        if (event.matches && !readThemeOverride()) {
+          applyTheme(true, true);
+        }
+      };
+      if (osDark.addEventListener) {
+        osDark.addEventListener('change', onOsChange);
+      }
+    }
 
     btn.addEventListener('click', function() {
       var newDark = !root.classList.contains('dark');

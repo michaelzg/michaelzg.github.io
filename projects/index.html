@@ -20,7 +20,7 @@ description: Interactive projects and software experiments.
         <a
           class="project-card__link"
           href="{{ project_url }}"
-          aria-label="{{ project_action }}: {{ project.title }}"
+          aria-label="{{ project_action }}: {{ project.title }}{% if project.launch_url %} (opens in a new tab){% endif %}"
           {% if project.launch_url %}target="_blank" rel="noopener noreferrer"{% endif %}
         >
           <div class="project-card__media" aria-hidden="true">
@@ -36,8 +36,8 @@ description: Interactive projects and software experiments.
 
           <div class="project-card__content">
             <h2 class="project-card__title">{{ project.title }}</h2>
-            <p class="project-card__summary">{{ project.summary }}</p>
-            <span class="project-card__open" aria-hidden="true">{{ project_action }} <i>&#8599;</i></span>
+            {% comment %} The diagonal arrow promises a new tab, so only projects hosted elsewhere get it. {% endcomment %}
+            <span class="project-card__open" aria-hidden="true">{{ project_action }} <i>{% if project.launch_url %}&#8599;{% else %}&#8594;{% endif %}</i></span>
           </div>
         </a>
         {% if project.external_url %}
