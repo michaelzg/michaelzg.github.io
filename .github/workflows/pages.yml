@@ -43,7 +43,11 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.3"
-          bundler-cache: true
+      # Gemfile.lock is resolved inside the Docker image (x86_64-linux-musl); add the runner's platform
+      - name: Install gems
+        run: |
+          bundle lock --add-platform x86_64-linux
+          bundle install --jobs 4
       - name: Build site
         run: bundle exec jekyll build
         env:
