@@ -1,0 +1,66 @@
+# Builds the Rust/wasm projects, then the Jekyll site, and deploys it to GitHub Pages.
+# Requires Settings -> Pages -> Source: "GitHub Actions".
+name: Deploy site
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # projects/baconeggs: Rust -> wasm32 -> wasm-bindgen output in pkg/
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: projects/baconeggs/_source/rust
+      - name: Install wasm-bindgen-cli (must match the crate's wasm-bindgen)
+        run: cargo install wasm-bindgen-cli --version 0.2.100 --locked
+      - name: Build baconeggs wasm
+        working-directory: projects/baconeggs
+        run: |
+          cargo build --release --target wasm32-unknown-unknown --manifest-path _source/rust/Cargo.toml
+          wasm-bindgen --target web --no-typescript --out-dir pkg \
+            _source/rust/target/wasm32-unknown-unknown/release/hearth.wasm
+
+      # Jekyll, with the same gems GitHub Pages uses (Gemfile: github-pages)
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      # Gemfile.lock is resolved inside the Docker image (x86_64-linux-musl); add the runner's platform
+      - name: Install gems
+        run: |
+          bundle lock --add-platform x86_64-linux
+          bundle install --jobs 4
+      - name: Build site
+        run: bundle exec jekyll build
+        env:
+          JEKYLL_ENV: production
+      - uses: actions/upload-pages-artifact@v3
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
