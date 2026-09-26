@@ -884,19 +884,21 @@ html.dark .global-theme-toggle {
   color: var(--color-text-primary);
 }
 
+// Sentence case at a readable size in soft cream; only the arrow carries the
+// project's colour.
 .project-card__open {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  margin-top: 1.15rem;
-  color: var(--project-accent);
-  font: 600 0.65rem/1 var(--font-mono);
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  margin-top: 0.7rem;
+  color: rgba(255, 249, 241, 0.78);
+  font: 500 0.78rem/1 var(--font-mono);
+  letter-spacing: 0.01em;
 }
 
 .project-card__open i {
   font-style: normal;
+  color: var(--project-accent);
   transition: transform var(--transition-snappy);
 }
 
@@ -982,7 +984,9 @@ html.dark .global-theme-toggle {
 }
 
 .projects-shell .project-card__title {
-  font-size: clamp(1.25rem, 2.5vw, 1.55rem);
+  font-size: clamp(1.5rem, 3vw, 1.85rem);
+  letter-spacing: -0.015em;
+  line-height: 1.15;
 }
 
 .projects-shell .project-card__footer {
