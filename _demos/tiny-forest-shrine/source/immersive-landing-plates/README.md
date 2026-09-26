@@ -1,7 +1,7 @@
 # Immersive Landing Plates
 
 These plates were created with Codex's built-in ImageGen workflow as the art
-direction and delivery layer for the Tiny Forest Shrine scroll film. Desktop
+direction and delivery layer for the Shrine scroll film. Desktop
 plates are native 16:9 compositions (1672 × 941); mobile plates are separately
 composed native 9:16 scenes (941 × 1672), not crops.
 

@@ -81,7 +81,7 @@ const root = document.getElementById('tiny-forest-shrine-root');
 if (root) {
   root.replaceChildren();
   root.classList.add('shrine-immersive-landing');
-  root.setAttribute('aria-label', 'Tiny Forest Shrine scroll story');
+  root.setAttribute('aria-label', 'Shrine scroll story');
 
   mountImmersiveLanding(root, {
     hint: 'scroll to follow the lanterns',

@@ -7,14 +7,14 @@
   preview_position: 56% 52%
 
 - slug: baconeggs
-  title: Breakfast at the Hearth
+  title: Bacon and Eggs
   accent: "#E8702A"
   path: /projects/baconeggs/
   preview_image: /assets/img/projects/baconeggs.webp
   preview_position: 50% 55%
 
 - slug: tiny-forest-shrine
-  title: Tiny Forest Shrine
+  title: Shrine
   accent: "#E6A66D"
   path: /projects/tiny-forest-shrine/
   action: Watch
