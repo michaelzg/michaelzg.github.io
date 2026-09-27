@@ -449,7 +449,28 @@ pub fn fire_vs() -> String {
 layout(location=0) in vec3 aPos;
 uniform mat4 uViewProj;
 out vec3 vW;
-void main(){ vW = aPos; gl_Position = uViewProj*vec4(aPos, 1.0); }"#
+uniform float uTime; uniform float uFlare;
+// These depend only on time and tongue index, not the ray-march sample.
+// 12 vec4s + vW fit within WebGL2's minimum 15 varying vectors.
+flat out vec4 vTongues[12];
+float hash11(float n){ return fract(sin(n*127.1 + 311.7)*43758.5453); }
+void main(){
+  for (int i = 0; i < 12; i++) {
+    float s = float(i);
+    float h1 = hash11(s), h2 = hash11(s + 17.0), h3 = hash11(s + 41.0);
+    float offset = (h1 - 0.5)*0.3;
+    float ang = (s + offset)/12.0*6.2831853;
+    float dF = abs(atan(sin(ang - 1.5708), cos(ang - 1.5708)));
+    float gap = smoothstep(0.8, 1.2, dF);
+    float c = cos(ang);
+    float side = 0.35 + 0.8*abs(c) + 0.3*max(-c, 0.0);
+    float t = uTime*(0.85 + 0.3*h2) + h3*10.0;
+    float L = (0.2 + 0.55*side)*(0.8 + 0.3*h2 + 0.12*sin(t*2.3))*gap*(1.0 + 0.35*uFlare);
+    vTongues[i] = vec4(offset, h1, t, L);
+  }
+  vW = aPos;
+  gl_Position = uViewProj*vec4(aPos, 1.0);
+}"#
     )
 }
 
@@ -467,7 +488,7 @@ float nz(vec3 p){ return texture(uNoise, p).r; }
 float sdEll(vec3 p, vec3 r){ float k0 = length(p/r); float k1 = length(p/(r*r)); return k0*(k0 - 1.0)/max(k1, 1e-4); }
 float smin(float a, float b, float k){ float h = clamp(0.5 + 0.5*(b - a)/k, 0.0, 1.0); return mix(b, a, h) - k*h*(1.0 - h); }
 
-float hash11(float n){ return fract(sin(n*127.1 + 311.7)*43758.5453); }
+flat in vec4 vTongues[12];
 
 // flame tongues rooted in the body's upper rim: each one is the body's own surface rising around the pan wall
 float tongues(vec3 p){
@@ -480,15 +501,9 @@ float tongues(vec3 p){
   float best = 1e3;
   for (int k = -1; k <= 1; k++) {
     float s = floor(u + 0.5) + float(k);
-    float sm = mod(s, K);
-    float h1 = hash11(sm), h2 = hash11(sm + 17.0), h3 = hash11(sm + 41.0);
-    float ang = (s + (h1 - 0.5)*0.3)/K*6.2831853;
-    float dF = abs(atan(sin(ang - 1.5708), cos(ang - 1.5708)));   // away from the face (+z)
-    float gap = smoothstep(0.8, 1.2, dF);
-    float c = cos(ang);
-    float side = 0.35 + 0.8*abs(c) + 0.3*max(-c, 0.0);          // flanks tall, handle side tallest
-    float t = uTime*(0.85 + 0.3*h2) + h3*10.0;
-    float L = (0.2 + 0.55*side)*(0.8 + 0.3*h2 + 0.12*sin(t*2.3))*gap*(1.0 + 0.35*uFlare);
+    vec4 tongue = vTongues[int(mod(s, K))];
+    float h1 = tongue.y, t = tongue.z, L = tongue.w;
+    float ang = (s + tongue.x)/K*6.2831853;
     if (L < 0.05) continue;
     float yr = 0.18;                                             // root, inside the body's rim
     float hy = clamp((p.y - yr)/L, 0.0, 1.0);

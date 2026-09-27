@@ -162,8 +162,9 @@ impl Fx {
             self.cap = n.next_power_of_two();
             gl.buffer_data_with_i32(GL::ARRAY_BUFFER, (self.cap * FLOATS * 4) as i32, GL::DYNAMIC_DRAW);
         }
-        let arr = js_sys::Float32Array::new_with_length(self.data.len() as u32);
-        arr.copy_from(&self.data);
+        // WebGL copies synchronously. Do not allocate or grow wasm memory between
+        // creating this view and uploading it, and never retain the view.
+        let arr = unsafe { js_sys::Float32Array::view(&self.data) };
         gl.buffer_sub_data_with_i32_and_array_buffer_view(GL::ARRAY_BUFFER, 0, &arr);
 
         let u = prog.bind(gl);

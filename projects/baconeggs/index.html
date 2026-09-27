@@ -43,8 +43,11 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // always revalidate: the model, the wasm and this page must come from the same version
 const asset = (path) => fetch(new URL(path, import.meta.url), { cache: 'no-cache' });
-await init({ module_or_path: asset('./pkg/hearth_bg.wasm') });
-const glb = new Uint8Array(await (await asset('./hearth.glb')).arrayBuffer());
+const [, glbBytes] = await Promise.all([
+  init({ module_or_path: asset('./pkg/hearth_bg.wasm') }),
+  asset('./hearth.glb').then(response => response.arrayBuffer()),
+]);
+const glb = new Uint8Array(glbBytes);
 const app = new App(canvas, glb, reduced);
 
 function resize() {
