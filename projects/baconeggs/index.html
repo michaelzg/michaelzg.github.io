@@ -48,10 +48,20 @@ const glb = new Uint8Array(await (await asset('./hearth.glb')).arrayBuffer());
 const app = new App(canvas, glb, reduced);
 
 function resize() {
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
   const w = innerWidth, h = innerHeight;
-  canvas.width = Math.round(w * dpr);
-  canvas.height = Math.round(h * dpr);
+  // The scene has multiple full-size render targets; bound their combined cost.
+  const pixelBudget = matchMedia('(pointer: coarse)').matches ? 1_200_000 : 3_000_000;
+  const dpr = Math.min(2, window.devicePixelRatio || 1, Math.sqrt(pixelBudget / (w * h)));
+  const width = Math.max(1, Math.floor(w * dpr));
+  const height = Math.max(1, Math.floor(h * dpr));
+  const bufferChanged = canvas.width !== width || canvas.height !== height;
+  if (!bufferChanged && resize.cssW === w && resize.cssH === h) return;
+  if (bufferChanged) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+  resize.cssW = w;
+  resize.cssH = h;
   app.resize(canvas.width, canvas.height, w, h);
 }
 addEventListener('resize', resize);
@@ -71,12 +81,20 @@ canvas.addEventListener('pointercancel', (e) => app.pointer_up(e.pointerId, e.cl
 canvas.addEventListener('wheel', (e) => { e.preventDefault(); app.wheel(e.deltaY); }, { passive: false });
 
 let last = performance.now();
+let frameHandle = 0;
 function loop(now) {
+  frameHandle = 0;
+  if (document.hidden) return;
   app.frame(Math.min(0.05, (now - last) / 1000));
   last = now;
-  requestAnimationFrame(loop);
+  frameHandle = requestAnimationFrame(loop);
 }
-requestAnimationFrame(loop);
+function resume() {
+  last = performance.now();
+  if (!document.hidden && !frameHandle) frameHandle = requestAnimationFrame(loop);
+}
+document.addEventListener('visibilitychange', resume);
+resume();
 requestAnimationFrame(() => {
   canvas.classList.add('ready');
   setTimeout(() => { if (!dragged) hint.classList.add('show'); }, 2500);

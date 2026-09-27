@@ -9,10 +9,10 @@ _source/blender/hearth.blend ──export──▶ hearth.glb ──┐
 _source/rust/ ──cargo + wasm-bindgen──▶ pkg/         ├──▶ index.html (one WebGL2 canvas)
 ```
 
-- **Model (Blender).** The pan, the food (four eggs with yolks, three bacon strips, numpy-painted textures), the shell used for falling eggs, and the hearth floor. It's exported to `hearth.glb` with modifiers applied and Y up. The fire spirit isn't a mesh.
+- **Model (Blender).** The pan, the food (four eggs with yolks, three bacon strips, numpy-painted textures), the shell used for falling eggs, the two half-buried logs the spirit sits on, and the hearth floor. It's exported to `hearth.glb` with modifiers applied and Y up. The fire spirit isn't a mesh. The one-time scripts beside `hearth.blend` record the art passes applied to it.
 - **Renderer (Rust compiled to wasm).** It drives raw WebGL2 through `web-sys`, with no JS framework:
-  - `lib.rs`: app state and animation. This covers the orbit camera, the pan toss with per-item flips, flame arms that catch and feed food, chewing, random expressions, and breakfast falling from the sky once the pan is empty. It also holds the render loop.
-  - `shaders.rs`: the GLSL. Cel shading with screen-space outlines, a ray-marched fire built from signed distance fields (body, tongues, arms and a painted face; partly see-through, writes depth), oil bubbles, steam, and bloom.
+  - `lib.rs`: app state and animation. This covers the orbit camera, the pan toss with per-item flips, flame arms that catch and feed food, chewing, random expressions, breakfast falling from the sky once the pan is empty, and the char creeping across the logs in ten steps over the first minute. It also holds the render loop.
+  - `shaders.rs`: the GLSL. Cel shading with screen-space outlines, a ray-marched fire built from signed distance fields (body, tongues, arms and a painted face; partly see-through, writes depth), painted firewood and ash (procedural grain, rings, charcoal and embers where the spirit sits, soot and cinders, bump-mapped relief), grease with crisp bits and bubbles, steam, and bloom.
   - `gfx.rs`: WebGL helpers, including multisampling with a separate glow buffer.
   - `assets.rs`: the GLB loader.
   - `fx.rs`: CPU particles.

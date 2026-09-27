@@ -27,6 +27,8 @@ pub struct Fx {
     cap: usize,
     data: Vec<f32>,
     seed: u32,
+    /// Where chips come to rest: the log platform (half x, half z, top y), else the ash (y).
+    pub floor: [f32; 4],
 }
 
 const FLOATS: usize = 8; // xyz size rgba
@@ -44,7 +46,7 @@ impl Fx {
         gl.enable_vertex_attrib_array(1);
         gl.vertex_attrib_pointer_with_i32(1, 4, GL::FLOAT, false, (FLOATS * 4) as i32, 16);
         gl.bind_vertex_array(None);
-        Fx { parts: Vec::new(), vao, buf, cap, data: Vec::new(), seed: 0x2F6B_91D3 }
+        Fx { parts: Vec::new(), vao, buf, cap, data: Vec::new(), seed: 0x2F6B_91D3, floor: [0.0, 0.0, -0.29, -0.29] }
     }
 
     fn rnd(&mut self) -> f32 {
@@ -122,14 +124,16 @@ impl Fx {
     }
 
     pub fn update(&mut self, dt: f32) {
+        let [hx, hz, top, ash] = self.floor;
         for p in &mut self.parts {
             p.age += dt;
             p.v.y -= p.grav * dt;
             p.v *= (1.0 - p.drag * dt).max(0.0);
             p.p += p.v * dt;
-            // chips settle on the hearth rather than falling through it
-            if !p.add && p.p.y < -0.29 {
-                p.p.y = -0.29;
+            // chips settle on the logs or the ash rather than falling through them
+            let floor = if p.p.x.abs() < hx && p.p.z.abs() < hz { top } else { ash };
+            if !p.add && p.p.y < floor {
+                p.p.y = floor;
                 p.v = Vec3::ZERO;
             }
         }
