@@ -821,9 +821,12 @@ html.dark .global-theme-toggle {
   margin-top: 1rem;
 }
 
+// A bento of image tiles: three across with the first project two wide, so
+// every project fits in two rows.
 .project-grid {
   display: grid;
-  gap: 1.15rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
 }
 
 .project-card {
@@ -838,12 +841,22 @@ html.dark .global-theme-toggle {
     box-shadow var(--duration-ui) var(--ease-out);
 }
 
+.project-card:first-child {
+  grid-column: span 2;
+}
+
 .project-card__link {
   position: relative;
   display: grid;
-  min-height: 12rem;
+  aspect-ratio: 4 / 3;
   text-decoration: none;
   color: inherit;
+}
+
+// The wide tile takes its height from the row.
+.project-card:first-child .project-card__link {
+  aspect-ratio: auto;
+  height: 100%;
 }
 
 .project-card__link:focus-visible {
@@ -852,10 +865,18 @@ html.dark .global-theme-toggle {
 }
 
 .project-card__media {
-  position: relative;
-  min-width: 0;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
   background: color-mix(in srgb, var(--project-accent) 18%, #15120f);
+}
+
+// A bottom matte keeps the title readable over any image.
+.project-card__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(9, 8, 7, 0.86) 0%, rgba(9, 8, 7, 0.38) 34%, transparent 62%);
 }
 
 .project-card__media img {
@@ -874,14 +895,24 @@ html.dark .global-theme-toggle {
 .project-card__content {
   position: relative;
   z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
   min-width: 0;
-  padding: 1.3rem 1.4rem 1.45rem;
+  padding: 0.9rem 1rem;
 }
 
 .project-card__title {
   margin: 0;
   font-size: 1.2rem;
-  color: var(--color-text-primary);
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  color: #fff9f1;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.72);
+}
+
+.project-card:first-child .project-card__title {
+  font-size: clamp(1.4rem, 3vw, 1.7rem);
 }
 
 // Sentence case at a readable size in soft cream; only the arrow carries the
@@ -890,9 +921,9 @@ html.dark .global-theme-toggle {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  margin-top: 0.7rem;
+  margin-top: 0.45rem;
   color: rgba(255, 249, 241, 0.78);
-  font: 500 0.78rem/1 var(--font-mono);
+  font: 500 0.72rem/1 var(--font-mono);
   letter-spacing: 0.01em;
 }
 
@@ -903,12 +934,13 @@ html.dark .global-theme-toggle {
 }
 
 .project-inline-link {
+  padding: 0.3rem 0.45rem;
+  background: rgba(9, 8, 7, 0.7);
   font-family: var(--font-mono);
   font-size: 0.65rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   text-decoration: none;
-  border-bottom: 1px solid var(--project-accent);
   color: var(--project-accent);
   white-space: nowrap;
 }
@@ -943,55 +975,12 @@ html.dark .global-theme-toggle {
   }
 }
 
+// Top right, clear of the title.
 .project-card__footer {
   position: absolute;
   z-index: 5;
-  right: 1.4rem;
-  bottom: 1.25rem;
-}
-
-// A compact cinematic poster: real project imagery, one strong text matte.
-.projects-shell .project-card__link {
-  grid-template-columns: minmax(0, 1fr);
-  min-height: 12rem;
-}
-
-.projects-shell .project-card__media {
-  position: absolute;
-  inset: 0;
-}
-
-.projects-shell .project-card__media::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, rgba(9, 8, 7, 0.9) 0%, rgba(9, 8, 7, 0.66) 44%, rgba(9, 8, 7, 0.1) 84%),
-    linear-gradient(0deg, rgba(9, 8, 7, 0.4), transparent 58%);
-}
-
-.projects-shell .project-card__content {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  width: min(68%, 34rem);
-  padding: 1.3rem 1.5rem;
-}
-
-.projects-shell .project-card__title {
-  color: #fff9f1;
-  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.72);
-}
-
-.projects-shell .project-card__title {
-  font-size: clamp(1.5rem, 3vw, 1.85rem);
-  letter-spacing: -0.015em;
-  line-height: 1.15;
-}
-
-.projects-shell .project-card__footer {
-  right: 1.5rem;
-  bottom: 1.25rem;
+  top: 0.8rem;
+  right: 0.9rem;
 }
 
 // ========================================
@@ -999,24 +988,21 @@ html.dark .global-theme-toggle {
 // ========================================
 
 @media screen and (max-width: 48em) {
-  .projects-shell .project-card__link {
-    min-height: 14rem;
+  // Two across on phones; the first project gets its own full-width row.
+  .project-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .projects-shell .project-card__media::after {
-    background:
-      linear-gradient(90deg, rgba(9, 8, 7, 0.91) 0%, rgba(9, 8, 7, 0.72) 52%, rgba(9, 8, 7, 0.22) 78%, rgba(9, 8, 7, 0.04) 100%),
-      linear-gradient(0deg, rgba(9, 8, 7, 0.42), transparent 68%);
+  .project-card:first-child .project-card__link {
+    aspect-ratio: 16 / 9;
   }
 
-  .projects-shell .project-card__content {
-    width: 78%;
-    padding: 1.2rem 1.15rem;
+  .project-card__content {
+    padding: 0.75rem 0.8rem;
   }
 
-  .projects-shell .project-card__footer {
-    right: 1.15rem;
-    bottom: 1.2rem;
+  .project-card__title {
+    font-size: 1.05rem;
   }
 
   .site-header {
@@ -1073,10 +1059,6 @@ html.dark .global-theme-toggle {
   .posts .post {
     padding: 2.5rem 0 2.5rem 2rem;
   }
-
-  .project-card__link {
-    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
-  }
 }
 
 @media screen and (min-width: 64em) {
@@ -1086,10 +1068,6 @@ html.dark .global-theme-toggle {
 
   .posts .post {
     padding: 3rem 0 3rem 2.5rem;
-  }
-
-  .project-grid {
-    gap: 1.6rem;
   }
 }
 
