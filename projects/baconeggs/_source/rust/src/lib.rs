@@ -221,10 +221,14 @@ struct Node {
 #[derive(Clone, Copy, PartialEq)]
 enum Kind {
     Iron,
+    IronRim,
     Oil,
     Bacon,
     Egg,
     Yolk,
+    WoodBark,
+    WoodSplit,
+    WoodEnd,
     Fire,
     Ground,
     Shell,
@@ -409,6 +413,7 @@ struct Progs {
     steam: Prog,
     oil: Prog,
     ground: Prog,
+    wood: Prog,
     points: Prog,
     bright: Prog,
     blur: Prog,
@@ -448,6 +453,14 @@ pub struct App {
     strip_hl: Vec3,
     strip_hw: Vec3,
     bacon_phase: HashMap<usize, f32>,
+    /// The two hearth logs as ground-plane segments (a.xz, b.xz) with footprint radii, for their
+    /// shadows in the ash; and per log node its shading seed and trunk radius.
+    logs: [Vec4; 2],
+    log_r: Vec2,
+    log_params: HashMap<usize, Vec2>,
+    /// Height of the ash, and how far the logs stand out of it (for the length of their shadows).
+    ground_y: f32,
+    log_h: f32,
     // framebuffer
     w: i32,
     h: i32,
@@ -524,6 +537,8 @@ pub struct App {
     tossing: bool,
     boost: f32,
     flicker: f32,
+    /// How far the spirit has burned into its logs, 0 (a small scorch) to 1 (fully charred).
+    burn: f32,
     i_pan: usize,
     i_root: usize,
     i_body: usize,
@@ -539,6 +554,9 @@ fn points_mesh(gl: &GL, a: &[f32], b: &[f32]) -> (Mesh, i32) {
 
 /// Box the flame volume is ray-marched inside (world space).
 const FIRE_MIN: Vec3 = Vec3::new(-1.95, -0.36, -1.95);
+/// The char on the logs grows through this many steps over this many seconds.
+const CHAR_STEPS: f32 = 11.0;
+const CHAR_SECS: f32 = 60.0;
 const FIRE_MAX: Vec3 = Vec3::new(1.95, 2.1, 2.05);
 
 fn box_mesh(gl: &GL, lo: Vec3, hi: Vec3) -> Mesh {
@@ -616,7 +634,9 @@ impl App {
         let gl: GL = canvas.get_context_with_context_options("webgl2", &opts)?.ok_or("WebGL2 unavailable")?.dyn_into()?;
         let hdr = gl.get_extension("EXT_color_buffer_float").ok().flatten().is_some();
         let max_samples = gl.get_parameter(GL::MAX_SAMPLES)?.as_f64().unwrap_or(4.0) as i32;
-        let samples = max_samples.clamp(0, 4);
+        // Two samples keep the cel outlines smooth without quadrupling the
+        // full-size color, glow, and depth renderbuffers.
+        let samples = max_samples.clamp(0, 2);
 
         use shaders::*;
         let prog = |name: &str, vs: String, fs: String| gfx::program(&gl, name, &vs, &fs).map_err(err);
@@ -627,6 +647,7 @@ impl App {
             steam: prog("steam", steam_vs(), steam_fs())?,
             oil: prog("oil", cel_vs(), oil_fs())?,
             ground: prog("ground", cel_vs(), ground_fs())?,
+            wood: prog("wood", cel_vs(), wood_fs())?,
             points: prog("points", points_vs(), points_fs())?,
             bright: prog("bright", fullscreen_vs(), bright_fs())?,
             blur: prog("blur", fullscreen_vs(), blur_fs())?,
@@ -656,7 +677,11 @@ impl App {
                 } else {
                     match m {
                         "M_Oil" => Kind::Oil,
+                        "M_IronRim" => Kind::IronRim,
                         "M_Yolk" => Kind::Yolk,
+                        "M_WoodBark" => Kind::WoodBark,
+                        "M_WoodSplit" => Kind::WoodSplit,
+                        "M_WoodEnd" => Kind::WoodEnd,
                         "M_Fire" => Kind::Fire,
                         "M_Shell" => Kind::Shell,
                         "M_Ground" => Kind::Ground,
@@ -740,6 +765,11 @@ impl App {
             strip_hl: Vec3::ZERO,
             strip_hw: Vec3::ZERO,
             bacon_phase: HashMap::new(),
+            logs: [Vec4::new(99.0, 99.0, 99.0, 99.1); 2],
+            log_r: Vec2::ZERO,
+            log_params: HashMap::new(),
+            ground_y: -0.3,
+            log_h: 0.25,
             w: 1,
             h: 1,
             css_w: 1.0,
@@ -812,6 +842,7 @@ impl App {
             tossing: false,
             boost: 0.0,
             flicker: 1.0,
+            burn: 0.0,
             i_pan,
             i_root,
             i_body,
@@ -822,10 +853,12 @@ impl App {
     }
 
     pub fn resize(&mut self, w: i32, h: i32, css_w: f32, css_h: f32) {
-        self.w = w.max(1);
-        self.h = h.max(1);
         self.css_w = css_w.max(1.0);
         self.css_h = css_h.max(1.0);
+        let (w, h) = (w.max(1), h.max(1));
+        if self.w == w && self.h == h && self.rt.is_some() { return; }
+        self.w = w;
+        self.h = h;
         let aspect = self.w as f32 / self.h as f32;
         let base = 32f32.to_radians();
         self.fov = if aspect >= 1.0 { base } else { (2.0 * ((base * 0.5).tan() / aspect).atan()).min(75f32.to_radians()) };
@@ -1234,7 +1267,8 @@ impl App {
             .into_iter()
             .enumerate()
         {
-            self.plumes.push(Plume { pos: Vec3::new(x, 0.68, z), w, h, seed: i as f32 * 1.7 + 0.3 });
+            // start a little above the food so the puffs frame it rather than cover it
+            self.plumes.push(Plume { pos: Vec3::new(x, 0.82, z), w, h, seed: i as f32 * 1.7 + 0.3 });
         }
 
         // sauté: everything that flips (bacon strips and four separate eggs)
@@ -1276,6 +1310,46 @@ impl App {
         }
         self.beads = points_mesh(&self.gl, &beads_a, &beads_b);
 
+        if let Some(&gi) = self.names.get("HearthStone") {
+            self.ground_y = self.nodes[gi].world.w_axis.y;
+        }
+        // hearth logs: pith on local x; the footprint runs through the centroid of the cross-section
+        let mut k = 0;
+        let (mut lo, mut hi) = (Vec3::splat(f32::MAX), Vec3::splat(f32::MIN));
+        for (ni, n) in asset.nodes.iter().enumerate() {
+            let Some(mi) = n.mesh else { continue };
+            if !n.name.starts_with("HearthLog") {
+                continue;
+            }
+            let pos: Vec<Vec3> = asset.meshes[mi].iter().flat_map(|p| p.pos.iter().map(|&v| Vec3::from(v))).collect();
+            let c = pos.iter().copied().sum::<Vec3>() / pos.len().max(1) as f32;
+            let (x0, x1) = pos.iter().fold((f32::MAX, f32::MIN), |(a, b), v| (a.min(v.x), b.max(v.x)));
+            let rad = pos.iter().fold(0f32, |a, v| a.max(Vec2::new(v.y, v.z).length()));
+            let spread = pos.iter().fold(0f32, |a, v| a.max(Vec2::new(v.y - c.y, v.z - c.z).length()));
+            self.log_params.insert(ni, Vec2::new(k as f32 * 3.7 + 1.3, rad));
+            for v in &pos {
+                let p = self.nodes[ni].world.transform_point3(*v);
+                lo = lo.min(p);
+                hi = hi.max(p);
+            }
+            if k < 2 {
+                let w = self.nodes[ni].world;
+                let a = w.transform_point3(Vec3::new(x0, c.y, c.z));
+                let b = w.transform_point3(Vec3::new(x1, c.y, c.z));
+                self.logs[k] = Vec4::new(a.x, a.z, b.x, b.z);
+                self.log_r[k] = spread * 0.7;
+            }
+            k += 1;
+        }
+        if k > 0 {
+            self.log_h = (hi.y - self.ground_y) * 0.6;
+            // the logs' flat tops make a platform under the spirit; chips land on it
+            let top = hi.y - 0.03;
+            self.fx.floor = [lo.x.abs().min(hi.x.abs()) - 0.1, lo.z.abs().min(hi.z.abs()) - 0.1, top, self.ground_y];
+        } else {
+            self.fx.floor = [0.0, 0.0, self.ground_y, self.ground_y];
+        }
+
         // oil sparks hopping out of the pan (pan-local)
         let (mut a, mut b) = (Vec::new(), Vec::new());
         for _ in 0..40 {
@@ -1310,6 +1384,13 @@ impl App {
         self.clock += dt;
         self.time += if self.reduced { dt * 0.35 } else { dt };
         let (t, tt) = (self.clock, self.time);
+
+        // The char creeps outward in steps: a small scorch at first, ten stages between, fully burned
+        // in about a minute after the page opens. Each step eases in over a second and a half.
+        let step = CHAR_SECS / CHAR_STEPS;
+        let k = (t / step).floor().min(CHAR_STEPS);
+        let level = if k < 1.0 { 0.0 } else { k - 1.0 + smooth(0.0, 1.5, t - k * step) };
+        self.burn = (level / CHAR_STEPS).min(1.0);
 
         // orbit damping
         let damp = 1.0 - (1.0f32 - 0.12).powf(dt * 60.0);
@@ -1727,7 +1808,32 @@ impl App {
                             .v4("uDeform", Vec4::ZERO)
                             .f("uTime", tt)
                             .f("uFlare", self.flare)
-                            .f("uFlicker", self.flicker);
+                            .f("uFlicker", self.flicker)
+                            .v4("uLog0", self.logs[0])
+                            .v4("uLog1", self.logs[1])
+                            .v2("uLogR", self.log_r)
+                            .f("uLogH", self.log_h)
+                            .f("uBurn", self.burn);
+                        prim.mesh.draw(gl, GL::TRIANGLES);
+                    }
+                    Kind::WoodBark | Kind::WoodSplit | Kind::WoodEnd => {
+                        let body = &self.nodes[self.i_body];
+                        let lp = self.log_params.get(&ni).copied().unwrap_or(Vec2::new(0.0, 0.4));
+                        let u = self.p.wood.bind(gl);
+                        self.lights(&u, cam);
+                        u.m4("uModel", &model)
+                            .m4("uViewProj", &vp)
+                            .m3("uNrmMat", &nrm)
+                            .v4("uDeform", Vec4::ZERO)
+                            .f("uTime", tt)
+                            .f("uFlicker", self.flicker)
+                            .f("uWood", match prim.kind { Kind::WoodBark => 0.0, Kind::WoodSplit => 1.0, _ => 2.0 })
+                            .f("uSeed", lp.x)
+                            .f("uRad", lp.y)
+                            .f("uGround", self.ground_y)
+                            .f("uBurn", self.burn)
+                            .v3("uBody", body.world.transform_point3(Vec3::ZERO))
+                            .v3("uBodyR", BODY_RAD * (body.s / body.bs));
                         prim.mesh.draw(gl, GL::TRIANGLES);
                     }
                     Kind::Oil => {
@@ -1759,13 +1865,20 @@ impl App {
                         u.v4("uDeform", deform);
                         // base, shadow tint, spec (strength, threshold, softness), fire amount, rim, top gradient
                         let (base, shade, spec, fire, rim, top) = match k {
-                            Kind::Iron => (srgb(0x2a292f), Vec3::new(0.5, 0.5, 0.56), Vec3::new(0.7, 0.978, 0.006), 1.25, 0.9, 0.0),
-                            Kind::Bacon => (Vec3::new(1.0, 0.97, 0.96), Vec3::new(0.84, 0.64, 0.62), Vec3::new(0.5, 0.955, 0.02), 0.12, 0.0, 0.0),
+                            Kind::Iron => (srgb(0x24262a), Vec3::new(0.45, 0.49, 0.54), Vec3::new(0.27, 0.985, 0.012), 0.70, 0.35, 0.0),
+                            Kind::IronRim => (srgb(0x1d2024), Vec3::new(0.42, 0.46, 0.52), Vec3::new(0.32, 0.987, 0.010), 0.85, 0.38, 0.0),
+                            Kind::Bacon => (Vec3::new(1.0, 0.97, 0.96), Vec3::new(0.84, 0.64, 0.62), Vec3::new(0.32, 0.968, 0.014), 0.12, 0.0, 0.0),
                             Kind::Egg => (Vec3::ONE, Vec3::new(0.80, 0.82, 0.94), Vec3::new(0.42, 0.968, 0.014), 0.12, 0.0, 0.0),
-                            Kind::Yolk => (srgb(0xf5bc58), Vec3::new(0.93, 0.62, 0.42), Vec3::new(0.9, 0.986, 0.006), 0.12, 0.0, 0.22),
+                            Kind::Yolk => (srgb(0xfacd52), Vec3::new(0.93, 0.62, 0.42), Vec3::new(0.9, 0.986, 0.006), 0.12, 0.0, 0.22),
                             _ => (Vec3::splat(0.5), Vec3::splat(0.6), Vec3::ZERO, 0.0, 0.0, 0.0),
                         };
-                        u.v3("uBase", base).v3("uShade", shade).v3("uSpec", spec).f("uFireAmt", fire).f("uRim", rim).f("uTopGrad", top);
+                        // yolks darken to a deep orange rim and carry a broad soft sheen under the sticker highlight
+                        let (edge, sheen) = match k {
+                            Kind::Yolk => (srgb(0xe07a16).extend(0.7), 0.16),
+                            _ => (Vec4::ZERO, 0.0),
+                        };
+                        u.v3("uBase", base).v3("uShade", shade).v3("uSpec", spec).f("uFireAmt", fire).f("uRim", rim).f("uTopGrad", top)
+                            .v4("uEdge", edge).f("uSheen", sheen);
                         if let Some(tex) = &prim.tex {
                             gl.active_texture(GL::TEXTURE0);
                             gl.bind_texture(GL::TEXTURE_2D, Some(tex));
@@ -1792,6 +1905,8 @@ impl App {
                 .f("uFireAmt", 0.5)
                 .f("uRim", 0.3)
                 .f("uTopGrad", 0.0)
+                .v4("uEdge", Vec4::ZERO)
+                .f("uSheen", 0.0)
                 .f("uHasTex", 0.0);
             for m in &self.shells {
                 u.m4("uModel", m).m3("uNrmMat", &Mat3::from_mat4(*m).inverse().transpose());
@@ -1821,8 +1936,9 @@ impl App {
             for prim in &self.meshes[mi] {
                 let (w, col) = match prim.kind {
                     Kind::Iron => (1.7, srgb(0x0c0a0c)),
+                    Kind::IronRim => (1.2, srgb(0x0c0a0c)),
                     Kind::Bacon => (1.25, srgb(0x7a2416)),
-                    Kind::Egg => (1.05, srgb(0xa0907e)),
+                    Kind::Egg => (1.0, srgb(0x8a5a2c)),
                     Kind::Yolk => (1.2, srgb(0xc27a2a)),
                     _ => continue,
                 };
@@ -1927,7 +2043,7 @@ impl App {
         let u = self.p.steam.bind(gl);
         let cam_up = Vec3::new(view.x_axis.y, view.y_axis.y, view.z_axis.y);
         u.m4("uViewProj", &vp).v3("uRight", right).v3("uUp", (cam_up + Vec3::Y * 0.35).normalize()).f("uTime", tt);
-        let steam_op = 0.5 * (1.0 + 0.9 * self.boost);
+        let steam_op = 0.42 * (1.0 + 0.9 * self.boost);
         for pl in &self.plumes {
             u.v3("uCenter", pl.pos).v2("uSize", Vec2::new(pl.w, pl.h)).f("uSeed", pl.seed).f("uAspect", pl.w / pl.h).f("uOpacity", steam_op);
             self.quad.draw(gl, GL::TRIANGLES);
