@@ -19,6 +19,12 @@ _source/rust/ ──cargo + wasm-bindgen──▶ pkg/         ├──▶ inde
 - **Frame.** Opaque cel pass, then outlines, then the blended fire, then steam and particles, then MSAA resolve, then bloom from the glow buffer, then the composite.
 - **Page.** `index.html` loads `pkg/hearth.js`, the wasm and `hearth.glb`, all relative to this folder. It forwards pointer, wheel and resize events and calls `App.frame(dt)` on every `requestAnimationFrame`. It has no external dependencies.
 
+## Performance
+
+The fire vertex shader precomputes the twelve tongues' time-dependent parameters and passes them flat to the ray marcher, avoiding repeated hashes and trigonometry at every sample. Particle uploads use a temporary view of wasm memory instead of copying into a new JavaScript backing buffer. The page fetches the model alongside wasm initialization.
+
+On Chrome with an Apple M4 at 1280×800, two local comparisons reduced median whole-frame GPU time from 57.1/55.6 ms to 42.0/35.2 ms (26–37%). Measurements used `EXT_disjoint_timer_query_webgl2`, 20 warmup queries followed by 80 samples, at a fixed animation time of 2.5 seconds. Results are device-specific; resolution, MSAA, ray-march limits, and bloom settings were unchanged.
+
 ## Local dev
 
 Prerequisites:
