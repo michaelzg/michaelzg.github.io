@@ -1007,6 +1007,7 @@ html.dark .global-theme-toggle {
 
   .site-header {
     text-align: left;
+    padding-inline: 1.5rem;
   }
 
   .site-header .measure {
@@ -1014,7 +1015,7 @@ html.dark .global-theme-toggle {
     align-items: center;
     justify-content: flex-start;
     gap: 1rem;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
   }
 
   .site-header .site-title {
@@ -1028,14 +1029,14 @@ html.dark .global-theme-toggle {
     float: none;
     margin: 0;
     text-align: left;
-    flex: 1 1 auto;
+    flex: 1 1 14rem;
     min-width: 0;
   }
 
   .site-header nav {
     gap: 1rem;
     justify-content: flex-start;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
   }
 
   .site-header nav a {
