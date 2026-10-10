@@ -14,7 +14,7 @@ description: Interactive projects and software experiments.
       {% endif %}
       {% assign project_action = project.action | default: "Open project" %}
       <article
-        class="project-card"
+        class="project-card{% if project.size %} project-card--{{ project.size }}{% endif %}"
         style="--project-accent: {{ project.accent | default: '#D2691E' }}; --project-preview-position: {{ project.preview_position | default: '50% 50%' }};"
       >
         <a

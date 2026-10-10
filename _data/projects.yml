@@ -1,5 +1,10 @@
+# Projects page tiles, in grid order. `size: wide` makes a tile two columns
+# wide; `size: half` splits a row between two tiles, for a pair that closes the
+# grid.
+
 - slug: pandamonium
   title: Pandamonium
+  size: wide
   accent: "#D6AD58"
   launch_url: https://pandamonium.michaelzg.com/
   action: Play game
@@ -13,16 +18,26 @@
   preview_image: /assets/img/projects/baconeggs.webp
   preview_position: 50% 55%
 
-- slug: tiny-forest-shrine
-  title: Shrine
-  accent: "#E6A66D"
-  path: /projects/tiny-forest-shrine/
-  action: Watch
-  preview_image: /assets/img/projects/tiny-forest-shrine.webp
-  preview_position: 62% 50%
+- slug: strawberrymatcha
+  title: Strawberry Matcha
+  accent: "#EE8BA3"
+  launch_url: https://strawberrymatcha.michaelzg.com/
+  action: Watch film
+  preview_image: /assets/img/projects/strawberrymatcha.webp
+  preview_position: 48% 50%
+
+- slug: nightowl
+  title: Night Owl
+  size: wide
+  accent: "#9B87F5"
+  launch_url: https://nightowl.michaelzg.com/
+  action: Explore
+  preview_image: /assets/img/projects/nightowl.webp
+  preview_position: 50% 4%
 
 - slug: h3-atlas
   title: H3 Atlas Lab
+  size: half
   accent: "#D2691E"
   path: /projects/h3-atlas/
   action: Explore map
@@ -32,6 +47,7 @@
 
 - slug: life-in-weeks
   title: Life In Weeks
+  size: half
   accent: "#D9B98C"
   path: /life-in-weeks/
   action: See the weeks

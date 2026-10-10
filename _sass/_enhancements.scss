@@ -821,16 +821,17 @@ html.dark .global-theme-toggle {
   margin-top: 1rem;
 }
 
-// A bento of image tiles: three across with the first project two wide, so
-// every project fits in two rows.
+// A bento of image tiles on six columns: a tile takes two, a wide tile four,
+// and a half tile three, so a closing pair fills its row without a hole.
 .project-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0.75rem;
 }
 
 .project-card {
   position: relative;
+  grid-column: span 2;
   border: 1px solid var(--color-border);
   background: #0c0a09;
   overflow: hidden;
@@ -841,8 +842,12 @@ html.dark .global-theme-toggle {
     box-shadow var(--duration-ui) var(--ease-out);
 }
 
-.project-card:first-child {
-  grid-column: span 2;
+.project-card--wide {
+  grid-column: span 4;
+}
+
+.project-card--half {
+  grid-column: span 3;
 }
 
 .project-card__link {
@@ -853,10 +858,15 @@ html.dark .global-theme-toggle {
   color: inherit;
 }
 
-// The wide tile takes its height from the row.
-.project-card:first-child .project-card__link {
+// A wide tile takes its height from the row; a half tile is as tall as the
+// rows of three above it.
+.project-card--wide .project-card__link {
   aspect-ratio: auto;
   height: 100%;
+}
+
+.project-card--half .project-card__link {
+  aspect-ratio: 2 / 1;
 }
 
 .project-card__link:focus-visible {
@@ -911,7 +921,7 @@ html.dark .global-theme-toggle {
   text-shadow: 0 2px 20px rgba(0, 0, 0, 0.72);
 }
 
-.project-card:first-child .project-card__title {
+.project-card--wide .project-card__title {
   font-size: clamp(1.4rem, 3vw, 1.7rem);
 }
 
@@ -988,13 +998,26 @@ html.dark .global-theme-toggle {
 // ========================================
 
 @media screen and (max-width: 48em) {
-  // Two across on phones; the first project gets its own full-width row.
+  // Two across on phones; a wide project gets its own full-width row.
   .project-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .project-card:first-child .project-card__link {
+  .project-card,
+  .project-card--half {
+    grid-column: span 1;
+  }
+
+  .project-card--wide {
+    grid-column: span 2;
+  }
+
+  .project-card--wide .project-card__link {
     aspect-ratio: 16 / 9;
+  }
+
+  .project-card--half .project-card__link {
+    aspect-ratio: 4 / 3;
   }
 
   .project-card__content {
