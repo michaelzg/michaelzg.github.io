@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wind</title>
+<meta name="description" content="The latest global wind forecast on a globe you can turn, near the surface and in the jet stream.">
+<meta name="theme-color" content="#070b10">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23070b10'/%3E%3Cpath d='M6 12h13a3.5 3.5 0 1 0-3.5-3.5M6 17h19M6 22h10a3.5 3.5 0 1 1-3.5 3.5' fill='none' stroke='%23eef0e6' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="lib/d3.min.js" defer></script>
+<script src="lib/topojson-client.min.js" defer></script>
+<script type="importmap">{"imports": {"three": "./lib/three.module.min.js"}}</script>
+<script src="app.js" type="module"></script>
+</head>
+<body>
+<main class="wind">
+  <div id="stage" class="stage" tabindex="0" role="group" aria-label="Globe" aria-describedby="globe-help">
+    <canvas id="globe" role="img" aria-label="Globe with moving lines that follow the forecast wind"></canvas>
+  </div>
+
+  <header class="masthead">
+    <h1>Wind</h1>
+    <p id="dek" class="dek">Near the surface, 10 meters up</p>
+    <p class="dateline"><span id="time">Loading the latest forecast…</span> <span id="state" class="state" hidden>Saved copy</span></p>
+    <div class="key">
+      <p class="key-title">Wind speed in <button id="units" class="key-unit" type="button">km/h</button></p>
+      <div id="legend-bar" class="key-bar" aria-hidden="true"></div>
+      <div id="legend-ticks" class="key-ticks" aria-hidden="true"></div>
+    </div>
+    <p id="notice" class="notice" role="status" hidden><span id="notice-text"></span> <button id="retry" type="button">Try again</button></p>
+  </header>
+
+  <section id="reading" class="reading" aria-label="Wind at the chosen place" hidden>
+    <p class="reading-speed">
+      <strong id="reading-speed">0</strong> <span id="reading-unit">km/h</span>
+      <svg id="reading-arrow" class="reading-arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14V2.5M3.5 7 8 2.5 12.5 7"/></svg>
+    </p>
+    <p id="reading-from" class="reading-from">Calm</p>
+    <p id="reading-place" class="reading-place"></p>
+  </section>
+
+  <nav class="toolbar" aria-label="Globe controls">
+    <button id="pause" class="tool" type="button" aria-label="Pause" aria-pressed="false" title="Pause (Space)">
+      <svg class="icon-pause" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5v10M13 5v10"/></svg>
+      <svg class="icon-play" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4.8v10.4l8.4-5.2z"/></svg>
+    </button>
+    <div class="levels" role="group" aria-label="Height above the ground">
+      <button type="button" data-level="surface" aria-pressed="true">Surface</button>
+      <button type="button" data-level="jet" aria-pressed="false">Jet stream</button>
+    </div>
+    <button id="reset" class="tool" type="button" aria-label="Return to the starting view" title="Starting view (0)">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.6 10a6.4 6.4 0 1 0 1.9-4.6L3.6 7.3"/><path d="M3.6 3.4v3.9h3.9"/></svg>
+    </button>
+    <button id="about" class="tool" type="button" aria-label="About this map" title="About this map">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5"/><path d="M10 9v5M10 6.2v.1"/></svg>
+    </button>
+  </nav>
+
+  <p class="credit">Source: National Weather Service, via earth.nullschool.net</p>
+  <section id="error" class="error" role="alert" hidden><p id="error-text">The forecast is unavailable.</p><button id="reload" type="button">Try again</button></section>
+  <p id="globe-help" class="visually-hidden">Drag or use the arrow keys to turn the globe, scroll or press plus and minus to zoom, and click or press Enter for a reading.</p>
+  <p id="status" class="visually-hidden" aria-live="polite" aria-atomic="true"></p>
+</main>
+
+<dialog id="about-dialog" aria-labelledby="about-title">
+  <button id="close-about" class="close" type="button" aria-label="Close">
+    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15"/></svg>
+  </button>
+  <h2 id="about-title">About this map</h2>
+  <p>Each line traces the wind’s path, sped up thousands of times so the motion is visible. Its color shows how fast the wind is blowing.</p>
+  <p>Surface winds are 10 meters above the ground. Jet stream winds are about 10 kilometers up.</p>
+  <p>The winds come from the Global Forecast System, the National Weather Service’s worldwide weather model, on a one‑degree grid (about 110 kilometers) prepared by earth.nullschool.net. It is a forecast that shows broad patterns, not a measurement, so local winds can differ.</p>
+  <dl class="times">
+    <div><dt>Forecast for</dt><dd id="valid-time">—</dd></div>
+    <div><dt>Forecast made</dt><dd id="model-run">—</dd></div>
+    <div><dt>Updated</dt><dd id="checked">—</dd></div>
+  </dl>
+  <p class="how">Drag to turn the globe, scroll or pinch to zoom, and click for a reading. On a keyboard, the arrow keys turn it, plus and minus zoom, Enter reads the center and Space pauses.</p>
+  <p class="links">
+    <a href="https://www.emc.ncep.noaa.gov/emc/pages/numerical_forecast_systems/gfs.php" target="_blank" rel="noopener noreferrer">Global Forecast System</a>
+    <a href="https://earth.nullschool.net/about.html" target="_blank" rel="noopener noreferrer">earth.nullschool.net</a>
+    <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">Natural Earth</a>
+  </p>
+</dialog>
+<noscript><p class="no-script">Turn on JavaScript to see the wind.</p></noscript>
+</body>
+</html>

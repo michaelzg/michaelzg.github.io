@@ -7,6 +7,9 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # Rebuild every three hours so the Wind project publishes a current forecast.
+  schedule:
+    - cron: "23 */3 * * *"
 
 permissions:
   contents: read
@@ -48,6 +51,12 @@ jobs:
         run: |
           bundle lock --add-platform x86_64-linux
           bundle install --jobs 4
+      # projects/wind: publish the current forecast beside the page. If the
+      # source is down, the page falls back to its dated saved copy, labeled so.
+      - name: Fetch current wind
+        continue-on-error: true
+        run: python3 projects/wind/_source/server.py --write projects/wind/api
+
       - name: Build site
         run: bundle exec jekyll build
         env:

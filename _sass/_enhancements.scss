@@ -822,7 +822,8 @@ html.dark .global-theme-toggle {
 }
 
 // A bento of image tiles on six columns: a tile takes two, a wide tile four,
-// and a half tile three, so a closing pair fills its row without a hole.
+// a full tile all six, and a half tile three, so a closing pair fills its row
+// without a hole.
 .project-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -850,6 +851,10 @@ html.dark .global-theme-toggle {
   grid-column: span 3;
 }
 
+.project-card--full {
+  grid-column: 1 / -1;
+}
+
 .project-card__link {
   position: relative;
   display: grid;
@@ -867,6 +872,11 @@ html.dark .global-theme-toggle {
 
 .project-card--half .project-card__link {
   aspect-ratio: 2 / 1;
+}
+
+// A cinematic band across the whole grid.
+.project-card--full .project-card__link {
+  aspect-ratio: 21 / 8;
 }
 
 .project-card__link:focus-visible {
@@ -1008,11 +1018,13 @@ html.dark .global-theme-toggle {
     grid-column: span 1;
   }
 
-  .project-card--wide {
-    grid-column: span 2;
+  .project-card--wide,
+  .project-card--full {
+    grid-column: 1 / -1;
   }
 
-  .project-card--wide .project-card__link {
+  .project-card--wide .project-card__link,
+  .project-card--full .project-card__link {
     aspect-ratio: 16 / 9;
   }
 
