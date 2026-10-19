@@ -16,7 +16,9 @@ const MAX_VIEW_LAT = 86;
 const TRAILS_PER_PIXEL = 46;
 const STROKE = 1.5;           // trail width at its head, in CSS pixels
 const COLORS = {background: '#070b10', ocean: '#0d1721', ground: '#252d35', coast: '#7b8893', border: '#3e4952', rim: [.32, .47, .62]};
-export const PALETTE = ['#5b8fbe', '#89bedb', '#cbe7ef', '#f6f5ee', '#f8d47f', '#f59c58', '#e85d50'];
+// Lightness rises steadily with speed (CIE L* 53 to 95), so the fastest winds are
+// the brightest marks, and the calmest still read over ocean and land.
+export const PALETTE = ['#5582b2', '#8086c2', '#b483bb', '#e48a80', '#f5a561', '#facb6c', '#fdf2b5'];
 
 const shortest = degrees => ((degrees + 540) % 360) - 180;
 

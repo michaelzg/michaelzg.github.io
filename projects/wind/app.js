@@ -56,7 +56,7 @@ function describe(wind, unit) {
   if (wind.speed < .3) return {speed, from: 'Calm', bearing: null};
   // Meteorological direction: where the wind comes from, clockwise from north.
   const bearing = (Math.atan2(-wind.u, -wind.v) * 180 / Math.PI + 360) % 360;
-  return {speed, from: `From the ${COMPASS[Math.round(bearing / 22.5) % 16]} · ${Math.round(bearing)}°`, bearing};
+  return {speed, from: `From the ${COMPASS[Math.round(bearing / 22.5) % 16]}`, bearing};
 }
 
 function coordinates([lon, lat]) {
@@ -277,8 +277,7 @@ async function start() {
   });
 
   // Landscape: the globe fills the height, beside the title or shifted right of
-  // it. Portrait: the whole disc sits between the title and the toolbar, a little
-  // above the middle of that space.
+  // it. Portrait: the whole disc is centered between the title and the source.
   const masthead = document.querySelector('.masthead'), toolbar = document.querySelector('.toolbar');
   const credit = document.querySelector('.credit');
   function layout() {
@@ -296,7 +295,7 @@ async function start() {
       else {
         const top = title.bottom + 16, band = floor - top;
         radius = Math.min(band / 2, width / 2 - 8);
-        y = top + radius + (band - 2 * radius) * .3;
+        y = top + band / 2;
       }
     }
     globe.setLayout({x, y, radius});

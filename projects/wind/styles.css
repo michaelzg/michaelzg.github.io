@@ -329,7 +329,6 @@ h1 {
   stroke-linejoin: round;
 }
 
-#pause svg.icon-play { fill: currentColor; stroke-width: 1.2; }
 #pause .icon-play, #pause[aria-pressed="true"] .icon-pause { display: none; }
 #pause[aria-pressed="true"] .icon-play { display: block; }
 
