@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-"""Current NOAA GFS winds for the Wind globe: a local preview server and a
-build-time exporter. Standard library only.
+"""Current NOAA GFS winds and named storms for the Wind globe: a local preview
+server and a build-time exporter. Standard library only.
 
 GFS fields are regridded and hosted by Earth / Nullschool. EPak's PPAK blocks
 store signed, variable-length integer residuals; each is reconstructed from the
 preceding row and column, then scaled.
 
   python3 projects/wind/_source/server.py              # preview with live data
-  python3 projects/wind/_source/server.py --write DIR  # write DIR/surface.json, DIR/jet.json
+  python3 projects/wind/_source/server.py --write DIR  # write DIR/surface.json, jet.json, storms.json
+
+Storms come from the tropical cyclone vitals that started the same GFS run: one
+line per active storm from the warning centers (NHC, JTWC), with its position
+and maximum sustained wind.
 """
 
 import argparse
@@ -32,16 +36,27 @@ SOURCES = {
     "surface": SOURCE_ROOT + "current-wind-surface-level-gfs-1.0.epak",
     "jet": SOURCE_ROOT + "current-wind-isobaric-250hPa-gfs-1.0.epak",
 }
+VITALS_URL = ("https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/"
+              "gfs.{run:%Y%m%d}/{run:%H}/atmos/gfs.t{run:%H}z.syndata.tcvitals.tm00")
+NHC_STORMS_URL = "https://www.nhc.noaa.gov/CurrentStorms.json"
+# Maximum sustained wind, m/s: 34 knots makes a tropical storm, 64 knots a
+# hurricane, typhoon or cyclone, depending on the basin (the storm id's letter).
+TROPICAL_STORM, HURRICANE = 17.5, 32.9
+BASIN_WORDS = {"L": "Hurricane", "E": "Hurricane", "C": "Hurricane", "W": "Typhoon"}
+NHC_BASINS = {"al": "L", "ep": "E", "cp": "C"}
+NHC_WORDS = {"HU": "Hurricane", "TS": "Tropical Storm", "STS": "Subtropical Storm"}
+VITALS_LINE = re.compile(r"^(\S+)\s+(\d\d[A-Z])\s+(\S+)\s+(\d{8})\s+(\d{4})\s+(\d{2,3})([NS])\s+(\d{3,4})([EW])"
+                         r"\s+\S+\s+\S+\s+(\d{3,4})\s+\S+\s+\S+\s+(\d+)")
 CACHE_SECONDS = 1800
 MAX_UPSTREAM_BYTES = 4 * 1024 * 1024
 USER_AGENT = "Wind/1.0 (+https://michaelzg.com/projects/wind/)"
 # The page asks for api/<level>.json beside itself, which is also where the
 # site build publishes the files, so one URL works locally and on a static host.
-STATIC_ROUTE = re.compile(r"/api/(surface|jet)\.json$")
+STATIC_ROUTE = re.compile(r"/api/(surface|jet|storms)\.json$")
 DECODE_ERRORS = (OSError, URLError, HTTPError, ValueError, KeyError, IndexError,
                  OverflowError, struct.error, StopIteration)
 _cache = {}
-_locks = {level: threading.Lock() for level in SOURCES}
+_locks = {name: threading.Lock() for name in [*SOURCES, "storms"]}
 
 
 def iso_now():
@@ -192,6 +207,71 @@ def get_wind(level):
         return result
 
 
+def fetch(url):
+    with urlopen(Request(url, headers={"User-Agent": USER_AGENT}), timeout=12) as response:
+        payload = response.read(MAX_UPSTREAM_BYTES + 1)
+    if len(payload) > MAX_UPSTREAM_BYTES:
+        raise ValueError("Upstream file exceeds size limit")
+    return payload
+
+
+def nhc_classes():
+    """NHC's own classification of its active storms, keyed like vitals ids
+    ("21E"). It knows when a storm has become post-tropical; vitals do not."""
+    try:
+        storms = json.loads(fetch(NHC_STORMS_URL))["activeStorms"]
+    except (*DECODE_ERRORS, TypeError):
+        return {}
+    return {f"{storm['id'][2:4]}{NHC_BASINS.get(storm['id'][:2], '?')}": storm["classification"] for storm in storms}
+
+
+def parse_vitals(text, classes):
+    storms = []
+    for line in text.splitlines():
+        match = VITALS_LINE.match(line)
+        if not match:
+            continue
+        center, storm_id, name, day, clock, lat, ns, lon, ew, pressure, wind = match.groups()
+        if int(storm_id[:2]) >= 90 or name == "INVEST":
+            continue  # disturbances being watched, not storms
+        wind = float(wind)
+        if storm_id in classes:
+            kind = NHC_WORDS.get(classes[storm_id])
+        elif wind >= HURRICANE:
+            kind = BASIN_WORDS.get(storm_id[2], "Cyclone")
+        else:
+            kind = "Tropical Storm" if wind >= TROPICAL_STORM else None
+        if not kind:
+            continue  # depressions and post-tropical lows go unlabeled
+        storms.append({
+            "id": storm_id, "name": name.capitalize(), "kind": kind, "center": center,
+            "lat": int(lat) / 10 * (1 if ns == "N" else -1), "lon": int(lon) / 10 * (1 if ew == "E" else -1),
+            "maxWind": wind, "pressure": int(pressure),
+            "time": dt.datetime.strptime(day + clock, "%Y%m%d%H%M").isoformat(timespec="seconds") + "Z",
+        })
+    return storms
+
+
+def storms_for_run(run_time, classes=None):
+    run = dt.datetime.fromisoformat(run_time.replace("Z", "+00:00"))
+    url = VITALS_URL.format(run=run)
+    storms = parse_vitals(fetch(url).decode("ascii", "replace"), {} if classes is None else classes)
+    return {"runTime": canonical_time(run_time), "fetchedAt": iso_now(), "storms": storms,
+            "source": "NCEP tropical cyclone vitals (NHC, JTWC)", "sourceUrl": url, "snapshot": False}
+
+
+def get_storms():
+    """Named storms for the run behind the current surface field."""
+    run_time = get_wind("surface")["runTime"]
+    with _locks["storms"]:
+        entry = _cache.get("storms")
+        if entry and time.monotonic() - entry[0] < CACHE_SECONDS and entry[1]["runTime"] == run_time:
+            return entry[1]
+        result = storms_for_run(run_time, nhc_classes())
+        _cache["storms"] = (time.monotonic(), result)
+        return result
+
+
 def to_json(value):
     return json.dumps(value, separators=(",", ":"), allow_nan=False).encode()
 
@@ -208,10 +288,10 @@ class WindHandler(SimpleHTTPRequestHandler):
             # A local preview: always serve the saved edits.
             del self.headers["If-Modified-Since"]
             return super().do_GET()
-        if level not in SOURCES:
+        if level not in SOURCES and level != "storms":
             return self.send_json(400, {"error": "Choose surface or jet"})
         try:
-            return self.send_json(200, get_wind(level))
+            return self.send_json(200, get_storms() if level == "storms" else get_wind(level))
         except DECODE_ERRORS as error:
             self.log_error("Wind upstream unavailable: %s", error)
             return self.send_json(502, {"error": "Current NOAA GFS data could not be fetched",
@@ -245,6 +325,13 @@ def write_current(directory):
         result.pop("cached", None)
         (directory / f"{level}.json").write_bytes(to_json(result))
         print(f"{level}: valid {result['validTime']}, model run {result['runTime']}")
+    try:
+        storms = get_storms()
+    except DECODE_ERRORS as error:
+        print(f"storms: unavailable ({error})", file=sys.stderr)
+        return 1
+    (directory / "storms.json").write_bytes(to_json(storms))
+    print(f"storms: {', '.join(s['kind'] + ' ' + s['name'] for s in storms['storms']) or 'none named'}")
     return 1 if failed else 0
 
 

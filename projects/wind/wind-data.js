@@ -67,6 +67,25 @@ export async function loadWind({level, force = false, signal} = {}) {
   }
 }
 
+/**
+ * Named storms from the tropical cyclone vitals that started the same model
+ * run as `grid`: the current list, else the saved one, else none. A storm list
+ * from another run is never used, so labels always sit on the field they name.
+ */
+export async function loadStorms(grid, {signal} = {}) {
+  for (const path of ['api/storms.json', 'data/storms.json']) {
+    try {
+      const data = await fetchJson(new URL(path, import.meta.url), {signal, timeout: 8000});
+      if (data.runTime === grid.runTime && Array.isArray(data.storms)) {
+        return data.storms.filter(storm => storm.name && storm.kind && Number.isFinite(storm.lat) && Number.isFinite(storm.lon));
+      }
+    } catch (error) {
+      if (signal?.aborted) throw error;
+    }
+  }
+  return [];
+}
+
 /** Bilinear interpolation of the grid at a longitude and latitude in degrees. */
 export function sampleWind(grid, longitude, latitude) {
   if (!grid || !Number.isFinite(longitude) || !Number.isFinite(latitude) || Math.abs(latitude) > 90) return null;

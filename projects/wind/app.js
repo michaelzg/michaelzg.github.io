@@ -1,16 +1,17 @@
-import {loadWind, sampleWind, REFRESH_INTERVAL} from './wind-data.js';
+import {loadWind, loadStorms, sampleWind, REFRESH_INTERVAL} from './wind-data.js';
 import {WindGlobe, PALETTE} from './globe-renderer.js';
 
 const $ = id => document.getElementById(id);
 const d3 = window.d3;
 
-// Trail motion is sped up for visibility, the jet stream less so because it is faster.
+// Trail motion is sped up for visibility, and eases off above `ease` m/s so storms
+// stay legible; the jet stream is sped up less because it is faster.
 // `key` is each unit's color scale: its top speed and tick spacing, round in that
 // unit. Trail colors follow the scale shown, so the key always reads exactly.
 const LEVELS = {
-  surface: {dek: 'Near the surface, 10 meters up', name: 'surface', speedScale: .0094, trail: 1.1,
+  surface: {dek: 'Near the surface, 10 meters up', name: 'surface', speedScale: .0132, ease: 8, trail: 1.3,
     key: {'km/h': [100, 25], 'm/s': [25, 5], knots: [50, 10]}},
-  jet: {dek: 'In the jet stream, about 10 kilometers up', name: 'jet stream', speedScale: .0032, trail: 1.1,
+  jet: {dek: 'In the jet stream, about 10 kilometers up', name: 'jet stream', speedScale: .0042, ease: 35, trail: 1.3,
     key: {'km/h': [300, 100], 'm/s': [80, 20], knots: [160, 40]}},
 };
 const UNITS = [
@@ -59,6 +60,27 @@ function describe(wind, unit) {
   return {speed, from: `From the ${COMPASS[Math.round(bearing / 22.5) % 16]}`, bearing};
 }
 
+/**
+ * Where the model draws a storm: the strongest cyclonic spin within 3° of the
+ * warning center's position, so its name sits on the spiral it labels.
+ */
+function vortexCenter(grid, lon, lat) {
+  const spin = lat >= 0 ? 1 : -1, h = .5;
+  let center = [lon, lat], strongest = 4; // m/s per degree; weaker spin keeps the reported position
+  for (let dy = -3; dy <= 3; dy += .25) {
+    for (let dx = -3; dx <= 3; dx += .25) {
+      if (dx * dx + dy * dy > 9) continue;
+      const y = lat + dy, stretch = Math.cos(y * Math.PI / 180), x = lon + dx / stretch;
+      const east = sampleWind(grid, x + h / stretch, y), west = sampleWind(grid, x - h / stretch, y);
+      const north = sampleWind(grid, x, y + h), south = sampleWind(grid, x, y - h);
+      if (!east || !west || !north || !south) continue;
+      const vorticity = spin * (east.v - west.v - north.u + south.u) / (2 * h);
+      if (vorticity > strongest) [strongest, center] = [vorticity, [x, y]];
+    }
+  }
+  return center;
+}
+
 function coordinates([lon, lat]) {
   const part = (value, positive, negative) => `${Math.abs(value).toFixed(1)}° ${value >= 0 ? positive : negative}`;
   return `${part(lat, 'north', 'south')}, ${part(lon, 'east', 'west')}`;
@@ -67,17 +89,21 @@ function coordinates([lon, lat]) {
 async function start() {
   const state = {
     level: 'surface', unit: Math.max(0, UNITS.findIndex(unit => unit.label === storage.get('wind-unit'))),
-    paused: motion.matches, grid: null, selected: null, loading: false, request: 0,
+    paused: motion.matches, grid: null, selected: null, storms: [], loading: false, request: 0,
   };
   let controller, poll, pageCached = false;
   const dialog = $('about-dialog');
   const reading = $('reading');
+  const stormLayer = $('storms');
   const announce = text => { $('status').textContent = text; };
 
   const globe = new WindGlobe($('globe'), {
     reducedMotion: motion.matches,
     onPick: point => select(point),
-    onFrame: placeReading,
+    onFrame: () => {
+      placeReading();
+      placeStorms();
+    },
   });
 
   function select(point) {
@@ -140,6 +166,44 @@ async function start() {
     if (bearing !== '') $('reading-arrow').style.transform = `rotate(${globe.screenAngle(lon, lat, (+bearing + 180) % 360)}deg)`;
   }
 
+  // Named storms are surface features, labeled on the surface field only.
+  async function showStorms(grid, request, signal) {
+    const storms = state.level === 'surface' ? await loadStorms(grid, {signal}).catch(() => []) : [];
+    if (request !== state.request) return;
+    state.storms = storms.map(storm => ({...storm, at: vortexCenter(grid, storm.lon, storm.lat)}));
+    stormLayer.replaceChildren(...state.storms.map(storm => {
+      const label = document.createElement('p');
+      label.className = 'storm';
+      label.setAttribute('role', 'listitem');
+      label.innerHTML = '<span class="storm-kind"></span> <span class="storm-name"></span>';
+      label.firstChild.textContent = storm.kind;
+      label.lastChild.textContent = storm.name;
+      return label;
+    }));
+    placeStorms();
+  }
+
+  function clearStorms() {
+    state.storms = [];
+    stormLayer.replaceChildren();
+  }
+
+  // Each name sits clear of its storm's bright core, about 3° out, on a leader
+  // from the eye that grows with zoom.
+  function placeStorms() {
+    const {width} = globe.layout;
+    const leader = Math.round(Math.min(90, Math.max(22, globe.pixelsPerRadian() * 3 * Math.PI / 180)));
+    state.storms.forEach((storm, i) => {
+      const label = stormLayer.children[i];
+      const {x, y, facing} = globe.project(...storm.at);
+      label.style.setProperty('--leader', `${leader}px`);
+      const w = label.offsetWidth, left = x + 6 + w > width - 8;
+      label.classList.toggle('is-left', left);
+      label.classList.toggle('is-behind', facing < .05);
+      label.style.transform = `translate(${Math.round(left ? x - 6 - w : x + 6)}px, ${Math.round(y - label.offsetHeight / 2)}px)`;
+    });
+  }
+
   /** The fastest speed on the key, in m/s, for the current level and unit. */
   function keyTop() {
     const unit = UNITS[state.unit];
@@ -186,6 +250,7 @@ async function start() {
     if (state.grid?.level !== level) {
       state.grid = null;
       globe.clearData();
+      clearStorms();
       reading.hidden = true;
       $('notice').hidden = true;
       $('state').hidden = true;
@@ -205,11 +270,13 @@ async function start() {
       state.grid = grid;
       globe.setData(grid, {...LEVELS[level], maxSpeed: keyTop()});
       updateLabels();
+      showStorms(grid, request, controller.signal);
       announce(`${LEVELS[level].dek}. Forecast for ${clock(grid.validTime)}.${grid.snapshot ? ' This is a saved copy.' : ''}`);
     } catch (error) {
       if (request !== state.request) return;
       state.grid = null;
       globe.clearData();
+      clearStorms();
       $('time').textContent = 'Forecast unavailable';
       $('error-text').textContent = error.message;
       $('error').hidden = false;

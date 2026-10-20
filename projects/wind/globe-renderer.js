@@ -8,12 +8,12 @@ THREE.ColorManagement.enabled = false;
 const RAD = Math.PI / 180;
 const DEG = 180 / Math.PI;
 const FOV = 30;
-const HOME = {lon: -32, lat: 22, scale: 1};
+const HOME = {lon: -32, lat: 22, scale: 1.2};
 const ZOOM = [.7, 3.5];
 const MAX_VIEW_LAT = 86;
 // Trails per CSS pixel of the globe's radius. Trail length grows with the globe,
 // so a count in proportion to its radius keeps the density even at any size.
-const TRAILS_PER_PIXEL = 46;
+const TRAILS_PER_PIXEL = 52;
 const STROKE = 1.5;           // trail width at its head, in CSS pixels
 const COLORS = {background: '#070b10', ocean: '#0d1721', ground: '#252d35', coast: '#7b8893', border: '#3e4952', rim: [.32, .47, .62]};
 // Lightness rises steadily with speed (CIE L* 53 to 95), so the fastest winds are
@@ -288,7 +288,7 @@ export class WindGlobe {
 
   isHome() {
     const {view} = this;
-    return Math.abs(shortest(view.lon - HOME.lon)) < .5 && Math.abs(view.lat - HOME.lat) < .5 && Math.abs(view.scale - 1) < .01;
+    return Math.abs(shortest(view.lon - HOME.lon)) < .5 && Math.abs(view.lat - HOME.lat) < .5 && Math.abs(view.scale - HOME.scale) < .01;
   }
 
   zoomBy(factor) {

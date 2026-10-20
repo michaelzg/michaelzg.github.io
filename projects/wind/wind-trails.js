@@ -6,13 +6,17 @@ const SIN_MAX_LAT = Math.sin(MAX_LAT);
 const LIFE = [2.6, 6]; // seconds a trail lives before it starts again elsewhere
 const FADE_OUT = .9;
 const RADIUS = 1.0035;
+// Motion eases off as wind strengthens: pace = wind / (1 + speed / ease) ** EASING.
+// Strong winds still move faster, but a storm's core no longer whirls.
+const EASING = .75;
+const MAX_CURL = 2; // radians a tail may turn before it fades, so tails never wrap a storm's eye
 
 const vertexShader = points => /* glsl */ `
   uniform sampler2D uWind;     // RG: eastward, northward m/s
   uniform sampler2D uPalette;
   uniform vec4 uGrid;          // first longitude, first latitude, spacing, in degrees
   uniform vec2 uGridSize;
-  uniform float uMaxSpeed, uSpeedScale, uTrail, uWidth, uOpacity;
+  uniform float uMaxSpeed, uSpeedScale, uEase, uTrail, uWidth, uOpacity;
   uniform vec2 uViewport;      // drawing buffer, in pixels
   attribute vec2 aPoint;       // index along the trail from its head, side of the ribbon
   attribute vec4 aHead;        // longitude, latitude (radians), age, lifetime (seconds)
@@ -24,6 +28,15 @@ const vertexShader = points => /* glsl */ `
 
   vec2 windAt(vec2 p) {
     return texture2D(uWind, ((p * DEG - uGrid.xy) / uGrid.zw + .5) / uGridSize).rg;
+  }
+
+  vec2 pace(vec2 wind) {
+    return wind * pow(1. + length(wind) / uEase, -${EASING});
+  }
+
+  float turn(vec2 a, vec2 b) {
+    float lengths = length(a) * length(b);
+    return lengths > 1e-6 ? acos(clamp(dot(a, b) / lengths, -1., 1.)) : 0.;
   }
 
   vec3 onSphere(vec2 p) {
@@ -41,15 +54,20 @@ const vertexShader = points => /* glsl */ `
     }
 
     // Step back along the steady field from the head. Every vertex of a trail
-    // takes the same steps, so consecutive points join exactly.
+    // takes the same steps, so consecutive points join exactly. A tail that has
+    // curled too far stops there and fades.
     float along = aPoint.x / float(POINTS - 1);
     float stepSize = uSpeedScale * min(aHead.z, uTrail) / float(POINTS - 1);
     vec2 p = aHead.xy;
     vec2 wind = windAt(p);
+    float curl = 0.;
     for (int i = 0; i < POINTS; i++) {
-      if (float(i) >= aPoint.x) break;
-      p -= vec2(wind.x / max(cos(p.y), .05), wind.y) * stepSize;
-      wind = windAt(p);
+      if (float(i) >= aPoint.x || curl > ${MAX_CURL}.) break;
+      vec2 velocity = pace(wind);
+      p -= vec2(velocity.x / max(cos(p.y), .05), velocity.y) * stepSize;
+      vec2 next = windAt(p);
+      curl += turn(wind, next);
+      wind = next;
     }
 
     vec3 surface = onSphere(p);
@@ -78,7 +96,8 @@ const vertexShader = points => /* glsl */ `
     float lifetime = smoothstep(0., .3, age) * (1. - smoothstep(life - ${FADE_OUT}, life, age));
     float facing = smoothstep(horizon, horizon + .2, dot(surface, eye));
     // Calm air keeps only a faint mark, so slow eddies don't read as noise.
-    vAlpha = uOpacity * pow(1. - along, .9) * lifetime * facing * coverage * mix(.28, 1., smoothstep(0., .3, speed));
+    vAlpha = uOpacity * pow(1. - along, .9) * lifetime * facing * coverage * mix(.28, 1., smoothstep(0., .3, speed))
+      * (1. - smoothstep(${MAX_CURL * .55}, ${MAX_CURL}., curl));
   }
 `;
 
@@ -148,7 +167,7 @@ export class WindTrails {
       uniforms: {
         uWind: {value: null}, uPalette: {value: paletteTexture(palette)},
         uGrid: {value: new THREE.Vector4()}, uGridSize: {value: new THREE.Vector2()},
-        uMaxSpeed: {value: 1}, uSpeedScale: {value: 0}, uTrail: {value: 1},
+        uMaxSpeed: {value: 1}, uSpeedScale: {value: 0}, uEase: {value: 10}, uTrail: {value: 1},
         uWidth: {value: 1}, uOpacity: {value: 1}, uViewport: {value: new THREE.Vector2(1, 1)},
       },
     });
@@ -158,7 +177,7 @@ export class WindTrails {
     this.mesh.visible = false;
   }
 
-  setField(grid, {maxSpeed, speedScale, trail}, keepTrails = false) {
+  setField(grid, {maxSpeed, speedScale, ease, trail}, keepTrails = false) {
     const uniforms = this.material.uniforms;
     uniforms.uWind.value?.dispose();
     uniforms.uWind.value = windTexture(grid);
@@ -166,9 +185,11 @@ export class WindTrails {
     uniforms.uGridSize.value.set(grid.width, grid.height);
     uniforms.uMaxSpeed.value = maxSpeed;
     uniforms.uSpeedScale.value = speedScale;
+    uniforms.uEase.value = ease;
     uniforms.uTrail.value = trail;
     this.grid = grid;
     this.speedScale = speedScale;
+    this.ease = ease;
     this.mesh.visible = true;
     if (keepTrails) return;
     // Start every trail full length, partway through its life.
@@ -207,7 +228,7 @@ export class WindTrails {
     const grid = this.grid;
     if (!grid || !this.count) return;
     const {u, v, width, height, lon0, lat0, dx, dy} = grid;
-    const heads = this.heads, scale = this.speedScale * dt;
+    const heads = this.heads, scale = this.speedScale * dt, ease = this.ease;
     for (let o = 0, end = this.count * 4; o < end; o += 4) {
       const age = heads[o + 2] + dt;
       if (age >= heads[o + 3]) {
@@ -224,12 +245,13 @@ export class WindTrails {
       const a = y0 * width + x0, b = y0 * width + x1, c = y1 * width + x0, d = y1 * width + x1;
       const east = (u[a] + (u[b] - u[a]) * tx) * (1 - ty) + (u[c] + (u[d] - u[c]) * tx) * ty;
       const north = (v[a] + (v[b] - v[a]) * tx) * (1 - ty) + (v[c] + (v[d] - v[c]) * tx) * ty;
-      const nextLat = lat + north * scale;
+      const pace = scale * (1 + Math.hypot(east, north) / ease) ** -EASING;
+      const nextLat = lat + north * pace;
       if (nextLat > MAX_LAT || nextLat < -MAX_LAT) {
         this.spawn(o);
         continue;
       }
-      let nextLon = lon + east * scale / Math.cos(lat);
+      let nextLon = lon + east * pace / Math.cos(lat);
       if (nextLon > Math.PI) nextLon -= 2 * Math.PI;
       else if (nextLon < -Math.PI) nextLon += 2 * Math.PI;
       heads[o] = nextLon;
