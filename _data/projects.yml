@@ -1,6 +1,6 @@
 # Projects page tiles, in grid order. `size: wide` makes a tile two columns
-# wide; `size: full` gives a tile a row of its own, as a band; `size: half`
-# splits a row between two tiles, for a pair that closes the grid.
+# wide; `size: half` splits a row between two tiles, for a pair that closes the
+# grid. On phones a lone last tile takes its row.
 
 - slug: pandamonium
   title: Pandamonium
@@ -37,7 +37,6 @@
 
 - slug: wind
   title: Wind
-  size: full
   accent: "#8FC4DE"
   path: /projects/wind/
   action: See the wind
@@ -46,7 +45,6 @@
 
 - slug: h3-atlas
   title: H3 Atlas Lab
-  size: half
   accent: "#D2691E"
   path: /projects/h3-atlas/
   action: Explore map
@@ -56,7 +54,6 @@
 
 - slug: life-in-weeks
   title: Life In Weeks
-  size: half
   accent: "#D9B98C"
   path: /life-in-weeks/
   action: See the weeks
