@@ -175,12 +175,23 @@ async function start() {
       const label = document.createElement('p');
       label.className = 'storm';
       label.setAttribute('role', 'listitem');
-      label.innerHTML = '<span class="storm-kind"></span> <span class="storm-name"></span>';
-      label.firstChild.textContent = storm.kind;
-      label.lastChild.textContent = storm.name;
+      label.innerHTML = '<span class="storm-kind"></span> <span class="storm-name"></span> <span class="storm-wind"></span>';
+      label.querySelector('.storm-kind').textContent = storm.kind;
+      label.querySelector('.storm-name').textContent = storm.name;
       return label;
     }));
+    labelStormWinds();
     placeStorms();
+  }
+
+  // The advisory's peak sustained wind: the 1° model smooths a storm's core, so
+  // a reading at the eye shows less than the storm's official strength.
+  function labelStormWinds() {
+    const unit = UNITS[state.unit];
+    state.storms.forEach((storm, i) => {
+      stormLayer.children[i].querySelector('.storm-wind').textContent =
+        `· ${(storm.maxWind * unit.factor).toFixed(unit.digits)} ${unit.label}`;
+    });
   }
 
   function clearStorms() {
@@ -192,7 +203,7 @@ async function start() {
   // from the eye that grows with zoom.
   function placeStorms() {
     const {width} = globe.layout;
-    const leader = Math.round(Math.min(90, Math.max(22, globe.pixelsPerRadian() * 3 * Math.PI / 180)));
+    const leader = Math.round(Math.min(90, Math.max(30, globe.pixelsPerRadian() * 3 * Math.PI / 180)));
     state.storms.forEach((storm, i) => {
       const label = stormLayer.children[i];
       const {x, y, facing} = globe.project(...storm.at);
@@ -221,6 +232,7 @@ async function start() {
       return tick;
     }));
     globe.setColorScale(keyTop());
+    labelStormWinds();
     updateReading();
   }
 
@@ -344,7 +356,8 @@ async function start() {
   });
 
   // Landscape: the globe fills the height, beside the title or shifted right of
-  // it. Portrait: the whole disc is centered between the title and the source.
+  // it, and opens a little closer in. Portrait: it opens filling the height
+  // between the title and the source, as a full-bleed disc.
   const masthead = document.querySelector('.masthead'), toolbar = document.querySelector('.toolbar');
   const credit = document.querySelector('.credit');
   function layout() {
@@ -354,7 +367,7 @@ async function start() {
       .filter(box => box.height).map(box => box.top)) - 24;
     const margin = Math.min(24, height * .03);
     let radius = Math.min((floor - margin) / 2, width * .58);
-    let x = width / 2, y = margin + (floor - margin) / 2;
+    let x = width / 2, y = margin + (floor - margin) / 2, homeScale = 1.2;
     const clear = cx => Math.hypot(cx - Math.min(cx, title.right), y - Math.min(y, title.bottom)) > radius + 12;
     if (width < height || !clear(x)) {
       const beside = title.right + 28 + radius;
@@ -363,9 +376,10 @@ async function start() {
         const top = title.bottom + 16, band = floor - top;
         radius = Math.min(band / 2, width / 2 - 8);
         y = top + band / 2;
+        if (width < height) homeScale = Math.min(1.6, Math.max(1, band / (2 * radius)));
       }
     }
-    globe.setLayout({x, y, radius});
+    globe.setLayout({x, y, radius, homeScale});
   }
   const observer = new ResizeObserver(layout);
   for (const element of [masthead, toolbar, credit, document.documentElement]) observer.observe(element);

@@ -20,7 +20,21 @@ app.js  title, key, toolbar, reading, About
 - **Globe.** A sphere with an equirectangular land texture painted by D3, coastlines and borders as great-circle line segments, and a rim glow measured from where each view ray passes the globe. The camera control is custom: the surface follows the pointer, flicks coast, and zoom, keys and reset glide.
 - **Colors.** Color management is off, so every color is a display value, as in CSS. The key's gradient and the trails share one palette, and each unit has its own round scale (0–100+ km/h at the surface, 0–300+ in the jet stream) that the trail colors follow, so the key always reads exactly. Faster winds also draw heavier strokes.
 - **Readings** come from the same grid the trails use, at full precision: speed, meteorological direction (where the wind comes from) and place.
-- **Named storms** come from the tropical cyclone vitals that started the same GFS run: each active storm's name, position and maximum sustained wind from NHC and JTWC. Tropical storms and stronger are labeled (Hurricane, Typhoon or Cyclone by basin above 64 knots); NHC's own classification overrides, so a post-tropical storm goes unlabeled. A storm list is used only with the field from the same run, and each name is placed on the model's spiral: the strongest cyclonic spin within 3° of the reported position. Labels show on the surface layer only.
+- **Named storms** come from the tropical cyclone vitals that started the same GFS run: each active storm's name, position and maximum sustained wind from NHC and JTWC. Tropical storms and stronger are labeled (Hurricane, Typhoon or Cyclone by basin above 64 knots); NHC's own classification overrides, so a post-tropical storm goes unlabeled. A storm list is used only with the field from the same run, and each name is placed on the model's spiral: the strongest cyclonic spin within 3° of the reported position. Each label carries the advisory's peak sustained wind, in the reader's unit, because the 1° field smooths a storm's core below its official strength. Labels show on the surface layer only.
+
+## Compared with the original
+
+Measured in the same headless Chrome (Apple M4, Metal), 1440 × 900 at 2×, with the original at `~/d3/wind` served beside this one:
+
+| | Original | This version |
+| --- | --- | --- |
+| Trails drawn | 7,406 (one per 175 pixels of window) | 24,640 (64 per pixel of globe radius) |
+| Trail coverage of a central ocean window | 4.0% of pixels | 7.3% of pixels |
+| Picture updates per second | 30 (trails step on a fixed 30 Hz clock) | 60 (every display frame; 120 on a 120 Hz screen) |
+| Frame pacing, median and 99th percentile | 16.7 and 16.8 ms | 16.7 and 16.8 ms |
+| A typhoon's core (Champi, 50 m/s in the field) | about 0.3 s per turn, tails wrapping the eye | about 1.1 to 1.3 s per turn, tails fading before a full curl |
+
+Coverage counts pixels at least 5% brighter than their 7 × 7 neighborhood, so flat land, ocean and smooth shading don't count. A frame here costs about 1.4 ms on the CPU and 7 to 8 ms on the GPU, of which about 4.4 ms is the globe itself at retina resolution.
 
 ## Data
 

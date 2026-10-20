@@ -94,9 +94,10 @@ const vertexShader = points => /* glsl */ `
     vColor = texture2D(uPalette, vec2(speed, .5)).rgb;
     float age = aHead.z, life = aHead.w;
     float lifetime = smoothstep(0., .3, age) * (1. - smoothstep(life - ${FADE_OUT}, life, age));
-    float facing = smoothstep(horizon, horizon + .2, dot(surface, eye));
+    // Fade toward the edge, where the turning surface would stack trails into a bright rim.
+    float facing = smoothstep(horizon, horizon + .5, dot(surface, eye));
     // Calm air keeps only a faint mark, so slow eddies don't read as noise.
-    vAlpha = uOpacity * pow(1. - along, .9) * lifetime * facing * coverage * mix(.28, 1., smoothstep(0., .3, speed))
+    vAlpha = uOpacity * pow(1. - along, .7) * lifetime * facing * coverage * mix(.28, 1., smoothstep(0., .3, speed))
       * (1. - smoothstep(${MAX_CURL * .55}, ${MAX_CURL}., curl));
   }
 `;

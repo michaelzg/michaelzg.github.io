@@ -321,8 +321,9 @@ h1 {
 
 .storm.is-left::before { display: none; }
 .storm.is-behind { opacity: 0; }
-.storm-kind { color: var(--ink-soft); }
+.storm-kind { color: var(--ink); font-weight: 500; }
 .storm-name { font-weight: 600; }
+.storm-wind { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 
 /* The one toolbar */
 
@@ -396,7 +397,7 @@ h1 {
   left: calc(var(--gutter) + env(safe-area-inset-left));
   bottom: calc(var(--gutter) + env(safe-area-inset-bottom) + 12px);
   max-width: calc(50vw - 200px);
-  color: var(--muted);
+  color: #9ba6b0;
   font-size: 11px;
   pointer-events: none;
 }
