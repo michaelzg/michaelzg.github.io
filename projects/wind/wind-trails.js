@@ -173,7 +173,6 @@ export class WindTrails {
       },
     });
     this.mesh = new THREE.Mesh(geometry, this.material);
-    this.mesh.name = 'wind';
     this.mesh.frustumCulled = false;
     this.mesh.visible = false;
   }
@@ -262,12 +261,5 @@ export class WindTrails {
     this.headAttribute.clearUpdateRanges();
     this.headAttribute.addUpdateRange(0, this.count * 4);
     this.headAttribute.needsUpdate = true;
-  }
-
-  dispose() {
-    this.mesh.geometry.dispose();
-    this.material.uniforms.uWind.value?.dispose();
-    this.material.uniforms.uPalette.value.dispose();
-    this.material.dispose();
   }
 }
