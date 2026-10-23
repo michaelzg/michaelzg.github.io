@@ -227,6 +227,16 @@ button.liw-legend-item:focus-visible {
   min-width: 0;
 }
 
+.liw-week-cell {
+  display: flex;
+  min-width: 0;
+}
+
+.liw-keyboard-help {
+  font: 400 0.75rem/1.6 var(--font-mono);
+  color: var(--color-text-secondary);
+}
+
 /*
   Every week knows which column it is in. A box is the containing block for its
   own tooltip, so this is what lets one measure back to the edge of the grid --
@@ -278,6 +288,12 @@ button.liw-legend-item:focus-visible {
 
 .liw-box.liw-has-label {
   font-weight: 600;
+}
+
+.liw-box:focus-visible {
+  outline: 2px solid var(--color-text-primary);
+  outline-offset: 2px;
+  z-index: 100;
 }
 
 .liw-event-mark {
@@ -660,6 +676,12 @@ button.liw-legend-item:focus-visible {
     transform: translateX(-50%) translateY(0) scale(1);
     transition-delay: 0s;
   }
+}
+
+// A stationary pointer must not obscure the week reached with the keyboard.
+.liw-decade:has(.liw-box:focus-visible) .liw-box:not(:focus) .liw-tip {
+  visibility: hidden;
+  opacity: 0;
 }
 
 /* ========================================

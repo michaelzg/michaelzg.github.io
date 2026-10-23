@@ -538,6 +538,63 @@
     return gridEl.querySelector('.liw-box[data-is-current="true"]');
   }
 
+  // Keep one Tab entry per decade; arrow keys explore the remaining weeks.
+  // Remember the week on the decade so responsive re-layout can restore it.
+  function rememberWeek(box) {
+    var decadeElement = box.closest('.liw-decade');
+    var previous = decadeElement.querySelector('.liw-box[tabindex="0"]');
+    if (previous && previous !== box) {
+      previous.tabIndex = -1;
+    }
+    box.tabIndex = 0;
+    decadeElement.dataset.activeWeek = box.dataset.weekIndex;
+  }
+
+  gridEl.addEventListener('focusin', function(event) {
+    var box = event.target.closest('.liw-box');
+    if (box) {
+      rememberWeek(box);
+    }
+  });
+
+  gridEl.addEventListener('click', function(event) {
+    var box = event.target.closest('.liw-box');
+    if (box) {
+      // Some browsers don't focus buttons on a pointer click. Focus also
+      // reveals the existing tooltip for touch users.
+      box.focus({ preventScroll: true });
+    }
+  });
+
+  gridEl.addEventListener('keydown', function(event) {
+    var box = event.target.closest('.liw-box');
+    if (!box || event.altKey || event.metaKey || event.shiftKey) {
+      return;
+    }
+    var edgeKey = event.key === 'Home' || event.key === 'End';
+    if (event.ctrlKey && !edgeKey) {
+      return;
+    }
+
+    var decadeElement = box.closest('.liw-decade');
+    var boxes = decadeElement.querySelectorAll('.liw-box');
+    var firstWeek = Number(boxes[0].dataset.weekIndex);
+    var index = Number(box.dataset.weekIndex) - firstWeek;
+    var nextIndex = index;
+    switch (event.key) {
+      case 'ArrowLeft': nextIndex -= 1; break;
+      case 'ArrowRight': nextIndex += 1; break;
+      case 'ArrowUp': nextIndex -= boxesInRow; break;
+      case 'ArrowDown': nextIndex += boxesInRow; break;
+      case 'Home': nextIndex = event.ctrlKey ? 0 : index - index % boxesInRow; break;
+      case 'End': nextIndex = event.ctrlKey ? boxes.length - 1 : index - index % boxesInRow + boxesInRow - 1; break;
+      default: return;
+    }
+    event.preventDefault();
+    nextIndex = Math.max(0, Math.min(boxes.length - 1, nextIndex));
+    boxes[nextIndex].focus();
+  });
+
   function collapsedCardText(isExpanded) {
     return isExpanded ? 'Collapse <span class="liw-expand-arrow">\u2191</span>' : 'Expand <span class="liw-expand-arrow">\u2193</span>';
   }
@@ -747,12 +804,21 @@
 
       eventMark.setAttribute('aria-hidden', 'true');
       box.appendChild(eventMark);
-      box.setAttribute('aria-label', eventsThisWeek.map(function(eventItem) {
-        return formatDate(eventItem.eventDate) + ': ' + eventItem.label;
-      }).join('. '));
     }
 
-    box.appendChild(createWeekTooltip(weekStart, eventsThisWeek, isNow));
+    var tooltip = createWeekTooltip(weekStart, eventsThisWeek, isNow);
+    var details = hasEvents ? eventsThisWeek.map(function(eventItem) {
+      return formatDate(eventItem.eventDate) + ': ' + eventItem.label +
+        (eventItem.description ? '. ' + eventItem.description : '');
+    }).join('. ') : tooltip.querySelector('.liw-tip-label').textContent;
+    box.setAttribute('aria-label', 'Week of ' + formatDate(weekStart) + '. ' + details +
+      (isNow ? '. Current week' : isFuture ? '. Future week' : ''));
+    if (isNow) {
+      box.setAttribute('aria-current', 'date');
+    }
+    // The accessible name includes the tooltip even while it is hidden.
+    tooltip.setAttribute('aria-hidden', 'true');
+    box.appendChild(tooltip);
     box.setAttribute('data-week-index', String(weekIdx));
     box.setAttribute('data-has-events', String(hasEvents));
     box.setAttribute('data-is-current', String(isNow));
@@ -779,6 +845,7 @@
     var palette = decadePalette(decade);
     var firstWeek = decade * WEEKS_PER_DECADE;
     var lastWeek = Math.min(firstWeek + WEEKS_PER_DECADE, totalWeeks);
+    var activeWeek = decadeElement.dataset.activeWeek === undefined ? firstWeek : Number(decadeElement.dataset.activeWeek);
     var currentRow = null;
     var currentRowBoxes = null;
     var decadeRows = [];
@@ -786,13 +853,18 @@
     for (var weekIdx = firstWeek; weekIdx < lastWeek; weekIdx += 1) {
       if (!currentRow || currentRowBoxes.length === boxesInRow) {
         currentRow = el('div', 'liw-flex-row');
+        currentRow.setAttribute('role', 'row');
         currentRowBoxes = [];
         fragment.appendChild(currentRow);
         decadeRows.push(currentRowBoxes);
       }
 
       var weekBox = createWeekBox(weekIdx, palette);
-      currentRow.appendChild(weekBox.element);
+      weekBox.element.tabIndex = weekIdx === activeWeek ? 0 : -1;
+      var cell = el('div', 'liw-week-cell');
+      cell.setAttribute('role', 'gridcell');
+      cell.appendChild(weekBox.element);
+      currentRow.appendChild(cell);
       currentRowBoxes.push(weekBox);
     }
 
@@ -838,6 +910,9 @@
     var decadeWrapper = createCollapsedCard(decade, eventsByDecade[decade], decadePalette(decade));
     var decadeElement = el('div', 'liw-decade');
     decadeElement.id = decadeWrapper.dataset.controls;
+    decadeElement.setAttribute('role', 'grid');
+    decadeElement.setAttribute('aria-label', decadeLabel(decade) + ' weeks');
+    decadeElement.setAttribute('aria-describedby', 'liw-keyboard-help');
     decadeElement.setAttribute('data-rendered', 'false');
     decadeWrapper.appendChild(decadeElement);
     gridFragment.appendChild(decadeWrapper);
@@ -868,12 +943,20 @@
     calloutMetrics.measuredAt = 0;
     measureCalloutMetrics();
 
+    var focusedBox = document.activeElement.closest('.liw-box');
+    var focusedWeek = focusedBox ? focusedBox.dataset.weekIndex : null;
     gridEl.querySelectorAll('.liw-decade[data-rendered="true"]').forEach(function(decadeElement) {
       decadeElement.textContent = '';
       decadeElement.setAttribute('data-rendered', 'false');
     });
 
     gridEl.querySelectorAll('.liw-decade-wrapper[data-collapsed="false"]').forEach(ensureDecadeRendered);
+    if (focusedWeek !== null) {
+      var restoredBox = gridEl.querySelector('.liw-box[data-week-index="' + focusedWeek + '"]');
+      if (restoredBox) {
+        restoredBox.focus({ preventScroll: true });
+      }
+    }
   }
 
   // Debounced rather than scheduled on a frame: this rebuilds every box in the
@@ -944,6 +1027,7 @@
         if (!nowBox) {
           return;
         }
+        nowBox.focus({ preventScroll: true });
         scrollIntoView(nowBox, 'center');
         nowBox.style.transition = 'box-shadow 0.3s ease';
       }, start);

@@ -16,11 +16,7 @@ description: Writing on software, projects, and the tools I build for myself.
         <span class="post-meta post-date">{{ post.date | date: "%b %-d, %Y" }} </span>
         
         <p class="post-summary">
-          {% if post.summary %}
-            {{ post.summary }}
-          {% else %}
-            {{ post.excerpt }}
-          {% endif %}
+          {{ post.summary | default: post.excerpt | strip_html | normalize_whitespace | escape }}
         </p>
       </div>
     {% endfor %}
